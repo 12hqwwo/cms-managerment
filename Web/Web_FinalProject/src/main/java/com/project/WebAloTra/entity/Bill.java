@@ -68,4 +68,8 @@ public class Bill implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id", nullable = true)
     private Branch branch;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cashier_account_id")
+    private Account cashier;
 }

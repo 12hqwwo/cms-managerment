@@ -91,6 +91,7 @@
             <th scope="col">Tổng tiền</th>
             <th scope="col">Loại đơn</th>
             <th scope="col">Hình thức TT</th>
+            <th scope="col">Nhân viên thanh toán</th>
             <th scope="col">Trạng thái</th>
             <th scope="col">Thao tác</th>
         </tr>
@@ -120,6 +121,7 @@
                 <span th:if="${item.hinhThucThanhToan == 'CHUYEN_KHOAN'}">Chuyển khoản</span>
                 <span th:if="${item.hinhThucThanhToan == 'TIEN_MAT'}">Tiền mặt</span>
             </td>
+            <td th:text="${item.nhanVienThanhToan}">staff@company.com</td>
 
             <td>
                 <!-- ✅ Sửa an toàn phần trạng thái -->

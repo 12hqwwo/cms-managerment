@@ -449,4 +449,9 @@ public class BillServiceImpl implements BillService {
         return billRepository.findByBranchId(branchId, pageable);
     }
 
+    @Override
+    public Page<BillDtoInterface> findByCashierIdAndBranchId(Long cashierId, Long branchId, Pageable pageable) {
+        return billRepository.findByCashierIdAndBranchId(cashierId, branchId, pageable);
+    }
+
 }

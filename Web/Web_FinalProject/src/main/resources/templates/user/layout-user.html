@@ -105,13 +105,20 @@
 									tin</a>
 								<!-- Nếu là admin -->
 								<a th:href="@{/admin/thong-ke-doanh-thu}"
-									sec:authorize="hasRole('ROLE_ADMIN')"> Trang quản lý
+									sec:authorize="hasRole('ADMIN')"> Trang quản lý
 									(Admin) </a>
 
 								<!-- Nếu là vendor -->
 								<a th:href="@{/vendor-page/thong-ke-doanh-thu}"
-									sec:authorize="hasRole('ROLE_VENDOR')"> Trang quản lý
-									(Vendor) </a> <a th:href="@{/cart-status}"
+									sec:authorize="hasRole('VENDOR')"> Trang quản lý
+									(Vendor) </a>
+								<a th:href="@{/admin/pos}"
+									th:if="${#authorization.expression('hasAnyRole(''STAFF'',''VENDOR'')')}">Bán
+									hàng tại quầy</a>
+								<a th:href="@{/admin/bill-list}"
+									th:if="${#authorization.expression('hasAnyRole(''STAFF'',''VENDOR'')')}">Hóa
+									đơn tại quầy</a>
+								<a th:href="@{/cart-status}"
 									th:if="${#authorization.expression('hasRole(''USER'')')}">Đơn
 									hàng</a> <a th:href="@{/user_logout}"
 									th:if="${#authorization.expression('isAuthenticated()')}">Đăng

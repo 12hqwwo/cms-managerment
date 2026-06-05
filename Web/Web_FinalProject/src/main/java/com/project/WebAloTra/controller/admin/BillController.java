@@ -3,6 +3,7 @@ package com.project.WebAloTra.controller.admin;
 
 import com.lowagie.text.DocumentException;
 import com.project.WebAloTra.dto.Bill.*;
+import com.project.WebAloTra.entity.Account;
 import com.project.WebAloTra.entity.Bill;
 import com.project.WebAloTra.entity.enumClass.BillStatus;
 import com.project.WebAloTra.entity.enumClass.InvoiceType;
@@ -103,17 +104,28 @@ public class BillController {
 
         Page<BillDtoInterface> bills;
 
-        // ✅ Nếu là vendor → chỉ lấy bill theo chi nhánh
-        if (authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(r -> r.getAuthority().equals("ROLE_VENDOR"))) {
+        boolean isStaff = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_STAFF"));
+        boolean isVendor = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_VENDOR"));
 
+        // ✅ STAFF chỉ xem bill do chính mình thanh toán (và theo chi nhánh đang gán nếu có)
+        if (isStaff) {
+            String email = authentication.getName();
+            Account account = accountRepository.findByEmail(email);
+            if (account == null) {
+                throw new RuntimeException("Không tìm thấy tài khoản nhân viên: " + email);
+            }
+            Long branchId = account.getBranch() != null ? account.getBranch().getId() : null;
+            bills = billService.findByCashierIdAndBranchId(account.getId(), branchId, pageable);
+
+        // ✅ Nếu là vendor → chỉ lấy bill theo chi nhánh
+        } else if (isVendor) {
             String email = authentication.getName();
             Long branchId = accountRepository.findBranchIdByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy chi nhánh cho vendor: " + email));
 
             bills = billService.findByBranchId(branchId, pageable);
-            model.addAttribute("isVendor", true);
-            model.addAttribute("branchId", branchId);
 
         } else {
             // ✅ Admin thì lấy toàn bộ
@@ -130,7 +142,6 @@ public class BillController {
             } else {
                 bills = billService.findAll(pageable);
             }
-            model.addAttribute("isVendor", false);
         }
 
         model.addAttribute("items", bills);

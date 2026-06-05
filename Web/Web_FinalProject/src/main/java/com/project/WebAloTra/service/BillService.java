@@ -68,4 +68,5 @@ public interface BillService {
 
     Page<BillDto> getAllValidBillToReturn( Pageable pageable);
     Page<BillDtoInterface> findByBranchId(Long branchId, Pageable pageable);
+    Page<BillDtoInterface> findByCashierIdAndBranchId(Long cashierId, Long branchId, Pageable pageable);
 }
