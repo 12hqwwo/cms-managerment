@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{user/layout-user.html}">
+<head>
+<meta charset="UTF-8">
+<title>Title</title>
+
+<link rel="icon" type="image/png" th:href="@{/images/icons/favicon.png}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/bootstrap/css/bootstrap.min.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/fonts/font-awesome-4.7.0/css/font-awesome.min.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/fonts/iconic/css/material-design-iconic-font.min.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/fonts/linearicons-v1.0.0/icon-font.min.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/animate/animate.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/css-hamburgers/hamburgers.min.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/animsition/css/animsition.min.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/select2/select2.min.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/daterangepicker/daterangepicker.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/slick/slick.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/MagnificPopup/magnific-popup.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css"
+	th:href="@{/vendor/perfect-scrollbar/perfect-scrollbar.css}" />
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" th:href="@{/css/util.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}" />
+
+
+</head>
+<body>
+
+	<div layout:fragment="content">
+		<div id="loading-overlay">
+			<div class="loading-spinner"></div>
+		</div>
+		<div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
+			aria-labelledby="exampleModalLabel" aria-hidden="true"
+			style="z-index: 99999">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="exampleModalLabel">Yêu cầu đăng
+							nhập</h5>
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<p>Vui lòng đăng nhập để tiếp tục sử dụng chức năng này.</p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary"
+							data-dismiss="modal">Đóng</button>
+						<a href="/user-login" class="btn btn-primary">Đăng nhập</a>
+						<!-- Update the URL to your login page -->
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- Product Detail -->
+		<section class="sec-product-detail bg0 p-t-65 p-b-60">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-6 col-lg-7 p-b-30">
+						<div class="p-l-25 p-r-30 p-lr-0-lg">
+							<div class="wrap-slick3 flex-sb flex-w">
+								<div class="wrap-slick3-dots"></div>
+								<div class="wrap-slick3-arrows flex-sb-m flex-w"></div>
+
+								<div class="slick3 gallery-lb" id="mainGallery">
+									<th:block th:each="image : ${product.image}">
+										<div class="item-slick3"
+											th:attr="data-thumb=${#strings.startsWith(image.link, 'http') ? image.link : '/' + image.link}">
+											<div class="wrap-pic-w pos-relative">
+												<img
+													th:src="${#strings.startsWith(image.link, 'http') ? image.link : '/' + image.link}"
+													alt="IMG-PRODUCT" /> <a
+													class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04"
+													th:href="${#strings.startsWith(image.link, 'http') ? image.link : '/' + image.link}">
+													<i class="fa fa-expand"></i>
+												</a>
+											</div>
+										</div>
+									</th:block>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-6 col-lg-5 p-b-30">
+						<div class="p-r-50 p-t-5 p-lr-0-lg">
+							<h4 id="productName" class="mtext-105 cl2 js-name-detail p-b-14"
+								th:text="${product.name}"></h4>
+
+							<span class="mtext-106 cl2" id="price_product"
+								th:text="${#numbers.formatDecimal(product.productDetails[0].price, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+
+							</span> </span>
+
+							<p class="stext-102 cl3 p-t-23" th:text="${product.describe}">
+								Một kết hợp từ sự thoải mái cùng độ ấm áp trong thiết kế cổ lọ.
+							</p>
+
+							<p class="stext-102 cl3 p-t-23">
+								<span><i class="fa fa-copyright"></i></span>&nbsp;Thương hiệu:
+								<span class="font-weight-bold" th:text="${product.brand.name}"></span>
+								<br> <span><i class="fa fa-puzzle-piece"></i></span>&nbsp;Loại
+								trà dùng: <span class="font-weight-bold"
+									th:text="${product.material.name}"></span> <br> <span><i
+									class="fa fa-cubes"></i></span>&nbsp;Danh mục: <span
+									class="font-weight-bold" th:text="${product.category.name}"></span>
+								<br>
+							</p>
+
+							<!--  -->
+							<div class="p-t-33">
+								<div class="flex-w flex-r-m p-b-10">
+									<div class="size-203 respon6">Size</div>
+									<div class="size-204 respon6-next">
+										<div class="rs1-select2 bor8 bg0">
+											<select class="js-select2" name="size" id="sizeSelect">
+												<!-- options loaded via ajax -->
+											</select>
+											<div class="dropDownSelect2"></div>
+										</div>
+									</div>
+								</div>
+
+								<div class="flex-w flex-r-m p-b-10">
+									<div class="size-203 respon6">Chọn đường</div>
+
+									<div class="size-204 respon6-next">
+										<div class="rs1-select2 bor8 bg0">
+											<select class="js-select2" name="time" id="colorSelect">
+												<!-- options loaded via ajax -->
+											</select>
+											<div class="dropDownSelect2"></div>
+										</div>
+									</div>
+								</div>
+								<input type="hidden" name="productDetailId"
+									, id="productDetailId">
+								<div class="flex-w flex-r-m p-b-10">
+									<div class="size-204 flex-w flex-m respon6-next">
+										<div class="wrap-num-product flex-w m-r-20 m-tb-10">
+											<div
+												class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m">
+												<i class="fs-16 zmdi zmdi-minus"></i>
+											</div>
+
+											<input class="mtext-104 cl3 txt-center num-product"
+												type="number" name="num-product" value="1">
+
+											<div
+												class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m">
+												<i class="fs-16 zmdi zmdi-plus"></i>
+											</div>
+										</div>
+										<span class="remaning-product" style="font-size: 12px"></span>
+										<th:block
+											th:if="${#authorization.expression('isAuthenticated()')}">
+											<button
+												class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addcart-detail">Thêm
+												vào giỏ</button>
+										</th:block>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!--  -->
+
+					</div>
+				</div>
+
+			</div>
+		</section>
+
+		<!-- Back to top -->
+		<div class="btn-back-to-top" id="myBtn">
+			<span class="symbol-btn-back-to-top"> <i
+				class="zmdi zmdi-chevron-up"></i>
+			</span>
+		</div>
+
+		<!-- Modal1 -->
+		<div class="wrap-modal1 js-modal1 p-t-60 p-b-20">
+			<div class="overlay-modal1 js-hide-modal1"></div>
+
+			<div class="container">
+				<div class="bg0 p-t-60 p-b-30 p-lr-15-lg how-pos3-parent">
+					<button class="how-pos3 hov3 trans-04 js-hide-modal1">
+						<img th:src="@{/images/icons/icon-close.png}" alt="CLOSE">
+					</button>
+
+					<div class="row">
+						<div class="col-md-6 col-lg-7 p-b-30">
+							<div class="p-l-25 p-r-30 p-lr-0-lg">
+								<div class="wrap-slick3 flex-sb flex-w">
+									<div class="wrap-slick3-dots"></div>
+									<div class="wrap-slick3-arrows flex-sb-m flex-w"></div>
+
+									<div class="slick3 gallery-lb" id="modalGallery">
+										<!-- Use the same product images here to avoid 404s -->
+										<th:block th:each="image : ${product.image}">
+											<div class="item-slick3"
+												th:attr="data-thumb=${#strings.startsWith(image.link, 'http') ? image.link : '/' + image.link}">
+												<div class="wrap-pic-w pos-relative">
+													<img
+														th:src="${#strings.startsWith(image.link, 'http') ? image.link : '/' + image.link}"
+														alt="IMG-PRODUCT"> <a
+														class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04"
+														th:href="${#strings.startsWith(image.link, 'http') ? image.link : '/' + image.link}">
+														<i class="fa fa-expand"></i>
+													</a>
+												</div>
+											</div>
+										</th:block>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-6 col-lg-5 p-b-30">
+							<div class="p-r-50 p-t-5 p-lr-0-lg">
+								<h4 class="mtext-105 cl2 js-name-detail p-b-14"
+									th:text="${product.name}"></h4>
+
+								<span class="mtext-106 cl2"> <span
+									th:text="${#numbers.formatDecimal(product.productDetails[0].price, 0, 'POINT', 0, 'COMMA')}"></span>
+									đ
+								</span>
+
+								<p class="stext-102 cl3 p-t-23" th:text="${product.describe}"></p>
+
+								<!-- Simplified selectors in modal if needed -->
+								<div class="p-t-33">
+									<div class="flex-w flex-r-m p-b-10">
+										<div class="size-203 flex-c-m respon6">Size</div>
+
+										<div class="size-204 respon6-next">
+											<div class="rs1-select2 bor8 bg0">
+												<select class="js-select2" name="time">
+													<option>Chọn loại bảo hành</option>
+													<option>1</option>
+													<option>2</option>
+													<option>3</option>
+													<option>4</option>
+												</select>
+												<div class="dropDownSelect2"></div>
+											</div>
+										</div>
+									</div>
+
+									<div class="flex-w flex-r-m p-b-10">
+										<div class="size-203 flex-c-m respon6">Color</div>
+
+										<div class="size-204 respon6-next">
+											<div class="rs1-select2 bor8 bg0">
+												<select class="js-select2" name="time">
+													<option>Chọn % đường</option>
+													<option>Red</option>
+													<option>Blue</option>
+													<option>White</option>
+													<option>Grey</option>
+												</select>
+												<div class="dropDownSelect2"></div>
+											</div>
+										</div>
+									</div>
+
+									<div class="flex-w flex-r-m p-b-10">
+										<div class="size-204 flex-w flex-m respon6-next">
+											<div class="wrap-num-product flex-w m-r-20 m-tb-10">
+												<div
+													class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m">
+													<i class="fs-16 zmdi zmdi-minus"></i>
+												</div>
+
+												<input class="mtext-104 cl3 txt-center num-product"
+													type="number" name="num-product" value="1">
+
+												<div
+													class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m">
+													<i class="fs-16 zmdi zmdi-plus"></i>
+												</div>
+											</div>
+
+											<button
+												class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addcart-detail">
+												Add to cart</button>
+										</div>
+									</div>
+								</div>
+
+								<!--  -->
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+			th:inline="javascript"></script>
+		<script th:inline="javascript">
+        /*<![CDATA[*/
+        var productId = /*[[${product.id}]]*/ 0;
+        var productCode = /*[[${product.code}]]*/ '';
+        /*]]>*/
+        var isUserLoggedIn = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+            $.ajax({
+                type: 'GET',
+                dataType: "json",
+                url: "/colors/" + productId + "/" + "product",
+                success: function (data) {
+                    loadColorSelect(data)
+                }
+            })
+
+        $.ajax({
+            type: 'GET',
+            dataType: "json",
+            url: "/sizes/" + productId + "/" + "product",
+            success: function (data) {
+                loadSizeSelect(data)
+            },
+        })
+
+        // Load product images from Cloudinary/API and render galleries
+        function buildItemsHtml(urls) {
+            var html = '';
+            for (var i = 0; i < urls.length; i++) {
+                var u = urls[i];
+                html += '<div class="item-slick3" data-thumb="' + u + '">'
+                      +   '<div class="wrap-pic-w pos-relative">'
+                      +     '<img src="' + u + '" alt="IMG-PRODUCT" />'
+                      +     '<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="' + u + '"><i class="fa fa-expand"></i></a>'
+                      +   '</div>'
+                      + '</div>';
+            }
+            return html;
+        }
+
+        function initSlickFor($wrap) {
+            var $slick = $wrap.find('.slick3');
+            try { if ($slick.hasClass('slick-initialized')) { $slick.slick('unslick'); } } catch (e) {}
+            // re-attach dots/arrows containers if needed
+            $wrap.find('.wrap-slick3-dots').empty();
+            $wrap.find('.wrap-slick3-arrows').empty();
+            $slick.slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                fade: true,
+                infinite: true,
+                autoplay: false,
+                autoplaySpeed: 6000,
+                arrows: true,
+                appendArrows: $wrap.find('.wrap-slick3-arrows'),
+                prevArrow:'<button class="arrow-slick3 prev-slick3"><i class="fa fa-angle-left" aria-hidden="true"></i></button>',
+                nextArrow:'<button class="arrow-slick3 next-slick3"><i class="fa fa-angle-right" aria-hidden="true"></i></button>',
+                dots: true,
+                appendDots: $wrap.find('.wrap-slick3-dots'),
+                dotsClass:'slick3-dots',
+                customPaging: function(slick, index) {
+                    var portrait = $(slick.$slides[index]).data('thumb');
+                    return '<img src=" ' + portrait + ' "/><div class="slick3-dot-overlay"></div>';
+                }
+            });
+        }
+
+        function initMagnific($gallery) {
+            try { $gallery.magnificPopup('destroy'); } catch (e) {}
+            $gallery.magnificPopup({
+                delegate: 'a',
+                type: 'image',
+                gallery: { enabled: true },
+                mainClass: 'mfp-fade'
+            });
+        }
+
+        $(document).ready(function () {
+            // Fetch Cloudinary images by product code
+            $.getJSON('/api/products/' + productCode + '/images')
+                .done(function(urls){
+                    if (urls && urls.length > 0) {
+                        var html = buildItemsHtml(urls);
+                        var $mainWrap = $('#mainGallery').closest('.wrap-slick3');
+                        var $modalWrap = $('#modalGallery').closest('.wrap-slick3');
+
+                        $('#mainGallery').html(html);
+                        $('#modalGallery').html(html);
+
+                        initSlickFor($mainWrap);
+                        initSlickFor($modalWrap);
+
+                        initMagnific($('#mainGallery'));
+                        initMagnific($('#modalGallery'));
+                    }
+                });
+
+            $("#sizeSelect").on('change', function (e) {
+                var sizeId = $(this).val()
+                handleSizeChange(sizeId)
+            })
+            
+            $("#colorSelect").on('change', function (e) {
+                var colorId = $(this).val()
+                handleColorChange(colorId)
+            })
+
+
+        $(".js-addcart-detail").on('click', function (e) {
+    if(!isUserLoggedIn) {
+        // Cho phép khách thêm vào giỏ hàng
+        addToCartAsGuest();
+    } else {
+        addToCart();
+    }
+});
+
+            // $(document).ajaxStart(function() {
+            //     $('#loading-overlay').show();
+            // });
+            //
+            // $(document).ajaxStop(function() {
+            //     $('#loading-overlay').hide();
+            // });
+        })
+
+        var initiallyAvailableColors = [];
+        var availableColors = [];
+        // Track size availability similar to colors
+        var initiallyAvailableSizes = [];
+        var availableSizes = [];
+
+        async function handleSizeChange(sizeId) {
+            if ( $("#sizeSelect").val() == "") {
+                enableAllColorOptions()
+                $("#colorSelect").select2()
+                return
+            }
+            else if ($("#colorSelect").val() !== "") {
+                loadPrice()
+            }
+            $('#loading-overlay').show();
+            await $.ajax({
+                type: 'GET',
+                dataType: "json",
+                url: `/colors/${productId}/product/${sizeId}/size`,
+                success: function (data) {
+                    // Enable all color options first
+                    enableAllColorOptions();
+                    // Update currently available colors
+                    availableColors = data.map(function (color) { return color.id; });
+                    // Disable colors that are not available now
+                    for (var i = 0; i < initiallyAvailableColors.length; i++) {
+                        if (!availableColors.includes(initiallyAvailableColors[i])) {
+                            disableColorOption(initiallyAvailableColors[i]);
+                        }
+                    }
+                    $('#colorSelect').select2();
+                }
+            });
+            $('#loading-overlay').hide()
+        }
+
+        // NEW: handle color change -> filter size options
+        async function handleColorChange(colorId) {
+            if ( $("#colorSelect").val() == "") {
+                enableAllSizeOptions();
+                $("#sizeSelect").select2();
+                return;
+            } else if ($("#sizeSelect").val() !== "") {
+                loadPrice();
+            }
+            $('#loading-overlay').show();
+            await $.ajax({
+                type: 'GET',
+                dataType: 'json',
+                url: `/sizes/${productId}/product/${colorId}/color`,
+                success: function(data) {
+                    // Enable all size options first
+                    enableAllSizeOptions();
+                    // Update currently available sizes
+                    availableSizes = data.map(function (size) { return size.id; });
+                    // Disable sizes that are not available now
+                    for (var i = 0; i < initiallyAvailableSizes.length; i++) {
+                        if (!availableSizes.includes(initiallyAvailableSizes[i])) {
+                            disableSizeOption(initiallyAvailableSizes[i]);
+                        }
+                    }
+                    $('#sizeSelect').select2();
+                }
+            });
+            $('#loading-overlay').hide();
+        }
+
+        function formatNumber(number) { return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+
+        function enableAllColorOptions() { $("#colorSelect option").removeAttr("disabled"); }
+        function disableColorOption(colorId) { $("#colorSelect option[value='" + colorId + "']").attr("disabled", "disabled"); }
+
+        // NEW: helpers for size options
+        function enableAllSizeOptions() { $("#sizeSelect option").removeAttr("disabled"); }
+        function disableSizeOption(sizeId) { $("#sizeSelect option[value='" + sizeId + "']").attr("disabled", "disabled"); }
+
+        function loadColorSelect(data) {
+            var selectElement = document.getElementById("colorSelect");
+            selectElement.innerHTML = '';
+            var defaultOption = document.createElement("option");
+            defaultOption.text = "Chọn % đường";
+            defaultOption.value = "";
+            selectElement.appendChild(defaultOption);
+            for (var i = 0; i < data.length; i++) {
+                var option = document.createElement("option");
+                option.text = data[i].name;
+                option.value = data[i].id;
+                selectElement.appendChild(option);
+            }
+            initiallyAvailableColors = data.map(function(color) { return color.id; });
+            availableColors = initiallyAvailableColors;
+        }
+
+        function loadSizeSelect(data) {
+            var selectElement = document.getElementById("sizeSelect");
+            selectElement.innerHTML = '';
+            var defaultOption = document.createElement("option");
+            defaultOption.text = "Chọn cỡ";
+            defaultOption.value = "";
+            selectElement.appendChild(defaultOption);
+            for (var i = 0; i < data.length; i++) {
+                var option = document.createElement("option");
+                option.text = data[i].name;
+                option.value = data[i].id;
+                selectElement.appendChild(option);
+            }
+            // Record initial size IDs for filtering later
+            initiallyAvailableSizes = data.map(function(size){ return size.id; });
+            availableSizes = initiallyAvailableSizes;
+        }
+
+        async function loadPrice() {
+            await $.ajax({
+                type: 'GET',
+                dataType: "json",
+                url: `/productDetails/${productId}/product`,
+                success: function (data) {
+                    const productDetail = data.find(item => item.size.id == $("#sizeSelect").val() && item.color.id == $("#colorSelect").val());
+                    loadRemainingQuantity(productDetail.quantity)
+                    if(!productDetail.discountedPrice) {
+                        $("#price_product").text(formatNumber(parseFloat(productDetail.price)) + ' đ')
+                    }
+                    else {
+                        const oldPrice = formatNumber(parseFloat(productDetail.price))
+                        const discountedPrice = formatNumber(parseFloat(productDetail.discountedPrice))
+                        $("#price_product").html(`
+                        <span style="font-size: 12px; text-decoration: line-through">${oldPrice} đ</span>
+                        <span class="mtext-106 cl2" id="price_product">${discountedPrice} đ</span>
+                        `)
+                    }
+                    $("#productDetailId").val(productDetail.id)
+                }
+            })
+        }
+
+        function loadRemainingQuantity(value) {
+            if(value == 0) {
+                $('.js-name-detail').append('<span style="color:red; border: 1px solid #ddd; font-size: 12px; margin-left: 8px">Hết hàng</span>')
+            }
+            $(".remaning-product").html(`Còn lại <span id="remaining-quantity" data-quantity="${value}">${value}</span> sản phẩm`)
+        }
+
+        $('.num-product').on('keypress', function (e) {
+            onlyAllowNumberInput(e)
+        })
+
+        $('.num-product').on('focusout', function (e) {
+            if($(this).val() == "") {
+                $(this).val(1)
+            }
+        })
+
+        function onlyAllowNumberInput(e) {
+            const key = e.key;
+            if (key === '-' || key == 0) {
+                e.preventDefault();
+            }
+        }
+     // =======================
+     // Guest Add To Cart (LocalStorage)
+     // =======================
+     // ✅ Guest Add To Cart - Gọi API thay vì localStorage
+function addToCartAsGuest() {
+    if (!checkColorAndSizeSelect()) return;
+
+    var remainingQuantity = parseInt($("#remaining-quantity").attr('data-quantity'));
+    var quantity = parseInt($('.num-product').val());
+    var nameProduct = $('#productName').text();
+
+    if (remainingQuantity === 0) {
+        swal("Lỗi", "Sản phẩm này đã hết hàng", "error");
+        return;
+    }
+
+    if (quantity > remainingQuantity) {
+        swal("Lỗi", "Số lượng vượt quá hàng tồn", "error");
+        return;
+    }
+
+    // ✅ Gọi API backend thay vì lưu localStorage
+    $('#loading-overlay').show();
+    $.ajax({
+        type: 'POST',
+        url: '/add-to-cart-guest',
+        data: {
+            productId: productId,
+            quantity: quantity
+        },
+        success: function(data) {
+            $('#loading-overlay').hide();
+            swal(nameProduct, "Đã thêm vào giỏ hàng", "success");
+            
+            // Cập nhật số lượng trên icon giỏ hàng
+            var currentCount = parseInt($(".js-show-cart").attr("data-notify") || 0);
+            $(".js-show-cart").attr("data-notify", currentCount + quantity);
+        },
+        error: function(xhr) {
+            $('#loading-overlay').hide();
+            swal("Lỗi", "Không thể thêm vào giỏ hàng", "error");
+            console.error(xhr);
+        }
+    });
+}
+        async function addToCart() {
+            var remainingQuantity = parseInt($("#remaining-quantity").attr('data-quantity'))
+            var quantity = parseInt($('.num-product').val())
+            if (!checkColorAndSizeSelect()) {
+                return;
+            }
+
+            if (remainingQuantity == 0) {
+                swal("Lỗi", "Sản phẩm có thuộc tính này đã hết hàng", "error");
+                return;
+            }
+
+            if (quantity > remainingQuantity) {
+                swal("Lỗi", "Số lượng thêm vào giỏ hàng lớn hơn số lượng còn", "error");
+                return;
+            }
+
+
+            var currentTotalQuantityInCart = parseInt($(".js-show-cart").attr("data-notify"));
+
+            var nameProduct = $('#productName').text();
+            var dataSend = {
+                detail: {
+                    id: $("#productDetailId").val()
+                },
+                quantity: quantity
+            }
+
+            $('#loading-overlay').show();
+            await $.ajax({
+                type: 'POST',
+                url: '/api/addToCart',
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(dataSend),
+                success: function (data) {
+                    $('#loading-overlay').hide();
+                    swal(nameProduct, "Thêm vào giỏ hàng thành công", "success")
+
+                    if(isUserLoggedIn) {
+                        $.ajax({
+                            type: 'GET',
+                            url:`http://localhost:8080/api/getAllCart`,
+                            dataType: 'json',
+                            success: function (data) {
+                                $(".js-show-cart").attr("data-notify", data.length)
+                                localStorage.setItem("cartQuantity", (data.length).toString())
+                            }
+                        })
+                    }
+                },
+                error: function (xhr, status, error) {
+                    $('#loading-overlay').hide();
+                    swal("Error", xhr.responseJSON.message, "error")
+                    row.find(".num-product").val(1)
+
+                }
+            })
+
+
+        }
+
+        function checkColorAndSizeSelect() {
+            if ($("#colorSelect").val() == "" || $("#sizeSelect").val() == "") {
+                swal("Error", "Vui lòng chọn đường và kích cỡ size trước khi thêm vào giỏ", "error")
+                return false
+            }
+            return true
+        }
+
+    </script>
+	</div>
+
+</body>
+</html>

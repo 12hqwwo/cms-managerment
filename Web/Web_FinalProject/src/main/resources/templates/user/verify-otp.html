@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{user/layout-user.html}">
+<head>
+<meta charset="UTF-8">
+<title>Xác thực OTP</title>
+
+<style>
+/* ================== STYLE CHUNG ================== */
+.otp-input {
+	width: 55px;
+	height: 65px;
+	font-size: 32px;
+	text-align: center;
+	border: 2px solid #007bff;
+	border-radius: 12px;
+	margin: 0 5px;
+	font-weight: bold;
+	color: #222;
+	transition: all 0.25s ease;
+	box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+}
+
+.otp-input:focus {
+	outline: none;
+	border-color: #0056b3;
+	box-shadow: 0 0 10px rgba(0, 86, 179, 0.6);
+}
+
+.otp-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.form-text {
+	font-size: 15px;
+	color: #555;
+	margin-top: 10px;
+}
+
+.btn-primary {
+	background-color: #007bff;
+	border: none;
+	font-weight: bold;
+	transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+	background-color: #0056b3;
+	transform: scale(1.03);
+}
+
+.alert {
+	font-size: 15px;
+}
+
+/* Mobile responsive */
+@media ( max-width : 576px) {
+	.otp-input {
+		width: 45px;
+		height: 55px;
+		font-size: 26px;
+	}
+}
+</style>
+</head>
+
+<body>
+	<div layout:fragment="content">
+
+		<!-- Banner -->
+		<section class="bg-img1 txt-center p-lr-15 p-tb-92"
+			style="background-image: url('images/bn1.jpg');">
+			<h2 class="ltext-105 cl0 txt-center">Xác thực Email</h2>
+		</section>
+
+		<!-- Nội dung -->
+		<section class="bg0 p-b-60">
+			<div class="container">
+				<div class="row justify-content-center">
+					<div class="col-md-6 col-lg-5">
+
+						<!-- Thông báo -->
+						<div th:if="${errorMessage}"
+							class="alert alert-danger text-center">
+							<p th:text="${errorMessage}"></p>
+						</div>
+						<div th:if="${success}" class="alert alert-success text-center">
+							<p th:text="${success}"></p>
+						</div>
+
+						<!-- Form OTP -->
+						<form
+							class="mt-5 px-4 pt-4 pb-5 shadow-sm border rounded text-center"
+							th:action="@{/verify-otp}" method="post" id="otpForm">
+							<h4 class="fw-bold text-center mb-4"
+								style="font-size: 28px; color: #222;">Nhập mã OTP</h4>
+
+							<div class="otp-container">
+								<input type="text" maxlength="1" class="otp-input" id="otp1"
+									oninput="moveNext(this, 'otp2')" name="otp1" required>
+								<input type="text" maxlength="1" class="otp-input" id="otp2"
+									oninput="moveNext(this, 'otp3')" name="otp2" required>
+								<input type="text" maxlength="1" class="otp-input" id="otp3"
+									oninput="moveNext(this, 'otp4')" name="otp3" required>
+								<input type="text" maxlength="1" class="otp-input" id="otp4"
+									oninput="moveNext(this, 'otp5')" name="otp4" required>
+								<input type="text" maxlength="1" class="otp-input" id="otp5"
+									oninput="moveNext(this, 'otp6')" name="otp5" required>
+								<input type="text" maxlength="1" class="otp-input" id="otp6"
+									oninput="combineOTP()" name="otp6" required>
+							</div>
+
+							<input type="hidden" id="code" name="code"> <small
+								class="form-text">Mã có hiệu lực trong 15 phút. Hãy kiểm
+								tra hộp thư của bạn.</small>
+
+							<button type="submit" class="btn btn-primary w-100 mt-4 py-2">
+								XÁC NHẬN</button>
+						</form>
+
+						<!-- Liên kết phụ -->
+						<div class="signup-link mt-4 text-center">
+							<p>Chưa nhận được mã?</p>
+							<form th:action="@{/resend-otp}" method="post" class="d-inline">
+								<input type="hidden" name="email" th:value="${email}" />
+								<button type="submit"
+									class="btn btn-link p-0 m-0 align-baseline text-primary fw-bold">
+									Gửi lại OTP</button>
+							</form>
+
+							<p>
+								<a th:href="@{/user-login}">← Quay lại đăng nhập</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Back to top -->
+		<div class="btn-back-to-top" id="myBtn">
+			<span class="symbol-btn-back-to-top"> <i
+				class="zmdi zmdi-chevron-up"></i>
+			</span>
+		</div>
+
+		<!-- Script OTP logic -->
+		<script>
+			function moveNext(current, nextId) {
+				if (current.value.length === 1) {
+					let next = document.getElementById(nextId);
+					if (next) next.focus();
+				}
+				combineOTP();
+			}
+
+			function combineOTP() {
+				let otp = '';
+				for (let i = 1; i <= 6; i++) {
+					let val = document.getElementById('otp' + i).value;
+					otp += val ? val : '';
+				}
+				document.getElementById('code').value = otp;
+			}
+
+			// Auto focus vào ô đầu tiên khi load trang
+			window.onload = () => document.getElementById('otp1').focus();
+		</script>
+	</div>
+</body>
+</html>

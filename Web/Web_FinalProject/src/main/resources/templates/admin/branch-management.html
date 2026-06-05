@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/admin-layout.html}">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Chi Nhánh</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .branch-card {
+            border-left: 4px solid #007bff;
+            transition: all 0.3s ease;
+        }
+        .branch-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .modal-form {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .red_require {
+            color: red;
+            font-weight: bold;
+        }
+        #branchRevenueChart {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid mt-4">
+        <h3>Quản Lý Chi Nhánh</h3>
+        <hr>
+
+        <!-- Alert Messages -->
+        <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${message}">
+            <strong>Thành công!</strong> <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" th:if="${error}">
+            <strong>Lỗi!</strong> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Buttons -->
+        <div class="mb-3">
+            <a href="/admin-only/account-management" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay Lại Quản Lý Tài Khoản
+            </a>
+        </div>
+
+        <!-- Branch Table -->
+        <div class="table-responsive">
+            <table id="branchTable" class="table table-striped table-hover">
+                <thead class="table-dark">
+                <tr>
+                    <th>Mã Chi Nhánh</th>
+                    <th>Tên Chi Nhánh</th>
+                    <th>Địa Chỉ</th>
+                    <th>Số Điện Thoại</th>
+                    <th>Email</th>
+                    <th>Vendor Account</th>
+                    <th>Trạng Thái</th>
+                    <th>Thao Tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="branch : ${branches}">
+                    <td><strong th:text="${branch.branchCode}"></strong></td>
+                    <td th:text="${branch.branchName}"></td>
+                    <td th:text="${branch.address}"></td>
+                    <td th:text="${branch.phone}"></td>
+                    <td th:text="${branch.email}"></td>
+                    <td>
+                        <span th:if="${branch.vendorAccount != null}" class="badge bg-success"
+                              th:text="${branch.vendorAccount.email}"></span>
+                        <span th:unless="${branch.vendorAccount != null}" class="badge bg-warning">Chưa gán</span>
+                    </td>
+                    <td>
+                        <span th:if="${branch.isActive}" class="badge bg-success">Hoạt động</span>
+                        <span th:unless="${branch.isActive}" class="badge bg-danger">Không hoạt động</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info view-branch-detail-btn"
+                                th:data-branch-id="${branch.id}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#branchDetailModal">
+                            <i class="fas fa-eye"></i> Xem chi tiết
+                        </button>
+                        <button class="btn btn-sm btn-warning edit-branch-btn"
+                                th:data-branch-id="${branch.id}"
+                                th:data-branch-code="${branch.branchCode}"
+                                th:data-branch-name="${branch.branchName}"
+                                th:data-branch-address="${branch.address}"
+                                th:data-branch-phone="${branch.phone}"
+                                th:data-branch-email="${branch.email}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editBranchModal">
+                            <i class="fas fa-edit"></i> Sửa
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-branch-btn"
+                                th:data-branch-id="${branch.id}">
+                            <i class="fas fa-trash"></i> Xóa
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ========== Modal thêm và sửa (giữ nguyên phần cũ) ========== -->
+    <!-- Modal Thêm Chi Nhánh -->
+    <div class="modal fade" id="addBranchModal" tabindex="-1" aria-labelledby="addBranchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBranchModalLabel">Thêm Chi Nhánh Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modal-form">
+                    <form id="addBranchForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchCodeAdd" class="form-label">Mã Chi Nhánh <span class="red_require">*</span></label>
+                                    <input type="text" class="form-control" id="branchCodeAdd" name="branchCode" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchNameAdd" class="form-label">Tên Chi Nhánh <span class="red_require">*</span></label>
+                                    <input type="text" class="form-control" id="branchNameAdd" name="branchName" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="branchAddressAdd" class="form-label">Địa Chỉ <span class="red_require">*</span></label>
+                            <input type="text" class="form-control" id="branchAddressAdd" name="address" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchPhoneAdd" class="form-label">Số Điện Thoại <span class="red_require">*</span></label>
+                                    <input type="tel" class="form-control" id="branchPhoneAdd" name="phone" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchEmailAdd" class="form-label">Email <span class="red_require">*</span></label>
+                                    <input type="email" class="form-control" id="branchEmailAdd" name="email" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="saveBranchBtn">Lưu Chi Nhánh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sửa Chi Nhánh -->
+    <div class="modal fade" id="editBranchModal" tabindex="-1" aria-labelledby="editBranchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBranchModalLabel">Chỉnh Sửa Chi Nhánh</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modal-form">
+                    <form id="editBranchForm">
+                        <input type="hidden" id="branchIdEdit">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchCodeEdit" class="form-label">Mã Chi Nhánh <span class="red_require">*</span></label>
+                                    <input type="text" class="form-control" id="branchCodeEdit" name="branchCode" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchNameEdit" class="form-label">Tên Chi Nhánh <span class="red_require">*</span></label>
+                                    <input type="text" class="form-control" id="branchNameEdit" name="branchName" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="branchAddressEdit" class="form-label">Địa Chỉ <span class="red_require">*</span></label>
+                            <input type="text" class="form-control" id="branchAddressEdit" name="address" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchPhoneEdit" class="form-label">Số Điện Thoại <span class="red_require">*</span></label>
+                                    <input type="tel" class="form-control" id="branchPhoneEdit" name="phone" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branchEmailEdit" class="form-label">Email <span class="red_require">*</span></label>
+                                    <input type="email" class="form-control" id="branchEmailEdit" name="email" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="updateBranchBtn">Cập Nhật Chi Nhánh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chi tiết Chi Nhánh -->
+    <div class="modal fade" id="branchDetailModal" tabindex="-1" aria-labelledby="branchDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="branchDetailModalLabel">Chi Tiết Chi Nhánh</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Thông tin chi nhánh -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Tên Chi Nhánh: <strong id="detailBranchName"></strong></h6>
+                            <h6 class="text-muted">Mã Chi Nhánh: <strong id="detailBranchCode"></strong></h6>
+                        </div>
+                    </div>
+
+                    <!-- Biểu đồ doanh thu 7 ngày -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0"><i class="fas fa-chart-line"></i> Doanh Thu 7 Ngày Gần Nhất</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="branchDetailRevenueChart" style="max-height: 300px;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách 10 hóa đơn gần nhất -->
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">
+                            <h6 class="mb-0"><i class="fas fa-list"></i> 10 Hóa Đơn Gần Nhất</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="branchBillsTable" class="table table-sm table-striped">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Mã Hóa Đơn</th>
+                                            <th>Ngày Tạo</th>
+                                            <th>Tổng Tiền (VNĐ)</th>
+                                            <th>Trạng Thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="branchBillsTableBody">
+                                        <tr><td colspan="4" class="text-center text-muted">Đang tải...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Scripts -->
+    <script>
+        let branchDetailChart = null;
+
+        // Xử lý nút "Xem chi tiết"
+        $(document).on('click', '.view-branch-detail-btn', function() {
+            const branchId = $(this).data('branch-id');
+            loadBranchDetail(branchId);
+        });
+
+        // Hàm tải chi tiết chi nhánh
+        function loadBranchDetail(branchId) {
+            console.log('Loading branch detail for branchId:', branchId);
+            
+            fetch(`/api/branches/admin/${branchId}/detail`)
+                .then(res => {
+                    console.log('Response status:', res.status);
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Branch detail data received:', data);
+                    
+                    if (data.error) {
+                        alert('Lỗi: ' + data.error);
+                        return;
+                    }
+                    
+                    // Hiển thị thông tin chi nhánh
+                    $('#detailBranchName').text(data.branchName || 'N/A');
+                    $('#detailBranchCode').text(data.branchCode || 'N/A');
+
+                    // Vẽ biểu đồ doanh thu 7 ngày
+                    if (data.revenueDates && data.revenueValues) {
+                        drawRevenueChart(data.revenueDates, data.revenueValues);
+                    }
+
+                    // Hiển thị danh sách hóa đơn
+                    if (data.bills) {
+                        displayBillsList(data.bills);
+                    }
+                })
+                .catch(err => {
+                    console.error('Lỗi chi tiết tải chi tiết chi nhánh:', err);
+                    alert('Không thể tải chi tiết chi nhánh! Lỗi: ' + err.message);
+                });
+        }
+
+        // Hàm vẽ biểu đồ doanh thu
+        function drawRevenueChart(dates, values) {
+            const ctx = document.getElementById('branchDetailRevenueChart').getContext('2d');
+            
+            if (branchDetailChart) {
+                branchDetailChart.destroy();
+            }
+
+            branchDetailChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: values,
+                        borderColor: 'rgba(75, 192, 75, 1)',
+                        backgroundColor: 'rgba(75, 192, 75, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: 'rgba(75, 192, 75, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Biểu Đồ Doanh Thu 7 Ngày'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('vi-VN');
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'VNĐ'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Ngày'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Hàm hiển thị danh sách hóa đơn
+        function displayBillsList(bills) {
+            const tableBody = $('#branchBillsTableBody');
+            tableBody.empty();
+
+            if (bills.length === 0) {
+                tableBody.html('<tr><td colspan="4" class="text-center text-muted">Không có hóa đơn nào</td></tr>');
+                return;
+            }
+
+            bills.forEach(bill => {
+                const statusBadge = getStatusBadge(bill.status);
+                const row = `
+                    <tr>
+                        <td><strong>${bill.code}</strong></td>
+                        <td>${bill.createDate}</td>
+                        <td>${bill.totalAmount.toLocaleString('vi-VN')} ₫</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+                tableBody.append(row);
+            });
+        }
+
+        // Hàm lấy badge trạng thái
+        function getStatusBadge(status) {
+            const statusMap = {
+                'PENDING': '<span class="badge bg-warning">Chờ xử lý</span>',
+                'CONFIRMED': '<span class="badge bg-info">Xác nhận</span>',
+                'PROCESSING': '<span class="badge bg-primary">Đang xử lý</span>',
+                'COMPLETED': '<span class="badge bg-success">Hoàn thành</span>',
+                'CANCELLED': '<span class="badge bg-danger">Hủy</span>',
+                'DELIVERED': '<span class="badge bg-success">Đã giao</span>'
+            };
+            return statusMap[status] || `<span class="badge bg-secondary">${status}</span>`;
+        }
+
+        $(document).ready(function() {
+            // DataTable cho bảng chi nhánh
+            new DataTable('#branchTable', {
+                order: [],
+                language: {
+                    search: "Tìm kiếm:",
+                    lengthMenu: "Hiển thị _MENU_ bản ghi mỗi trang",
+                    zeroRecords: "Không tìm thấy chi nhánh nào",
+                    info: "Trang _PAGE_ / _PAGES_",
+                    paginate: {
+                        first: "<<", last: ">>", next: ">", previous: "<"
+                    },
+                }
+            });
+
+            // Xử lý nút "Lưu Chi Nhánh" (Thêm)
+            $('#saveBranchBtn').click(function() {
+                const formData = {
+                    branchCode: $('#branchCodeAdd').val(),
+                    branchName: $('#branchNameAdd').val(),
+                    address: $('#branchAddressAdd').val(),
+                    phone: $('#branchPhoneAdd').val(),
+                    email: $('#branchEmailAdd').val(),
+                    isActive: true
+                };
+
+                if (!formData.branchCode || !formData.branchName || !formData.address || !formData.phone || !formData.email) {
+                    alert('Vui lòng điền đầy đủ thông tin!');
+                    return;
+                }
+
+                fetch('/api/branches', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert('Thêm chi nhánh thành công!');
+                    location.reload();
+                })
+                .catch(err => {
+                    console.error('Lỗi:', err);
+                    alert('Lỗi thêm chi nhánh!');
+                });
+            });
+
+            // Xử lý nút "Edit Branch"
+            $(document).on('click', '.edit-branch-btn', function() {
+                const branchId = $(this).data('branch-id');
+                const branchCode = $(this).data('branch-code');
+                const branchName = $(this).data('branch-name');
+                const address = $(this).data('branch-address');
+                const phone = $(this).data('branch-phone');
+                const email = $(this).data('branch-email');
+
+                $('#branchIdEdit').val(branchId);
+                $('#branchCodeEdit').val(branchCode);
+                $('#branchNameEdit').val(branchName);
+                $('#branchAddressEdit').val(address);
+                $('#branchPhoneEdit').val(phone);
+                $('#branchEmailEdit').val(email);
+            });
+
+            // Xử lý nút "Cập Nhật Chi Nhánh"
+            $('#updateBranchBtn').click(function() {
+                const branchId = $('#branchIdEdit').val();
+                const formData = {
+                    branchCode: $('#branchCodeEdit').val(),
+                    branchName: $('#branchNameEdit').val(),
+                    address: $('#branchAddressEdit').val(),
+                    phone: $('#branchPhoneEdit').val(),
+                    email: $('#branchEmailEdit').val()
+                };
+
+                if (!formData.branchCode || !formData.branchName || !formData.address || !formData.phone || !formData.email) {
+                    alert('Vui lòng điền đầy đủ thông tin!');
+                    return;
+                }
+
+                fetch(`/api/branches/${branchId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert('Cập nhật chi nhánh thành công!');
+                    location.reload();
+                })
+                .catch(err => {
+                    console.error('Lỗi:', err);
+                    alert('Lỗi cập nhật chi nhánh!');
+                });
+            });
+
+            // Xử lý nút "Delete Branch"
+            $(document).on('click', '.delete-branch-btn', function() {
+                const branchId = $(this).data('branch-id');
+                if (confirm('Bạn chắc chắn muốn xóa chi nhánh này?')) {
+                    fetch(`/api/branches/${branchId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert('Xóa chi nhánh thành công!');
+                        location.reload();
+                    })
+                    .catch(err => {
+                        console.error('Lỗi:', err);
+                        alert('Lỗi xóa chi nhánh!');
+                    });
+                }
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

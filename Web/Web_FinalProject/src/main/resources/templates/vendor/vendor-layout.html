@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      lang="en"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+
+<head th:replace="fragments-vendor::page_head('Vendor page')"></head>
+
+<style>
+.user-menu { display: none; }
+.user-menu.active { display: block; }
+.nav-link:hover { background-color: #cccccc; }
+</style>
+
+<body>
+<aside id="left-panel" class="left-panel">
+    <nav class="navbar navbar-expand-sm navbar-default">
+        <div class="navbar-header">
+            <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#main-menu" aria-controls="main-menu"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fa fa-bars"></i>
+            </button>
+            <a class="navbar-brand text-white" style="background-color: #272c33" th:href="@{/vendor/product-all}">
+                <img th:src="@{/images/logots.png}" alt="Logo">
+            </a>
+            <a class="navbar-brand hidden" href="./">
+                <img th:src="@{/images/logots.png}" alt="Logo">
+            </a>
+        </div>
+
+        <div id="main-menu" class="main-menu collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+
+                <!-- ✅ Trang chủ -->
+                <li class="active">
+                    <a th:href="@{/vendor-page/product-all}">
+                        <i class="menu-icon fas fa-home"></i>Trang chủ
+                    </a>
+                </li>
+
+                <!-- ✅ Trang quản lý -->
+                <li class="active">
+                    <a th:href="@{/vendor-page/thong-ke-doanh-thu}">
+                        <i class="menu-icon fas fa-chart-line"></i>Thống kê doanh thu
+                    </a>
+                </li>
+
+                <!-- ✅ Quản lý sản phẩm -->
+                <li class="menu-item-has-children dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
+                        <i class="menu-icon fa fa-laptop"></i>Quản lý sản phẩm
+                    </a>
+                    <ul class="sub-menu children dropdown-menu">
+                        <li><a th:href="@{/vendor-page/product-all}">
+                            <i class="fas fa-tshirt"></i>Sản phẩm
+                        </a></li>
+                    </ul>
+                </li>
+
+                <!-- ✅ Quản lý hóa đơn -->
+                <li class="menu-item-has-children dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
+                        <i class="menu-icon fa fa-table"></i>Quản lý hóa đơn
+                    </a>
+                    <ul class="sub-menu children dropdown-menu">
+                        <li><a th:href="@{/admin/bill-list}">
+                            <i class="fas fa-file-invoice"></i>Hóa đơn
+                        </a></li>
+                        
+                    </ul>
+                </li>
+
+                <!-- ✅ Bán hàng tại quầy -->
+                <li><a th:href="@{/admin/pos}">
+                    <i class="menu-icon fas fa-cash-register"></i>Bán hàng tại quầy
+                </a></li>
+
+                <!-- ✅ Đăng xuất -->
+                <li><a th:href="@{/user_logout}">
+                    <i class="menu-icon fa fa-sign-out"></i>Đăng xuất
+                </a></li>
+
+            </ul>
+        </div>
+    </nav>
+</aside>
+
+<!-- Nội dung bên phải -->
+<div id="right-panel" class="right-panel">
+    <header id="header" class="header">
+        <div class="col-sm-7">
+            <a id="menuToggle" class="menutoggle pull-left">
+                <i class="fa fa fa-tasks"></i>
+            </a>
+        </div>
+        <div class="col-sm-5">
+            <div class="user-area dropdown float-right">
+                <span sec:authentication="principal.username"></span>
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                    <img class="user-avatar rounded-circle"
+                         src="https://www.kkday.com/vi/blog/wp-content/uploads/chup-anh-dep-bang-dien-thoai-25.jpg"
+                         alt="User Avatar"
+                         style="border-radius: 50%; height: 34px; width: 34px;">
+                </a>
+                <div class="user-menu">
+                    <a class="nav-link" th:href="@{/}">
+                        <i class="fa fa-user"></i>Trang khách
+                    </a>
+                    <a class="nav-link" th:href="@{/user_logout}">
+                        <i class="fa fa-power-off"></i>Đăng xuất
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="content p-4">
+        <div layout:fragment="content"></div>
+    </div>
+</div>
+
+<th:block th:replace="fragments-vendor::script"></th:block>
+<!-- ⚡️ THÊM ĐOẠN NÀY -->
+<th:block layout:fragment="scripts"></th:block>
+
+<script>
+    $('.user-avatar').on('click', function() {
+        $('.user-menu').toggleClass('active');
+    });
+</script>
+<script>
+    $('.user-avatar').on('click', function() {
+        $('.user-menu').toggleClass('active');
+    });
+</script>
+
+
+</body>
+</html>
