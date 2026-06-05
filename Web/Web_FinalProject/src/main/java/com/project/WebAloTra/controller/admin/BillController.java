@@ -7,6 +7,7 @@ import com.project.WebAloTra.entity.Account;
 import com.project.WebAloTra.entity.Bill;
 import com.project.WebAloTra.entity.enumClass.BillStatus;
 import com.project.WebAloTra.entity.enumClass.InvoiceType;
+import com.project.WebAloTra.exception.NotFoundException;
 import com.project.WebAloTra.repository.AccountRepository;
 import com.project.WebAloTra.service.BillService;
 
@@ -114,7 +115,7 @@ public class BillController {
             String email = authentication.getName();
             Account account = accountRepository.findByEmail(email);
             if (account == null) {
-                throw new RuntimeException("Không tìm thấy tài khoản nhân viên: " + email);
+                throw new NotFoundException("Không tìm thấy tài khoản nhân viên: " + email);
             }
             Long branchId = account.getBranch() != null ? account.getBranch().getId() : null;
             bills = billService.findByCashierIdAndBranchId(account.getId(), branchId, pageable);
@@ -123,7 +124,7 @@ public class BillController {
         } else if (isVendor) {
             String email = authentication.getName();
             Long branchId = accountRepository.findBranchIdByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy chi nhánh cho vendor: " + email));
+                    .orElseThrow(() -> new NotFoundException("Không tìm thấy chi nhánh cho vendor: " + email));
 
             bills = billService.findByBranchId(branchId, pageable);
 

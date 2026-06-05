@@ -112,12 +112,11 @@
 								<a th:href="@{/vendor-page/thong-ke-doanh-thu}"
 									sec:authorize="hasRole('VENDOR')"> Trang quản lý
 									(Vendor) </a>
-								<a th:href="@{/admin/pos}"
-									th:if="${#authorization.expression('hasAnyRole(''STAFF'',''VENDOR'')')}">Bán
-									hàng tại quầy</a>
-								<a th:href="@{/admin/bill-list}"
-									th:if="${#authorization.expression('hasAnyRole(''STAFF'',''VENDOR'')')}">Hóa
-									đơn tại quầy</a>
+								<th:block
+									th:if="${#authorization.expression('hasAnyRole(''STAFF'',''VENDOR'')')}">
+									<a th:href="@{/admin/pos}">Bán hàng tại quầy</a> <a
+										th:href="@{/admin/bill-list}">Hóa đơn tại quầy</a>
+								</th:block>
 								<a th:href="@{/cart-status}"
 									th:if="${#authorization.expression('hasRole(''USER'')')}">Đơn
 									hàng</a> <a th:href="@{/user_logout}"
