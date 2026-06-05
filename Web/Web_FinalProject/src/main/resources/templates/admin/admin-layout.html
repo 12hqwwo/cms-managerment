@@ -119,6 +119,14 @@
 
 					<!-- ✅ Công cụ khác -->
 					<li class="menu-title">Công cụ khác</li>
+					<li sec:authorize="hasAnyRole('ADMIN','VENDOR','STAFF')"><a
+						th:href="@{/admin/pos}"> <i class="menu-icon fas fa-cash-register"></i>
+							Bán hàng tại quầy
+					</a></li>
+					<li sec:authorize="hasAnyRole('ADMIN','VENDOR','STAFF')"><a
+						th:href="@{/admin/bill-list}"> <i class="menu-icon fas fa-file-invoice"></i>
+							Hóa đơn
+					</a></li>
 					<!-- 💬 Chat hỗ trợ khách hàng (chỉ ADMIN thấy) -->
 					<li sec:authorize="hasRole('ADMIN')"><a
 						th:href="@{/admin/chat}"> <i class="menu-icon fa fa-comments"></i>

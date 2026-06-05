@@ -16,6 +16,7 @@ public interface BillDtoInterface {
     BillStatus getTrangThai();
     InvoiceType getLoaiDon();
     String getHinhThucThanhToan();
+    String getNhanVienThanhToan();
 
     String getMaGiaoDich();
     String getMaDoiTra();

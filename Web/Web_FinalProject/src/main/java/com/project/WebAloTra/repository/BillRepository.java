@@ -38,12 +38,14 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			    b.status AS trangThai,
 			    b.invoice_type AS loaiDon,
 			    pm.name AS hinhThucThanhToan,
+			    COALESCE(ca.email, '') AS nhanVienThanhToan,
 			    COALESCE(br.code, '') AS maDoiTra,
 			    COALESCE(pmt.order_id, '') AS maGiaoDich
 			FROM bill b
 			LEFT JOIN customer c ON b.customer_id = c.id
 			LEFT JOIN payment pmt ON b.id = pmt.bill_id
 			LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+			LEFT JOIN account ca ON b.cashier_account_id = ca.id
 			LEFT JOIN bill_return br ON b.id = br.bill_id
 			""", countQuery = "SELECT COUNT(*) FROM bill", nativeQuery = true)
 	Page<BillDtoInterface> listBill(Pageable pageable);
@@ -63,12 +65,14 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			    b.status AS trangThai,
 			    b.invoice_type AS loaiDon,
 			    pm.name AS hinhThucThanhToan,
+			    COALESCE(ca.email, '') AS nhanVienThanhToan,
 			    COALESCE(br.code, '') AS maDoiTra,
 			    COALESCE(pmt.order_id, '') AS maGiaoDich
 			FROM bill b
 			LEFT JOIN customer c ON b.customer_id = c.id
 			LEFT JOIN payment pmt ON b.id = pmt.bill_id
 			LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+			LEFT JOIN account ca ON b.cashier_account_id = ca.id
 			LEFT JOIN bill_return br ON b.id = br.bill_id
 			""", nativeQuery = true)
 	List<BillDtoInterface> listBill();
@@ -150,10 +154,12 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			    b.status AS trangThai,
 			    b.invoice_type AS loaiDon,
 			    pm.name AS hinhThucThanhToan,
+			    COALESCE(ca.email, '') AS nhanVienThanhToan,
 			    COALESCE(br.code, '') AS maDoiTra
 			FROM bill b
 			LEFT JOIN customer c ON b.customer_id = c.id
 			LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+			LEFT JOIN account ca ON b.cashier_account_id = ca.id
 			LEFT JOIN bill_return br ON b.id = br.bill_id
 			WHERE (:maDinhDanh IS NULL OR b.code LIKE CONCAT('%', :maDinhDanh, '%'))
 			  AND (:ngayTaoStart IS NULL OR :ngayTaoEnd IS NULL OR (b.create_date BETWEEN :ngayTaoStart AND :ngayTaoEnd))
@@ -182,10 +188,12 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			    b.status AS trangThai,
 			    b.invoice_type AS loaiDon,
 			    pm.name AS hinhThucThanhToan,
+			    COALESCE(ca.email, '') AS nhanVienThanhToan,
 			    COALESCE(br.code, '') AS maDoiTra
 			FROM bill b
 			LEFT JOIN customer c ON b.customer_id = c.id
 			LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+			LEFT JOIN account ca ON b.cashier_account_id = ca.id
 			LEFT JOIN bill_return br ON b.id = br.bill_id
 			WHERE (:maDinhDanh IS NULL OR b.code LIKE CONCAT('%', :maDinhDanh, '%'))
 			  AND (:ngayTaoStart IS NULL OR :ngayTaoEnd IS NULL OR (b.create_date BETWEEN :ngayTaoStart AND :ngayTaoEnd))
@@ -602,14 +610,50 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 		            b.create_date AS ngayTao,
 		            COALESCE(b.amount, 0) AS tongTien,
 		            b.status AS trangThai,
-		            b.invoice_type AS loaiDon
+		            b.invoice_type AS loaiDon,
+		            pm.name AS hinhThucThanhToan,
+		            COALESCE(ca.email, '') AS nhanVienThanhToan,
+		            COALESCE(br.code, '') AS maDoiTra
 		        FROM bill b
 		        LEFT JOIN customer c ON b.customer_id = c.id
+		        LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+		        LEFT JOIN account ca ON b.cashier_account_id = ca.id
+		        LEFT JOIN bill_return br ON b.id = br.bill_id
 		        WHERE b.branch_id = :branchId
 		        """,
 		        countQuery = "SELECT COUNT(*) FROM bill WHERE branch_id = :branchId",
 		        nativeQuery = true)
 		Page<BillDtoInterface> findByBranchId(@Param("branchId") Long branchId, Pageable pageable);
+
+		@Query(value = """
+		        SELECT 
+		            b.id AS maHoaDon,
+		            b.code AS maDinhDanh,
+		            c.name AS hoVaTen,
+		            c.phone_number AS soDienThoai,
+		            b.create_date AS ngayTao,
+		            COALESCE(b.amount, 0) AS tongTien,
+		            b.status AS trangThai,
+		            b.invoice_type AS loaiDon,
+		            pm.name AS hinhThucThanhToan,
+		            COALESCE(ca.email, '') AS nhanVienThanhToan,
+		            COALESCE(br.code, '') AS maDoiTra
+		        FROM bill b
+		        LEFT JOIN customer c ON b.customer_id = c.id
+		        LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+		        LEFT JOIN account ca ON b.cashier_account_id = ca.id
+		        LEFT JOIN bill_return br ON b.id = br.bill_id
+		        WHERE b.cashier_account_id = :cashierId
+		          AND (:branchId IS NULL OR b.branch_id = :branchId)
+		        """,
+		        countQuery = """
+		        SELECT COUNT(*)
+		        FROM bill b
+		        WHERE b.cashier_account_id = :cashierId
+		          AND (:branchId IS NULL OR b.branch_id = :branchId)
+		        """,
+		        nativeQuery = true)
+		Page<BillDtoInterface> findByCashierIdAndBranchId(@Param("cashierId") Long cashierId, @Param("branchId") Long branchId, Pageable pageable);
 
 
 }

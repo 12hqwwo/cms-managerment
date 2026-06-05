@@ -42,6 +42,7 @@ public class CartServiceImpl implements CartService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final BillDetailToppingRepository billDetailToppingRepository;
     private final BranchRepository branchRepository;
+    private final BranchInventoryRepository branchInventoryRepository;
 
     private final AtomicLong invoiceCounter = new AtomicLong(1);
 
@@ -58,7 +59,8 @@ public class CartServiceImpl implements CartService {
             PaymentRepository paymentRepository,
             PaymentMethodRepository paymentMethodRepository,
             BillDetailToppingRepository billDetailToppingRepository,
-            BranchRepository branchRepository
+            BranchRepository branchRepository,
+            BranchInventoryRepository branchInventoryRepository
     ) {
         this.cartRepository = cartRepository;
         this.productDiscountRepository = productDiscountRepository;
@@ -73,6 +75,7 @@ public class CartServiceImpl implements CartService {
         this.paymentMethodRepository = paymentMethodRepository;
         this.billDetailToppingRepository = billDetailToppingRepository;
         this.branchRepository = branchRepository;
+        this.branchInventoryRepository = branchInventoryRepository;
     }
 
     @Override
@@ -363,11 +366,30 @@ public class CartServiceImpl implements CartService {
 	    bill.setStatus(BillStatus.HOAN_THANH);
 	    bill.setPromotionPrice(orderDto.getPromotionPrice());
 	    bill.setReturnStatus(false);
-	    
-	    if (orderDto.getBranchId() != null) {
-	        Branch branch = branchRepository.findById(orderDto.getBranchId())
+	    Account cashierAccount = UserLoginUtil.getCurrentLogin();
+	    if (cashierAccount == null) {
+	        throw new ShopApiException(HttpStatus.UNAUTHORIZED, "Không xác định được tài khoản thanh toán");
+	    }
+	    bill.setCashier(cashierAccount);
+
+	    boolean isVendorOrStaff = cashierAccount.getRole() != null
+	            && (cashierAccount.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_VENDOR
+	            || cashierAccount.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_STAFF);
+
+	    Long effectiveBranchId = orderDto.getBranchId();
+	    if (isVendorOrStaff) {
+	        if (cashierAccount.getBranch() == null) {
+	            throw new ShopApiException(HttpStatus.BAD_REQUEST, "Tài khoản nhân viên/quản lý chưa được gán chi nhánh");
+	        }
+	        effectiveBranchId = cashierAccount.getBranch().getId();
+	    }
+
+	    if (effectiveBranchId != null) {
+	        Branch branch = branchRepository.findById(effectiveBranchId)
 	            .orElseThrow(() -> new NotFoundException("Chi nhánh không tồn tại"));
 	        bill.setBranch(branch);
+	    } else if (isVendorOrStaff) {
+	        throw new ShopApiException(HttpStatus.BAD_REQUEST, "Không tìm thấy chi nhánh hợp lệ cho nhân viên/quản lý");
 	    }
 
 
@@ -420,6 +442,20 @@ public class CartServiceImpl implements CartService {
 	        if (productDetail.getQuantity() - item.getQuantity() < 0) {
 	            throw new ShopApiException(HttpStatus.BAD_REQUEST,
 	                    "Sản phẩm " + productDetail.getProduct().getName() + " chỉ còn lại " + productDetail.getQuantity());
+	        }
+
+	        if (effectiveBranchId != null) {
+	            BranchInventory branchInventory = branchInventoryRepository
+	                    .findByBranchIdAndProductDetailId(effectiveBranchId, productDetail.getId())
+	                    .orElseThrow(() -> new ShopApiException(HttpStatus.BAD_REQUEST,
+	                            "Sản phẩm " + productDetail.getProduct().getName() + " không có trong tồn kho chi nhánh"));
+	            if (branchInventory.getQuantity() == null || branchInventory.getQuantity() - item.getQuantity() < 0) {
+	                throw new ShopApiException(HttpStatus.BAD_REQUEST,
+	                        "Sản phẩm " + productDetail.getProduct().getName() + " không đủ số lượng tại chi nhánh");
+	            }
+	            branchInventory.setQuantity(branchInventory.getQuantity() - item.getQuantity());
+	            branchInventory.setUpdateDate(LocalDateTime.now());
+	            branchInventoryRepository.save(branchInventory);
 	        }
 
 	        productDetail.setQuantity(productDetail.getQuantity() - item.getQuantity());

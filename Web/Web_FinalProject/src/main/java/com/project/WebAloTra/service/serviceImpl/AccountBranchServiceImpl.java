@@ -9,6 +9,7 @@ import com.project.WebAloTra.dto.Account.CreateVendorAccountRequest;
 import com.project.WebAloTra.entity.Account;
 import com.project.WebAloTra.entity.Branch;
 import com.project.WebAloTra.entity.Role;
+import com.project.WebAloTra.entity.enumClass.RoleName;
 import com.project.WebAloTra.repository.AccountRepository;
 import com.project.WebAloTra.repository.BranchRepository;
 import com.project.WebAloTra.repository.RoleRepository;
@@ -86,7 +87,7 @@ public class AccountBranchServiceImpl implements AccountBranchService {
         account.setCreateDate(LocalDateTime.now());
         account.setUpdateDate(LocalDateTime.now());
 
-        Optional<Role> vendorRole = roleRepository.findByName("VENDOR");
+        Optional<Role> vendorRole = roleRepository.findByName(RoleName.ROLE_VENDOR);
         vendorRole.ifPresent(account::setRole);
 
         savedBranch.setVendorAccount(account);
