@@ -115,10 +115,10 @@
 							<h4 id="productName" class="mtext-105 cl2 js-name-detail p-b-14"
 								th:text="${product.name}"></h4>
 
-							<span class="mtext-106 cl2" id="price_product"
-								th:text="${#numbers.formatDecimal(product.productDetails[0].price, 0, 'POINT', 0, 'COMMA') + ' đ'}">
-
-							</span> </span>
+							<span class="mtext-106 cl2" id="price_product">
+								<span th:if="${not #lists.isEmpty(product.productDetails)}" th:text="${#numbers.formatDecimal(product.productDetails[0].price, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+								<span th:unless="${not #lists.isEmpty(product.productDetails)}" style="color: red; font-size: 16px;">Sản phẩm chưa có cấu hình (Bị lỗi dữ liệu trùng lặp)</span>
+							</span>
 
 							<p class="stext-102 cl3 p-t-23" th:text="${product.describe}">
 								Một kết hợp từ sự thoải mái cùng độ ấm áp trong thiết kế cổ lọ.
@@ -249,9 +249,9 @@
 								<h4 class="mtext-105 cl2 js-name-detail p-b-14"
 									th:text="${product.name}"></h4>
 
-								<span class="mtext-106 cl2"> <span
-									th:text="${#numbers.formatDecimal(product.productDetails[0].price, 0, 'POINT', 0, 'COMMA')}"></span>
-									đ
+								<span class="mtext-106 cl2">
+									<span th:if="${not #lists.isEmpty(product.productDetails)}" th:text="${#numbers.formatDecimal(product.productDetails[0].price, 0, 'POINT', 0, 'COMMA')} + ' đ'"></span>
+									<span th:unless="${not #lists.isEmpty(product.productDetails)}" style="color: red; font-size: 16px;">Lỗi dữ liệu</span>
 								</span>
 
 								<p class="stext-102 cl3 p-t-23" th:text="${product.describe}"></p>

@@ -16,9 +16,9 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
-    Product findByCode(String code);
+    Product findFirstByCodeOrderByIdDesc(String code);
 
-    @Query("SELECT p FROM Product p WHERE p.name LIKE %:name%")
+    @Query("SELECT p FROM Product p WHERE p.name LIKE '%' || :name || '%'")
     Page<Product> getAllByName(String name, Pageable pageable);
 
     boolean existsByCode(String code);
@@ -33,7 +33,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         INNER JOIN brand br ON br.id = p.brand_id
         INNER JOIN material mt ON mt.id = p.material_id
         INNER JOIN category ct ON ct.id = p.category_id
-        WHERE p.name LIKE CONCAT('%', :productName, '%')
+        WHERE p.name LIKE '%' || :productName || '%'
           AND p.delete_flag = 0
         ORDER BY p.create_date DESC
         """, nativeQuery = true)
@@ -54,8 +54,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         LEFT JOIN material m ON m.id = p.material_id
         LEFT JOIN category c ON c.id = p.category_id
         WHERE
-            (:maSanPham IS NULL OR p.code LIKE CONCAT('%', :maSanPham, '%'))
-            AND (:tenSanPham IS NULL OR p.name LIKE CONCAT('%', :tenSanPham, '%'))
+            (:maSanPham IS NULL OR p.code LIKE '%' || :maSanPham || '%')
+            AND (:tenSanPham IS NULL OR p.name LIKE '%' || :tenSanPham || '%')
             AND (:nhanHang IS NULL OR b.id = :nhanHang)
             AND (:chatLieu IS NULL OR m.id = :chatLieu)
             AND (:theLoai IS NULL OR c.id = :theLoai)
@@ -94,52 +94,56 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     // 🔥 Top 10 sản phẩm bán chạy
     @Query(value = """
-        SELECT TOP(10)
-            p.id,
-            p.code,
-            p.name,
-            (SELECT TOP(1) image.link FROM image WHERE image.product_id = p.id) AS imageUrl,
-            brand.name AS brand,
-            cat.name AS category,
-            COALESCE(SUM(bd.quantity), 0) AS totalQuantity,
-            COALESCE(SUM(bd.return_quantity), 0) AS totalQuantityReturn,
-            SUM(bd.quantity * bd.moment_price) AS revenue
-        FROM bill b
-        JOIN bill_detail bd ON b.id = bd.bill_id
-        JOIN product_detail pd ON pd.id = bd.product_detail_id
-        JOIN product p ON p.id = pd.product_id
-        LEFT JOIN bill_return br ON br.bill_id = b.id
-        JOIN brand ON brand.id = p.brand_id
-        JOIN category cat ON cat.id = p.category_id
-        WHERE b.status = 'HOAN_THANH'
-        GROUP BY p.id, p.code, p.name, brand.name, cat.name
-        ORDER BY totalQuantity DESC
+        SELECT * FROM (
+            SELECT
+                p.id,
+                p.code,
+                p.name,
+                (SELECT image.link FROM image WHERE image.product_id = p.id AND ROWNUM = 1) AS imageUrl,
+                brand.name AS brand,
+                cat.name AS category,
+                COALESCE(SUM(bd.quantity), 0) AS totalQuantity,
+                COALESCE(SUM(bd.return_quantity), 0) AS totalQuantityReturn,
+                SUM(bd.quantity * bd.moment_price) AS revenue
+            FROM bill b
+            JOIN bill_detail bd ON b.id = bd.bill_id
+            JOIN product_detail pd ON pd.id = bd.product_detail_id
+            JOIN product p ON p.id = pd.product_id
+            LEFT JOIN bill_return br ON br.bill_id = b.id
+            JOIN brand ON brand.id = p.brand_id
+            JOIN category cat ON cat.id = p.category_id
+            WHERE b.status = 'HOAN_THANH'
+            GROUP BY p.id, p.code, p.name, brand.name, cat.name
+            ORDER BY SUM(bd.quantity) DESC
+        ) WHERE ROWNUM <= 10
         """, nativeQuery = true)
     List<BestSellerProduct> getBestSellerProduct();
 
     // 🔥 Top 10 bán chạy theo ngày
     @Query(value = """
-        SELECT TOP(10)
-            p.id,
-            p.code,
-            p.name,
-            (SELECT TOP(1) image.link FROM image WHERE image.product_id = p.id) AS imageUrl,
-            brand.name AS brand,
-            cat.name AS category,
-            COALESCE(SUM(bd.quantity), 0) AS totalQuantity,
-            COALESCE(SUM(bd.return_quantity), 0) AS totalQuantityReturn,
-            SUM(bd.quantity * bd.moment_price) AS revenue
-        FROM bill b
-        JOIN bill_detail bd ON b.id = bd.bill_id
-        JOIN product_detail pd ON pd.id = bd.product_detail_id
-        JOIN product p ON p.id = pd.product_id
-        LEFT JOIN bill_return br ON br.bill_id = b.id
-        JOIN brand ON brand.id = p.brand_id
-        JOIN category cat ON cat.id = p.category_id
-        WHERE b.status = 'HOAN_THANH'
-          AND b.create_date BETWEEN :fromDate AND :toDate
-        GROUP BY p.id, p.code, p.name, brand.name, cat.name
-        ORDER BY totalQuantity DESC
+        SELECT * FROM (
+            SELECT
+                p.id,
+                p.code,
+                p.name,
+                (SELECT image.link FROM image WHERE image.product_id = p.id AND ROWNUM = 1) AS imageUrl,
+                brand.name AS brand,
+                cat.name AS category,
+                COALESCE(SUM(bd.quantity), 0) AS totalQuantity,
+                COALESCE(SUM(bd.return_quantity), 0) AS totalQuantityReturn,
+                SUM(bd.quantity * bd.moment_price) AS revenue
+            FROM bill b
+            JOIN bill_detail bd ON b.id = bd.bill_id
+            JOIN product_detail pd ON pd.id = bd.product_detail_id
+            JOIN product p ON p.id = pd.product_id
+            LEFT JOIN bill_return br ON br.bill_id = b.id
+            JOIN brand ON brand.id = p.brand_id
+            JOIN category cat ON cat.id = p.category_id
+            WHERE b.status = 'HOAN_THANH'
+              AND b.create_date BETWEEN TO_TIMESTAMP(:fromDate, 'YYYY-MM-DD') AND TO_TIMESTAMP(:toDate, 'YYYY-MM-DD')
+            GROUP BY p.id, p.code, p.name, brand.name, cat.name
+            ORDER BY SUM(bd.quantity) DESC
+        ) WHERE ROWNUM <= 10
         """, nativeQuery = true)
     List<BestSellerProduct> getBestSellerProduct(String fromDate, String toDate);
 

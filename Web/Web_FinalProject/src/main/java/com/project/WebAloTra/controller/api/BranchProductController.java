@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.project.WebAloTra.entity.BranchInventory;
 import com.project.WebAloTra.repository.BranchInventoryRepository;
 import com.project.WebAloTra.repository.BranchRepository;
+import com.project.WebAloTra.repository.CategoryRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,6 +26,33 @@ public class BranchProductController {
 
     @Autowired
     private BranchRepository branchRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    /**
+     * Lấy danh sách danh mục thực tế từ DB
+     * GET /api/branch-products/categories
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<?> getAllCategories() {
+        try {
+            List<Map<String, Object>> categories = categoryRepository.findAll()
+                    .stream()
+                    .map(cat -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", cat.getId());
+                        map.put("name", cat.getName());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(categories);
+        } catch (Exception e) {
+            logger.error("Error getting categories", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Lỗi: " + e.getMessage()));
+        }
+    }
 
     /**
      * Lấy danh sách tất cả chi nhánh

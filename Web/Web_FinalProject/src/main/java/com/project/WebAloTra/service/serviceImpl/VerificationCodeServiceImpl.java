@@ -69,7 +69,14 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         content.append("<p>Mã có hiệu lực trong vòng 15 phút.</p>");
         content.append("<p>Trân trọng,<br>Đội ngũ AloTrà</p>");
 
-        emailService.sendEmail(account.getEmail(), subject, content.toString());
+        try {
+            emailService.sendEmail(account.getEmail(), subject, content.toString());
+        } catch (Exception e) {
+            System.out.println("\n\n=======================================================");
+            System.out.println("⚠️ LỖI GỬI EMAIL: " + e.getMessage());
+            System.out.println("🔑 MÃ OTP CỦA BẠN LÀ: " + verificationCodeValue);
+            System.out.println("=======================================================\n\n");
+        }
 
         return verificationCode;
     }

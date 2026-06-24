@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-WebAloTraApplication<DuAnTotNghiep>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.project.WebAloTra.WebAloTraApplication",
+            "projectName": "DuAnTotNghiep",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

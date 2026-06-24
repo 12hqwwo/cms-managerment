@@ -16,6 +16,7 @@ public interface BillDetailProduct {
     
 
     Double getTongTopping(); // ✅ tổng topping của dòng, không cần đổi tên
+    String getTenTopping();
 
     Double getTongTien();    // ✅ moment_price * quantity
 

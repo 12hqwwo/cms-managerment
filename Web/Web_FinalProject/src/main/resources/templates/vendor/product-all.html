@@ -125,19 +125,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Load danh mục + tìm kiếm
-    function loadCategories() {
-        const demoCats = [
-            { id: 1, name: 'Trà sữa' },
-            { id: 2, name: 'Hồng trà' },
-            { id: 3, name: 'Trà trái cây' }
-        ];
-        demoCats.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.name;
-            categorySelect.appendChild(opt);
-        });
+    // Load danh muc tu DB thuc te
+    async function loadCategories() {
+        try {
+            const res = await fetch('/api/branch-products/categories');
+            const cats = await res.json();
+            cats.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                categorySelect.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Loi tai danh muc:', err);
+        }
     }
 
     searchInput.addEventListener("input", function () {

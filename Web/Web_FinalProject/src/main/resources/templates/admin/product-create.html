@@ -162,7 +162,7 @@
                 </div>
             </div>
             <div class="form-row">
-                <div class="form-group col-md-6">
+                <div class="form-group col-md-6 d-none">
                     <label>Giới tính</label>
                     <span class="red_require"> *</span>
                     <select class="form-select" th:field="*{gender}">
@@ -171,7 +171,7 @@
                         <option th:value="3" th:text="'Unisex'" ></option>
                     </select>
                 </div>
-                <div class="form-group col-md-6">
+                <div class="form-group col-md-12">
                     <label>Mô tả</label>
 <textarea class="form-control" th:field="*{describe}" rows="7" maxlength="700"></textarea>
                     <span class="error"></span>

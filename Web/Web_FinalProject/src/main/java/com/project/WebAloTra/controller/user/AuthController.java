@@ -17,6 +17,8 @@ import com.project.WebAloTra.entity.Role;
 import com.project.WebAloTra.exception.ShopApiException;
 import com.project.WebAloTra.repository.AccountRepository;
 import com.project.WebAloTra.repository.CustomerRepository;
+import com.project.WebAloTra.repository.RoleRepository;
+import com.project.WebAloTra.entity.enumClass.RoleName;
 import com.project.WebAloTra.service.*;
 
 import javax.mail.MessagingException;
@@ -32,6 +34,8 @@ public class AuthController {
 
     private final CustomerRepository customerRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private RoleRepository roleRepository;
 
     public AuthController(AccountService accountService, AccountRepository accountRepository, PasswordEncoder passwordEncoder, SessionService sessionService, CookieService cookieService, VerificationCodeService verificationCodeService, CustomerRepository customerRepository) {
         this.accountService = accountService;
@@ -89,8 +93,11 @@ public class AuthController {
         account.setNonLocked(true);
 
         // Mặc định role USER
-        Role role = new Role();
-        role.setId(3L);
+        Role role = roleRepository.findByName(RoleName.ROLE_USER).orElse(null);
+        if (role == null) {
+            role = new Role();
+            role.setId(3L);
+        }
         account.setRole(role);
 
         // ✅ Xử lý Customer

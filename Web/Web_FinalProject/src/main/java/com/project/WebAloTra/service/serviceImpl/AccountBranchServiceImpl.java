@@ -174,7 +174,7 @@ public class AccountBranchServiceImpl implements AccountBranchService {
             SELECT b.branchName, COALESCE(SUM(bi.totalAmount), 0)
             FROM Bill bi
             JOIN bi.branch b
-            WHERE bi.status = com.project.DuAnTotNghiep.entity.enumClass.BillStatus.PAID
+            WHERE bi.status = com.project.WebAloTra.entity.enumClass.BillStatus.HOAN_THANH
             GROUP BY b.branchName
             ORDER BY SUM(bi.totalAmount) DESC
         """, Object[].class).getResultList();

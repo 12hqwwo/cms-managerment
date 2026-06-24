@@ -44,9 +44,9 @@ public class Branch implements Serializable {
     @Column(name = "is_active")
     private boolean isActive = true;
 
-    @OneToOne(mappedBy = "branch", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Account vendorAccount;
+    private List<Account> vendorAccounts;
 
     @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore

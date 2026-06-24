@@ -18,7 +18,7 @@ public interface ProductDiscountRepository extends JpaRepository<ProductDiscount
     ProductDiscount findByProductDetail_Id(Long productDetailId);
     @Query(value = "SELECT * FROM product_discount pd " +
             "WHERE pd.product_detail_id = :productDetailId " +
-            "AND GETDATE() BETWEEN pd.start_date AND pd.end_date " +
-            "AND pd.closed = 'false'", nativeQuery = true)
+            "AND SYSDATE BETWEEN pd.startDate AND pd.endDate " +
+            "AND pd.closed = 0", nativeQuery = true)
     ProductDiscount findValidDiscountByProductDetailId(@Param("productDetailId") Long productDetailId);
 }

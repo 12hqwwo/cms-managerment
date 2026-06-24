@@ -20,8 +20,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query(value = """
         UPDATE payment 
         SET bill_id = :billId, 
-            order_status = '1', 
-            payment_date = GETDATE()
+            orderStatus = '1', 
+            paymentDate = SYSDATE
         WHERE id = :paymentId
         """, nativeQuery = true)
     void updateBillAndStatus(@Param("billId") Long billId, @Param("paymentId") Long paymentId);

@@ -1,0 +1,50 @@
+XÂY DỰNG WEBSITE HỆ THỐNG QUẢN LÝ CHUỖI CỬA HÀNG TRÀ SỮA
+1. Mô tả kiến trúc
+Xây dựng một ứng dụng web theo mô hình 3 lớp (3-layer model), yêu cầu phân tách rõ ràng nhiệm vụ giữa các tầng:
+Presentation Layer (Giao diện): Xử lý hiển thị (Sử dụng Thymeleaf, HTML/CSS/JS). Tiếp nhận request từ client.
+Business Layer (Xử lý nghiệp vụ): Chứa các Controller/Service (Java). Xử lý các logic mềm như gửi Email, OTP, Web-socket chat realtime, upload ảnh, xuất PDF/Excel.
+Data Layer (Lớp dữ liệu & Bảo mật): Truy xuất CSDL Oracle.
+2. Yêu cầu nghiệp vụ & Chính sách bảo mật (Thực hiện trên Oracle)
+2.1. Quản lý Tài khoản & Định danh (Profile - DAC)
+Chính sách mật khẩu: Mặc định giới hạn đăng nhập sai 3 lần sẽ khóa tài khoản tạm thời (Lock account). Yêu cầu đổi mật khẩu định kỳ (PASSWORD_LIFE_TIME) và không được dùng lại mật khẩu cũ (PASSWORD_REUSE_MAX).
+Kiểm soát Session: Mặc định nhân viên bán hàng tại quầy POS chỉ được phép duy trì 1 phiên đăng nhập tại một thời điểm (SESSIONS_PER_USER = 1).
+2.2. Quản lý Vai trò & Phân quyền (Role & RBAC)
+Phân cấp kế thừa: Tổ chức các Role theo thứ tự ROLE_ADMIN > ROLE_VENDOR (Quản lý chi nhánh) > ROLE_STAFF (Nhân viên bình thường).
+Hạn chế DML (Data Manipulation Language): Tuyệt đối không cấp quyền DELETE trên các bảng liên quan đến tài chính (BILL, PAYMENT, BILL_DETAIL). Hủy đơn phải dùng lệnh UPDATE trạng thái.
+ROLE_STAFF chỉ được INSERT trong hóa đơn, không được UPDATE giá tiền hay tổng tiền.
+Bảo mật qua Procedure: Khách hàng (ROLE_USER) không có quyền DML trực tiếp. Việc đặt hàng phải thông qua việc gọi Procedure (PROC_CREATE_ORDER) để DB kiểm tra toàn vẹn dữ liệu.
+2.3. Kiểm soát truy cập mức dòng & Nhãn dữ liệu (VPD & OLS - MAC)
+Biệt lập theo Chi nhánh (Branch Isolation): * Sử dụng VPD và OLS (nhãn Compartment/Group) để đảm bảo ROLE_VENDOR (Quản lý chi nhánh) chỉ xem được Dữ liệu Tồn kho (BRANCH_INVENTORY), doanh thu (BILL) và sản phẩm thuộc chi nhánh của mình. Riêng ROLE_STAFF chỉ có thể truy cập vào POS (bán hàng tại gian hàng).
+Biệt lập theo khách hàng: Sử dụng VPD lọc dữ liệu theo account_id / customer_id trên các bảng giỏ hàng (CART), đơn hàng (BILL), địa chỉ giao hàng (ADDRESS_SHIPPING), wishlist. khách hàng nào chỉ thấy dữ liệu của khách hàng đó.
+Soft-delete Global: Áp dụng chính sách VPD trên toàn DB để tự động nối thêm điều kiện delete_flag = 0 vào mọi câu SELECT của ứng dụng.
+2.4. Che giấu dữ liệu (Data Redaction) / Masking
+Bảo vệ PII (Thông tin định danh cá nhân) của khách hàng. Trên bảng CUSTOMER, sử dụng DBMS_REDACT để che giấu (Masking) số điện thoại (ví dụ: 09 *** 9) và email đối với ROLE_STAFF. Chỉ quản lý cấp cao mới được xem bản rõ.
+2.5. Giám sát & Kiểm toán (Fine-Grained Auditing - FGA)
+Thiết lập FGA để bắt các hành vi có rủi ro gian lận:
+Ghi log mọi thao tác UPDATE thay đổi mức giảm giá (discount_amount, percentage) trên bảng DISCOUNT_CODE.
+Bẫy sự kiện lập phiếu hoàn tiền (BILL_RETURN) bất thường.
+Ghi log mức cảnh báo cao với mọi lệnh UPDATE số lượng tồn kho (BRANCH_INVENTORY) được chạy bằng script thủ công thay vì qua luồng chuẩn của ứng dụng.
+3. Bảng Áp dụng Công nghệ Bảo mật (Dành cho Sinh viên)
+Sinh viên dựa vào bảng mapping dưới đây để biết cần áp dụng kỹ thuật Oracle nào cho Module tương ứng trên Java:
+Nhóm chức năng (Java Controllers)
+Cơ chế bảo mật áp dụng (Oracle DB)
+Đăng ký, Đăng nhập, Đổi MK (AuthController, ProfileController)
+PROFILE: Giới hạn sai 3 lần, PASSWORD_LIFE_TIME, PASSWORD_REUSE_MAX.
+Quản lý Tài khoản / Nhân viên (AccountMngController)
+Phân quyền ROLE, Role Hierarchy, thiết lập OLS phân cấp (Admin > Vendor > Staff).
+Sản phẩm, Danh mục, Topping (ProductController, CategoryController...)
+Cấp quyền Object Privilege (CRUD) bằng RBAC theo đúng vai trò hệ thống.
+Hồ sơ, Giỏ hàng, Wishlist, Địa chỉ (UserProfileController, ShoppingCartController...)
+Áp dụng VPD lọc dữ liệu theo account_id / customer_id.
+Tồn kho, Doanh thu chi nhánh (BranchInventory..., Statistic...)
+Áp dụng VPD (branch_id) kết hợp nhãn OLS (Group Branch). FGA giám sát UPDATE thủ công.
+Quản lý Đơn hàng, Thanh toán (BillController, OrderController, Payment...)
+KHÔNG cấp quyền DELETE. Bắt buộc tạo qua thủ tục PROC_CREATE_ORDER. Phân quyền OLS theo cấp quản lý.
+Khuyến mãi, Mã giảm giá (DiscountCodeController, ProductDiscount...)
+Áp dụng FGA theo dõi chỉnh sửa % giảm giá.
+Quản lý Khách hàng (CustomerRestController)
+VPD bảo vệ dữ liệu. Áp dụng OLS bảo vệ Khách VIP. Data Redaction che PII (SĐT, Email).
+Hoàn tiền, Trả hàng (RefundController, BillReturnController)
+Cài đặt bẫy kiểm toán FGA giám sát luồng tiền hoàn trả bất thường.
+POS tại quầy (BuyAtTheCounterController)
+Gán ROLE_STAFF, SESSIONS_PER_USER = 1, OLS nhãn chi nhánh, RBAC hạn chế trên Bill.

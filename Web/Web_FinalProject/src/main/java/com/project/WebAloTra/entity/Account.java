@@ -47,7 +47,7 @@ public class Account implements Serializable {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "branch_id", nullable = true)
     private Branch branch;
 

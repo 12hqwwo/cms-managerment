@@ -20,13 +20,10 @@
 								<div class="float-end mr-4">
 									<!-- Add class 'active' to progress -->
 									<div class="track"
-										th:if="${billdetail.trangThaiDonHang != T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).TRA_HANG && billdetail.trangThaiDonHang != T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HUY}">
+										th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() != 'TRA_HANG' and billdetail.trangThaiDonHang.toString() != 'HUY'}">
 										<div class="step"
 											th:classappend="${
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_XAC_NHAN ||
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_GIAO_HANG ||
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_LAY_HANG ||
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HOAN_THANH  ? 'active' : ''}
+                                    billdetail.trangThaiDonHang != null and (billdetail.trangThaiDonHang.toString() == 'CHO_XAC_NHAN' or billdetail.trangThaiDonHang.toString() == 'CHO_GIAO_HANG' or billdetail.trangThaiDonHang.toString() == 'CHO_LAY_HANG' or billdetail.trangThaiDonHang.toString() == 'HOAN_THANH')  ? 'active' : ''}
                                     ">
 											<span class="icon"> <svg
 													xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -38,12 +35,7 @@
 											</span> <span class="text">Chờ xác nhận</span>
 										</div>
 										<div class="step"
-											th:classappend="${
-
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_GIAO_HANG ||
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_LAY_HANG ||
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HOAN_THANH ? 'active' : ''}
-                                    ">
+											th:classappend="${billdetail.trangThaiDonHang != null and (billdetail.trangThaiDonHang.toString() == 'CHO_GIAO_HANG' or billdetail.trangThaiDonHang.toString() == 'CHO_LAY_HANG' or billdetail.trangThaiDonHang.toString() == 'HOAN_THANH') ? 'active' : ''}">
 											<span class="icon"> <svg
 													xmlns="http://www.w3.org/2000/svg" width="24" height="24"
 													viewBox="0 0 24 24">
@@ -66,17 +58,13 @@
 										</div>
 										<div class="step"
 											th:classappend="${
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_GIAO_HANG ||
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HOAN_THANH  ? 'active' : ''}
+                                    billdetail.trangThaiDonHang != null and (billdetail.trangThaiDonHang.toString() == 'CHO_GIAO_HANG' or billdetail.trangThaiDonHang.toString() == 'HOAN_THANH')  ? 'active' : ''}
                                     ">
 											<span class="icon"> <i class="fa fa-truck"></i>
 											</span> <span class="text"> Chờ giao hàng </span>
 										</div>
 										<div class="step"
-											th:classappend="${
-
-                                    billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HOAN_THANH  ? 'active' : ''}
-                                    ">
+											th:classappend="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() == 'HOAN_THANH' ? 'active' : ''}">
 											<span class="icon"> <svg
 													xmlns="http://www.w3.org/2000/svg" width="24" height="24"
 													viewBox="0 0 24 24">
@@ -88,13 +76,13 @@
 										</div>
 									</div>
 									<div
-										th:if="${billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HUY}">
+										th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() == 'HUY'}">
 										<div
 											class="text-danger font-weight-bold border rounded p-2 border-danger">
 											ĐÃ HỦY</div>
 									</div>
 									<div
-										th:if="${billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).TRA_HANG}">
+										th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() == 'TRA_HANG'}">
 										<div
 											class="text-danger font-weight-bold border rounded p-2 border-danger">
 											HOÀN TRẢ</div>
@@ -105,12 +93,12 @@
 										#[[${billdetail.maDinhDanh}]]</h2>
 								</div>
 								<div class="text-muted">
-									<p class="mb-1">SỐ 1 VÕ VĂN NGÂN</p>
+									<p class="mb-1">Hệ thống Trà Sữa AloTra</p>
 									<p class="mb-1">
-										<i class="uil uil-envelope-alt me-1"></i> ndc0099asasin@gmail.com
+										<i class="uil uil-envelope-alt me-1"></i> contact@alotra.vn
 									</p>
 									<p>
-										<i class="uil uil-phone me-1"></i> 0899047497
+										<i class="uil uil-phone me-1"></i> 1900 1234
 									</p>
 								</div>
 							</div>
@@ -165,9 +153,9 @@
 									Loại đơn :
 									<h5 style="color: rgb(21, 219, 153)">
 										<span
-											th:if="${billdetail.loaiHoaDon == T(com.project.DuAnTotNghiep.entity.enumClass.InvoiceType).OFFLINE}">Tại
+											th:if="${billdetail.loaiHoaDon != null and billdetail.loaiHoaDon.toString() == 'OFFLINE'}">Tại
 											quầy</span> <span
-											th:if="${billdetail.loaiHoaDon == T(com.project.DuAnTotNghiep.entity.enumClass.InvoiceType).ONLINE}">Online</span>
+											th:if="${billdetail.loaiHoaDon != null and billdetail.loaiHoaDon.toString() == 'ONLINE'}">Online</span>
 									</h5>
 								</div>
 							</div>
@@ -182,8 +170,7 @@
 								<h5 class="font-size-15">Danh sách đơn hàng</h5>
 
 								<div class="table-responsive">
-									<table
-										class="table align-middle table-nowrap table-centered mb-0">
+									<table class="table align-middle table-nowrap table-centered mb-0">
 										<thead>
 											<tr>
 												<th>Sản phẩm</th>
@@ -196,35 +183,38 @@
 										</thead>
 										<!-- end thead -->
 										<tbody>
-											<tr th:each="productDetail : ${billDetailProduct}">
-												<td>
-													<div>
-														<h6 class="text-truncate font-size-14 mb-1"
-															th:text="${productDetail.tenSanPham}">Black Strap
-															A012</h6>
-													</div>
-												</td>
-												<td th:text="${productDetail.tenMau}"></td>
-												<td th:text="${productDetail.kichCo}"></td>
-												<td
-													th:text="${#numbers.formatDecimal(productDetail.giaTien, 0, 'POINT', 0, 'COMMA')}"></td>
-												<td th:text="${productDetail.soLuong}"></td>
-												<td class="text-end"
-													th:text="${#numbers.formatDecimal(productDetail.tongTien, 0, 'POINT', 0, 'COMMA')}">
-												</td>
-											</tr>
-
-											<!-- ✅ dòng này phải nằm cùng scope của vòng lặp -->
-											<tr class="bg-light"
-												th:if="${productDetail.tongTopping != null and productDetail.tongTopping > 0}">
-												<td colspan="4" class="ps-5 text-muted"><i
-													class="fas fa-plus text-success"></i> Topping</td>
-												<td colspan="2" class="text-end text-muted">+ <span
-													th:text="${#numbers.formatDecimal(productDetail.tongTopping, 0, 'POINT', 0, 'COMMA')}"></span>
-													VND
-												</td>
-											</tr>
-
+											<th:block th:each="productDetail : ${billDetailProduct}">
+												<tr>
+													<td>
+														<div>
+															<h6 class="text-truncate font-size-14 mb-1"
+																th:text="${productDetail.tenSanPham}">Black Strap
+																A012</h6>
+														</div>
+													</td>
+													<td th:text="${productDetail.tenMau}"></td>
+													<td th:text="${productDetail.kichCo}"></td>
+													<td
+														th:text="${#numbers.formatDecimal(productDetail.giaTien, 0, 'POINT', 0, 'COMMA')}"></td>
+													<td th:text="${productDetail.soLuong}"></td>
+													<td class="text-end"
+														th:text="${#numbers.formatDecimal(productDetail.tongTien, 0, 'POINT', 0, 'COMMA')}">
+													</td>
+												</tr>
+	
+												<!-- ✅ dòng này phải nằm cùng scope của vòng lặp -->
+												<tr class="bg-light"
+													th:if="${productDetail.tongTopping != null and productDetail.tongTopping > 0}">
+													<td colspan="4" class="ps-5 text-muted">
+														<i class="fas fa-plus text-success"></i> Topping
+														<span class="font-italic" th:if="${productDetail.tenTopping != null}" th:text="' (' + ${productDetail.tenTopping} + ')'"></span>
+													</td>
+													<td colspan="2" class="text-end text-muted">+ <span
+														th:text="${#numbers.formatDecimal(productDetail.tongTopping, 0, 'POINT', 0, 'COMMA')}"></span>
+														VND
+													</td>
+												</tr>
+											</th:block>
 
 											<tr>
 												<th scope="row" colspan="5" class="text-end">Tổng thanh
@@ -284,9 +274,9 @@
 									<input type="hidden" name="trangThaiDonHang" value="HUY" />
 									<button type="button" class="cancel-btn btn btn-danger rounded"
 										style="float: right; margin-bottom: 10px"
-										th:if="${billdetail.trangThaiDonHang != T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).TRA_HANG &&
-                            billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_XAC_NHAN
-                            || billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_LAY_HANG}">
+										th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() != 'TRA_HANG' and
+                            (billdetail.trangThaiDonHang.toString() == 'CHO_XAC_NHAN'
+                            or billdetail.trangThaiDonHang.toString() == 'CHO_LAY_HANG')}">
 										<i class="far fa-times-circle"></i>&nbsp;Hủy đơn này
 									</button>
 								</form>
@@ -296,19 +286,19 @@
 									method="get">
 									<div th:data-status="${billdetail.trangThaiDonHang}"
 										class="btn-update-status mt-2" style="max-width: 180px"
-										th:if="${billdetail.trangThaiDonHang != T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).TRA_HANG &&
-                                billdetail.trangThaiDonHang != T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HUY &&
-                                billdetail.trangThaiDonHang != T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HOAN_THANH}">
+										th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() != 'TRA_HANG' and
+                                billdetail.trangThaiDonHang.toString() != 'HUY' and
+                                billdetail.trangThaiDonHang.toString() != 'HOAN_THANH'}">
 										<span class="btn btn-secondary text-wrap rounded"
-											th:if="${billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_XAC_NHAN}">
+											th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() == 'CHO_XAC_NHAN'}">
 											<i class="far fa-check-square text-wrap"></i>&nbsp; Xác nhận,
 											duyệt đơn này
 										</span> <span class="btn btn-primary text-wrap rounded"
-											th:if="${billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_LAY_HANG}">
+											th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() == 'CHO_LAY_HANG'}">
 											<i class="far fa-check-square text-wrap"></i>&nbsp; Xác nhận
 											chuyển cho shipper
 										</span> <span class="btn btn-success  text-wrap rounded"
-											th:if="${billdetail.trangThaiDonHang == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_GIAO_HANG}">
+											th:if="${billdetail.trangThaiDonHang != null and billdetail.trangThaiDonHang.toString() == 'CHO_GIAO_HANG'}">
 											<i class="far fa-check-square"></i>&nbsp; Xác nhận đã giao
 											hàng
 										</span>

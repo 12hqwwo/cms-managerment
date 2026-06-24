@@ -135,16 +135,16 @@
                     <td class="text-nowrap text-muted font-italic" th:if="${bill.customer == null}">Khách lẻ</td>
                     <td th:text="${#temporals.format(bill.createDate, 'dd-MM-yyyy HH:mm')}"></td>
                     <td>
-                      <span th:if="${bill.invoiceType == T(com.project.DuAnTotNghiep.entity.enumClass.InvoiceType).OFFLINE}">Tại quầy</span>
-                      <span th:if="${bill.invoiceType == T(com.project.DuAnTotNghiep.entity.enumClass.InvoiceType).ONLINE}">Online</span>
+                      <span th:if="${bill.invoiceType == T(com.project.WebAloTra.entity.enumClass.InvoiceType).OFFLINE}">Tại quầy</span>
+                      <span th:if="${bill.invoiceType == T(com.project.WebAloTra.entity.enumClass.InvoiceType).ONLINE}">Online</span>
                     </td>
                     <td class="text-center" th:text="${bill.paymentMethod.name}"></td>
-                    <td class="text-center" th:if="${bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_GIAO_HANG}"> <span class="badge badge-pill bg-warning inv-badge" >Chờ giao hàng</span> </td>
-                    <td class="text-center" th:if="${bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_LAY_HANG}"> <span class="badge badge-pill bg-primary inv-badge" >Chờ lấy hàng</span> </td>
-                    <td class="text-center" th:if="${bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_XAC_NHAN}"> <span class="badge badge-pill bg-secondary inv-badge">Chờ xác nhận</span> </td>
-                    <td class="text-center" th:if="${bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HOAN_THANH}"> <span class="badge badge-pill bg-success inv-badge" >Hoàn thành</span> </td>
-                    <td class="text-center" th:if="${bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).HUY}"> <span class="badge badge-pill bg-danger inv-badge">Hủy</span> </td>
-                    <td class="text-center" th:if="${bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).TRA_HANG}"> <span class="badge badge-pill bg-dark inv-badge">Hoàn trả</span> </td>
+                    <td class="text-center" th:if="${bill.status == T(com.project.WebAloTra.entity.enumClass.BillStatus).CHO_GIAO_HANG}"> <span class="badge badge-pill bg-warning inv-badge" >Chờ giao hàng</span> </td>
+                    <td class="text-center" th:if="${bill.status == T(com.project.WebAloTra.entity.enumClass.BillStatus).CHO_LAY_HANG}"> <span class="badge badge-pill bg-primary inv-badge" >Chờ lấy hàng</span> </td>
+                    <td class="text-center" th:if="${bill.status == T(com.project.WebAloTra.entity.enumClass.BillStatus).CHO_XAC_NHAN}"> <span class="badge badge-pill bg-secondary inv-badge">Chờ xác nhận</span> </td>
+                    <td class="text-center" th:if="${bill.status == T(com.project.WebAloTra.entity.enumClass.BillStatus).HOAN_THANH}"> <span class="badge badge-pill bg-success inv-badge" >Hoàn thành</span> </td>
+                    <td class="text-center" th:if="${bill.status == T(com.project.WebAloTra.entity.enumClass.BillStatus).HUY}"> <span class="badge badge-pill bg-danger inv-badge">Hủy</span> </td>
+                    <td class="text-center" th:if="${bill.status == T(com.project.WebAloTra.entity.enumClass.BillStatus).TRA_HANG}"> <span class="badge badge-pill bg-dark inv-badge">Hoàn trả</span> </td>
 
                   </tr>
 

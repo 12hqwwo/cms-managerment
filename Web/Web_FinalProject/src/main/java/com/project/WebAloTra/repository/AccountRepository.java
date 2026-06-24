@@ -25,11 +25,11 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
      */
     @Query(value = """
             SELECT 
-                FORMAT(a.create_date, 'MM-yyyy') AS month,
+                TO_CHAR(a.create_date, 'MM-YYYY') AS month,
                 COUNT(a.id) AS count
             FROM account a
-            WHERE a.create_date BETWEEN :startDate AND :endDate
-            GROUP BY FORMAT(a.create_date, 'MM-yyyy')
+            WHERE a.create_date BETWEEN TO_TIMESTAMP(:startDate, 'YYYY-MM-DD') AND TO_TIMESTAMP(:endDate, 'YYYY-MM-DD')
+            GROUP BY TO_CHAR(a.create_date, 'MM-YYYY')
             ORDER BY MIN(a.create_date)
             """, nativeQuery = true)
     List<Object[]> getMonthlyAccountStatistics(

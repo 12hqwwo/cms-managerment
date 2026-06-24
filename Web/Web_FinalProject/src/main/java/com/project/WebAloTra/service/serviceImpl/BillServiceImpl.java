@@ -16,6 +16,10 @@ import com.project.WebAloTra.repository.Specification.BillSpecification;
 import com.project.WebAloTra.repository.Specification.ProductSpecification;
 import com.project.WebAloTra.service.BillService;
 import com.project.WebAloTra.utils.UserLoginUtil;
+import javax.persistence.EntityManager;
+import javax.persistence.ParameterMode;
+import javax.persistence.PersistenceContext;
+import javax.persistence.StoredProcedureQuery;
 
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -44,6 +48,9 @@ public class BillServiceImpl implements BillService {
 
     @Autowired
     private BillRepository billRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private ProductDetailRepository productDetailRepository;
@@ -151,10 +158,22 @@ public class BillServiceImpl implements BillService {
             });
         }
 
-        Bill bill = billRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy bill có mã" + id));
-        bill.setStatus(BillStatus.valueOf(status));
-        bill.setUpdateDate(LocalDateTime.now());
-        return billRepository.save(bill);
+        StoredProcedureQuery query = entityManager.createStoredProcedureQuery("PROC_UPDATE_BILL_STATUS");
+        query.registerStoredProcedureParameter("p_bill_id", Long.class, ParameterMode.IN);
+        query.registerStoredProcedureParameter("p_new_status", String.class, ParameterMode.IN);
+        query.registerStoredProcedureParameter("p_result_msg", String.class, ParameterMode.OUT);
+
+        query.setParameter("p_bill_id", id);
+        query.setParameter("p_new_status", status);
+
+        query.execute();
+
+        String resultMsg = (String) query.getOutputParameterValue("p_result_msg");
+        if (!"SUCCESS".equals(resultMsg)) {
+            throw new RuntimeException("Lỗi cập nhật hóa đơn: " + resultMsg);
+        }
+
+        return billRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy bill có mã" + id));
     }
 
     @Override

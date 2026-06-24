@@ -88,7 +88,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product getProductByCode(String code) {
-        Product product = productRepository.findByCode(code);
+        Product product = productRepository.findFirstByCodeOrderByIdDesc(code);
         if(product != null) {
 
             return product;
@@ -148,9 +148,9 @@ public class ProductServiceImpl implements ProductService {
         productDto.setCode(product.getCode());
         productDto.setName(product.getName());
         productDto.setCategoryName(product.getCategory().getName());
-        productDto.setImageUrl(product.getImage().get(0).getLink());
+        productDto.setImageUrl(product.getFirstImageUrl());
         productDto.setDescription(product.getDescribe());
-        productDto.setPriceMin(product.getProductDetails().get(0).getPrice());
+        productDto.setPriceMin(!product.getProductDetails().isEmpty() ? product.getProductDetails().get(0).getPrice() : 0.0);
         productDto.setCreateDate(product.getCreateDate());
         productDto.setUpdatedDate(product.getUpdatedDate());
 
@@ -198,7 +198,7 @@ public class ProductServiceImpl implements ProductService {
         productDto.setCode(product.getCode());
         productDto.setName(product.getName());
         productDto.setCategoryName(product.getCategory().getName());
-        productDto.setImageUrl(product.getImage().get(0).getLink());
+        productDto.setImageUrl(product.getFirstImageUrl());
         productDto.setDescription(product.getDescribe());
         productDto.setCreateDate(product.getCreateDate());
         productDto.setUpdatedDate(product.getUpdatedDate());

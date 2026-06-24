@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "size")
+@Table(name = "size_product") // "size" la reserved keyword trong Oracle -> doi thanh size_product
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

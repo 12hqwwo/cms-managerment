@@ -13,8 +13,8 @@ import java.util.*;
 public class ConfigVNPay {
     public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
     public static String vnp_ReturnUrl = "http://localhost:8080/payment-result";
-    public static String vnp_TmnCode = "WSKPMBP7";
-    public static String secretKey = "YXVDLHFPDPTUKXVYXDCAMLIPMBQOXWUV";
+    public static String vnp_TmnCode = "LC102I44";
+    public static String secretKey = "N2IDUDDJLLR0QSIK106NZ99LBOMH2I31";
     public static String vnp_ApiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
     public static String vnp_Version = "2.1.0";
     public static String vnp_Command = "pay";
@@ -55,7 +55,7 @@ public class ConfigVNPay {
         return digest;
     }
 
-    //Util for VNPAY
+    // Util for VNPAY
     public static String hashAllFields(Map<String, String> fields) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
@@ -112,13 +112,13 @@ public class ConfigVNPay {
             if (ipAddress == null || ipAddress.isEmpty()) {
                 ipAddress = request.getRemoteAddr();
             }
-            
+
             // Convert IPv6 to IPv4 if needed
             // IPv6 localhost (0:0:0:0:0:0:0:1) → convert to 127.0.0.1
             if ("0:0:0:0:0:0:0:1".equals(ipAddress) || "::1".equals(ipAddress)) {
                 ipAddress = "127.0.0.1";
             }
-            
+
             // Handle IPv6 full form and compressed form
             if (ipAddress.contains(":")) {
                 // If it's IPv6, try to use localhost IP instead
@@ -131,18 +131,19 @@ public class ConfigVNPay {
                     ipAddress = "127.0.0.1";
                 }
             }
-            
+
         } catch (Exception e) {
             System.err.println("[VNPay] ❌ Error getting IP: " + e.getMessage());
             ipAddress = "127.0.0.1"; // Default to localhost if error
         }
-        
+
         System.out.println("✅ [VNPay] IP Address converted: " + ipAddress);
         return ipAddress;
     }
 
     public static String validateAndSanitizeParameter(String value) {
-        if (value == null) return "";
+        if (value == null)
+            return "";
         // Remove any problematic characters that might cause VNPAY JS issues
         return value.trim();
     }

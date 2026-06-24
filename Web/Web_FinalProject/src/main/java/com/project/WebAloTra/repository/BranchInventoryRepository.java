@@ -27,7 +27,7 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
 
 
     /**
-     * ✅ Lấy sản phẩm còn hàng của chi nhánh (Native SQL — sửa lại đúng tên cột)
+     * ✅ Lấy sản phẩm còn hàng của chi nhánh (Native SQL với tên cột camelCase đúng theo DDL)
      */
     @Query(value = """
         SELECT bi.*
@@ -37,7 +37,7 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
         WHERE bi.branch_id = :branchId
           AND bi.quantity > 0
           AND bi.isActive = 1
-ORDER BY p.create_date DESC
+        ORDER BY p.create_date DESC
     """, nativeQuery = true)
     List<BranchInventory> findActiveProductsByBranch(@Param("branchId") Long branchId);
 
