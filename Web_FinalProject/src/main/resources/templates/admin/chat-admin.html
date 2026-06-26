@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>💬 Chat hỗ trợ khách hàng</title>
+<link rel="stylesheet"
+	th:href="@{/vendor/bootstrap/css/bootstrap.min.css}">
+<script th:src="@{/js/sockjs.min.js}"></script>
+<script th:src="@{/js/stomp.min.js}"></script>
+
+<style>
+body {
+	background: #f5f6fa;
+	font-family: 'Poppins', sans-serif;
+}
+
+.chat-container {
+	display: flex;
+	height: 90vh;
+	margin: 20px;
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+	background: white;
+}
+
+.chat-users {
+	width: 25%;
+	border-right: 1px solid #ccc;
+	overflow-y: auto;
+}
+
+.chat-users h5 {
+	padding: 15px;
+	background: #007bff;
+	color: white;
+	margin: 0;
+}
+
+.chat-users li {
+	padding: 10px 15px;
+	cursor: pointer;
+	border-bottom: 1px solid #eee;
+}
+
+.chat-users li.active {
+	background: #e9ecef;
+}
+
+.chat-box {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.chat-messages {
+	flex: 1;
+	padding: 15px;
+	overflow-y: auto;
+	background: #fafafa;
+}
+
+.chat-message {
+	margin-bottom: 10px;
+}
+
+.chat-message.admin {
+	text-align: right;
+}
+
+.bubble {
+	display: inline-block;
+	padding: 8px 12px;
+	border-radius: 10px;
+	max-width: 70%;
+}
+
+.chat-message.user .bubble {
+	background: #e9ecef;
+}
+
+.chat-message.admin .bubble {
+	background: #007bff;
+	color: white;
+}
+
+.chat-input {
+	display: flex;
+	border-top: 1px solid #ccc;
+	padding: 8px;
+}
+</style>
+</head>
+
+<body>
+	<div class="chat-container">
+		<div class="chat-users">
+			<h5>👥 Người dùng</h5>
+			<ul id="userList"></ul>
+		</div>
+
+		<div class="chat-box">
+			<div id="chatMessages" class="chat-messages">
+				<!-- Tin nhắn sẽ được render ở đây -->
+			</div>
+
+			<div class="chat-input">
+				<input type="text" id="messageInput" placeholder="Nhập tin nhắn..."
+					style="flex: 1; border: none; padding: 10px;">
+				<button id="sendBtn"
+					style="background: #007bff; color: white; border: none; padding: 0 15px;">
+					Gửi ➤</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+  let stompClient = null;
+  let selectedUser = null;
+  let users = new Set();
+  let messageHistory = new Map(); // lưu tin nhắn theo user
+
+  function connectAdmin() {
+    if (typeof SockJS === "undefined") {
+      alert("❌ SockJS chưa tải xong. Hãy reload (Ctrl + Shift + R).");
+      return;
+    }
+
+    const socket = new SockJS("/ws");
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, (frame) => {
+      console.log("✅ Admin connected:", frame);
+
+      // Nhận tin nhắn từ public topic (user mới join)
+      stompClient.subscribe("/topic/public", (msg) => {
+        const data = JSON.parse(msg.body);
+        console.log("📢 Public message received:", data);
+        if (data.from && data.from !== "admin@gmail.com") {
+          users.add(data.from);
+          updateUserList();
+          
+          // ✅ Hiển thị tin nhắn public nếu đang chat với user đó
+          if (data.from === selectedUser) {
+            showMessage(data.from, data.content);
+          }
+        }
+      });
+
+      // ✅ Nhận tin nhắn riêng từ user - CHÍNH LÀ CHỖ QUAN TRỌNG
+      stompClient.subscribe("/user/queue/messages", (msg) => {
+        const data = JSON.parse(msg.body);
+        console.log("📬 Private message received:", data);
+
+        if (data.from && data.from !== "admin@gmail.com") {
+          // ✅ Thêm user vào danh sách nếu chưa có
+          if (!users.has(data.from)) {
+            users.add(data.from);
+            updateUserList();
+          }
+
+          // ✅ Lưu vào bộ nhớ tạm
+          if (!messageHistory.has(data.from)) messageHistory.set(data.from, []);
+          messageHistory.get(data.from).push({ from: data.from, content: data.content });
+
+          // ✅ Hiển thị luôn nếu đang xem user đó
+          if (data.from === selectedUser) {
+            showMessage(data.from, data.content);
+          } else {
+            // ✅ Highlight user có tin nhắn mới
+            highlightUserWithNewMessage(data.from);
+          }
+        }
+      });
+
+      // ✅ Gửi thông báo admin online
+      stompClient.send("/app/chat.send", {}, JSON.stringify({
+        from: "admin@gmail.com",
+        content: "Admin đã online"
+      }));
+    });
+  }
+
+  function updateUserList() {
+    const ul = document.getElementById("userList");
+    ul.innerHTML = "";
+    users.forEach(u => {
+      const li = document.createElement("li");
+      li.textContent = u;
+      li.onclick = () => selectUser(u);
+      li.setAttribute("data-user", u);
+      if (u === selectedUser) li.classList.add("active");
+      ul.appendChild(li);
+    });
+  }
+
+  // ✅ Highlight user có tin nhắn mới
+  function highlightUserWithNewMessage(userEmail) {
+    const li = document.querySelector(`li[data-user="${userEmail}"]`);
+    if (li && !li.classList.contains('active')) {
+      li.style.backgroundColor = '#ffd700';
+      li.style.fontWeight = 'bold';
+    }
+  }
+
+  // Khi chọn user → load lịch sử từ DB
+  function selectUser(userEmail) {
+    selectedUser = userEmail;
+    
+    // ✅ Remove highlight khi đã chọn
+    const li = document.querySelector(`li[data-user="${userEmail}"]`);
+    if (li) {
+      li.style.backgroundColor = '';
+      li.style.fontWeight = '';
+    }
+
+    fetch(`/admin/api/chat/history?userEmail=${encodeURIComponent(userEmail)}`)
+      .then(res => res.json())
+      .then(messages => {
+        const container = document.getElementById("chatMessages");
+        container.innerHTML = "";
+
+        messages.forEach(m => {
+          const div = document.createElement("div");
+          div.className = "chat-message " + (m.sender === "admin@gmail.com" ? "admin" : "user");
+          div.innerHTML = `<div class="bubble">${m.content}</div>`;
+          container.appendChild(div);
+        });
+
+        container.scrollTop = container.scrollHeight;
+        updateUserList(); // Refresh để highlight active user
+      })
+      .catch(err => {
+        console.error("❌ Lỗi load lịch sử:", err);
+      });
+  }
+
+//Hiển thị tin nhắn (từ realtime)
+  function showMessage(from, content) {
+    const msgBox = document.getElementById("chatMessages");
+    const div = document.createElement("div");
+
+    div.classList.add("chat-message", from === "admin@gmail.com" ? "admin" : "user");
+
+    // ✅ Bỏ phần email, chỉ hiển thị nội dung
+    div.innerHTML = `<div class="bubble">${content}</div>`;
+
+    msgBox.appendChild(div);
+    msgBox.scrollTop = msgBox.scrollHeight;
+  }
+  // Gửi tin nhắn từ admin → user
+  document.getElementById("sendBtn").addEventListener("click", () => {
+    const input = document.getElementById("messageInput");
+    const text = input.value.trim();
+    if (text === "" || !selectedUser) {
+      alert("Vui lòng chọn user và nhập tin nhắn!");
+      return;
+    }
+
+    stompClient.send("/app/chat.send", {}, JSON.stringify({
+      from: "admin@gmail.com",
+      to: selectedUser,
+      content: text
+    }));
+
+    showMessage("admin@gmail.com", text);
+    input.value = "";
+  });
+
+  // ✅ Enter để gửi tin nhắn
+  document.getElementById("messageInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      document.getElementById("sendBtn").click();
+    }
+  });
+
+  connectAdmin();
+  
+  window.addEventListener("load", () => {
+	  fetch("/admin/api/chat/users")
+	    .then(res => res.json())
+	    .then(data => {
+	      data.forEach(email => users.add(email));
+	      updateUserList();
+	    })
+	    .catch(err => console.error("❌ Lỗi tải danh sách user:", err));
+	});
+
+  </script>
+</body>
+</html>

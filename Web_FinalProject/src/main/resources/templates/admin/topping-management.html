@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/admin-layout.html}">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Topping</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .topping-card {
+            transition: transform 0.2s;
+        }
+        .topping-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            width: 500px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="font-weight-bold">
+                        <i class="fas fa-plus-circle text-primary"></i> Quản lý Topping
+                    </h2>
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fa fa-plus"></i> Thêm Topping Mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Topping Grid -->
+        <div class="row" id="toppingGrid">
+            <!-- Toppings will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="toppingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h4 id="modalTitle" class="mb-4">Thêm Topping</h4>
+            
+            <form id="toppingForm">
+                <input type="hidden" id="toppingId">
+                
+                <div class="form-group">
+                    <label for="name">Tên Topping <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" required 
+                           placeholder="Ví dụ: Trân châu đen">
+                </div>
+
+                <div class="form-group">
+                    <label for="price">Giá (VND) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="price" name="price" required 
+                           placeholder="Ví dụ: 5000" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Mô tả</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" 
+                              placeholder="Mô tả về topping..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            loadToppings();
+        });
+
+        // Load all toppings
+        function loadToppings() {
+            $.ajax({
+                url: '/api/admin/toppings',
+                type: 'GET',
+                success: function(data) {
+                    displayToppings(data);
+                },
+                error: function(xhr) {
+                    Swal.fire('Lỗi', 'Không thể tải danh sách topping', 'error');
+                }
+            });
+        }
+
+        // Display toppings in grid
+        function displayToppings(toppings) {
+            const grid = $('#toppingGrid');
+            grid.empty();
+            
+            if (toppings.length === 0) {
+                grid.append(`
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Chưa có topping nào</p>
+                    </div>
+                `);
+                return;
+            }
+
+            toppings.forEach(topping => {
+                const statusBadge = topping.status 
+                    ? '<span class="status-badge status-active">Hoạt động</span>'
+                    : '<span class="status-badge status-inactive">Tạm dừng</span>';
+                
+                const card = `
+                    <div class="col-md-4 col-lg-3 mb-4">
+                        <div class="card topping-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="card-title mb-0">${topping.name}</h5>
+                                    ${statusBadge}
+                                </div>
+                                <p class="card-text text-success font-weight-bold h4">
+                                    ${formatCurrency(topping.price)}
+                                </p>
+                                <p class="card-text text-muted small">
+                                    ${topping.description || 'Chưa có mô tả'}
+                                </p>
+                            </div>
+                            <div class="card-footer bg-white border-top-0">
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editTopping(${topping.id})">
+                                        <i class="fa fa-edit"></i> Sửa
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="toggleStatus(${topping.id})">
+                                        <i class="fa fa-toggle-on"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTopping(${topping.id})">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.append(card);
+            });
+        }
+
+        // Open Add Modal
+        function openAddModal() {
+            $('#modalTitle').text('Thêm Topping');
+            $('#toppingForm')[0].reset();
+            $('#toppingId').val('');
+            $('#toppingModal').show();
+        }
+
+        // Edit Topping
+        function editTopping(id) {
+            $.ajax({
+                url: `/api/admin/toppings/${id}`,
+                type: 'GET',
+                success: function(topping) {
+                    $('#modalTitle').text('Sửa Topping');
+                    $('#toppingId').val(topping.id);
+                    $('#name').val(topping.name);
+                    $('#price').val(topping.price);
+                    $('#description').val(topping.description);
+                    $('#toppingModal').show();
+                },
+                error: function() {
+                    Swal.fire('Lỗi', 'Không thể tải thông tin topping', 'error');
+                }
+            });
+        }
+
+        // Submit Form (Add/Edit)
+        $('#toppingForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const id = $('#toppingId').val();
+            const data = {
+                name: $('#name').val(),
+                price: parseFloat($('#price').val()),
+                description: $('#description').val(),
+                status: true
+            };
+
+            const url = id ? `/api/admin/toppings/${id}` : '/api/admin/toppings';
+            const method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                type: method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function() {
+                    Swal.fire('Thành công!', id ? 'Đã cập nhật topping' : 'Đã thêm topping mới', 'success');
+                    closeModal();
+                    loadToppings();
+                },
+                error: function(xhr) {
+                    Swal.fire('Lỗi', xhr.responseJSON?.message || 'Có lỗi xảy ra', 'error');
+                }
+            });
+        });
+
+        // Toggle Status
+        function toggleStatus(id) {
+            $.ajax({
+                url: `/api/admin/toppings/${id}/toggle-status`,
+                type: 'PATCH',
+                success: function() {
+                    Swal.fire('Thành công', 'Đã thay đổi trạng thái', 'success');
+                    loadToppings();
+                },
+                error: function() {
+                    Swal.fire('Lỗi', 'Không thể thay đổi trạng thái', 'error');
+                }
+            });
+        }
+
+        // Delete Topping
+        function deleteTopping(id) {
+            Swal.fire({
+                title: 'Xác nhận xóa?',
+                text: 'Bạn có chắc muốn xóa topping này?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/api/admin/toppings/${id}`,
+                        type: 'DELETE',
+                        success: function() {
+                            Swal.fire('Đã xóa!', 'Topping đã được xóa', 'success');
+                            loadToppings();
+                        },
+                        error: function() {
+                            Swal.fire('Lỗi', 'Không thể xóa topping', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Close Modal
+        function closeModal() {
+            $('#toppingModal').hide();
+        }
+
+        // Format Currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('toppingModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

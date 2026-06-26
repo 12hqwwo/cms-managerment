@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{vendor/vendor-layout}">
+<head>
+    <title>Chi tiết sản phẩm</title>
+    <style>
+        .product-img {
+            width: 240px;
+            height: 240px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="card p-4 shadow-sm">
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <img id="productImage" class="product-img" th:src="@{/images/default-product.png}" alt="Ảnh sản phẩm">
+            </div>
+
+            <div class="col-md-8">
+                <h4 id="productName" class="text-primary mb-3"></h4>
+                <p id="productDesc" class="text-muted"></p>
+                <hr>
+                <p><b>Size:</b> <span id="productSize"></span></p>
+                <p><b>Đường:</b> <span id="productColor"></span></p>
+                <p><b>Giá:</b> <span id="productPrice" class="text-success font-weight-bold"></span></p>
+                <p><b>Tồn kho:</b> <span id="productStock"></span></p>
+                <a th:href="@{/vendor/product-all}" class="btn btn-outline-primary mt-3">
+                    ⬅ Quay lại danh sách
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const urlParams = new URLSearchParams(window.location.search);
+    const productDetailId = urlParams.get("productDetailId");
+    const branchId = /*[[${branch.id}]]*/ 0;
+
+    if (!productDetailId) {
+        document.querySelector("#productName").innerText = "Không tìm thấy sản phẩm.";
+    } else {
+        // 🧩 1. Lấy thông tin sản phẩm từ API tồn kho chi nhánh
+        fetch(`/api/branch-products/branch/${branchId}`)
+            .then(res => res.json())
+            .then(data => {
+                const product = (data.products || []).find(p => p.productDetailId == productDetailId);
+                if (!product) {
+                    document.querySelector("#productName").innerText = "Không tìm thấy sản phẩm này trong kho.";
+                    return;
+                }
+
+                document.querySelector("#productName").innerText = product.productName;
+                document.querySelector("#productDesc").innerText = product.describe || "Không có mô tả.";
+                document.querySelector("#productSize").innerText = product.size?.name || "—";
+                document.querySelector("#productColor").innerText = product.color?.name || "—";
+                document.querySelector("#productPrice").innerText = product.price?.toLocaleString("vi-VN") + "₫";
+
+                // 🧩 2. Kiểm tra tồn kho cụ thể
+                fetch(`/api/branch-products/check/${branchId}/${productDetailId}`)
+                    .then(r => r.json())
+                    .then(stock => {
+                        document.querySelector("#productStock").innerHTML =
+                            stock.inStock
+                                ? `<span class='badge badge-success'>Còn ${stock.quantity} sản phẩm</span>`
+                                : `<span class='badge badge-danger'>Hết hàng</span>`;
+                    });
+            })
+            .catch(err => console.error("Lỗi khi tải sản phẩm:", err));
+    }
+</script>
+</body>
+</html>
