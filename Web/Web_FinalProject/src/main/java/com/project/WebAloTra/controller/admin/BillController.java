@@ -1,6 +1,5 @@
 package com.project.WebAloTra.controller.admin;
 
-
 import com.lowagie.text.DocumentException;
 import com.project.WebAloTra.dto.Bill.*;
 import com.project.WebAloTra.entity.Account;
@@ -9,6 +8,7 @@ import com.project.WebAloTra.entity.enumClass.BillStatus;
 import com.project.WebAloTra.entity.enumClass.InvoiceType;
 import com.project.WebAloTra.exception.NotFoundException;
 import com.project.WebAloTra.repository.AccountRepository;
+import com.project.WebAloTra.repository.BillRepository;
 import com.project.WebAloTra.service.BillService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,14 +41,55 @@ import java.util.List;
 @RequestMapping("/admin")
 public class BillController {
 
-	@Autowired
-	private AccountRepository accountRepository;
-	
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private BillRepository billRepository;
+
     @Autowired
     private BillService billService;
+
+    // ✅ Helper method: Ensure STAFF only views/manages their own checkout bills
+    private void checkBillOwnership(Long billId, Authentication authentication) {
+        if (authentication == null)
+            return;
+        boolean isStaff = authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_STAFF"));
+        if (isStaff) {
+            String email = authentication.getName();
+            Account account = accountRepository.findByEmail(email);
+            if (account != null) {
+                Bill bill = billRepository.findById(billId)
+                        .orElseThrow(() -> new NotFoundException("Không tìm thấy hóa đơn: " + billId));
+                if (bill.getCashier() == null || !bill.getCashier().getId().equals(account.getId())) {
+                    throw new NotFoundException(
+                            "Bạn chỉ được xem hoặc thao tác trên hóa đơn do chính mình thanh toán!");
+                }
+            }
+        }
+    }
+
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * Hiển thị danh sách hóa đơn với phân quyền theo vai trò.
+     *
+     * [ORACLE SECURITY — Defense in Depth]
+     * Bộ lọc dưới đây (Java-level) là lớp bảo vệ thứ nhất ở tầng Ứng dụng.
+     * Vì Spring Boot dùng HikariCP Connection Pool (tất cả user cùng chia sẻ
+     * 1 kết nối TRASUA), Oracle VPD (Virtual Private Database) không thể tự
+     * nhận diện nhân viên nào đang đăng nhập.
+     *
+     * Do đó, việc lọc branch_id / cashier_id tại Java là CẦN THIẾT và
+     * bổ sung cho Oracle VPD — không phải thủ công thay thế VPD.
+     *
+     * Phân quyền:
+     * - ADMIN → xem tất cả đơn hàng
+     * - VENDOR → chỉ xem đơn theo chi nhánh của mình
+     * - STAFF → chỉ xem đơn do chính mình tạo (cashier_account_id = account.id)
+     */
     @GetMapping("/bill-list")
     public String getBill(
             Model model,
@@ -61,13 +102,13 @@ public class BillController {
             @RequestParam(name = "trangThai", required = false) String trangThai,
             @RequestParam(name = "loaiDon", required = false) String loaiDon,
             @RequestParam(name = "soDienThoai", required = false) String soDienThoai,
-            @RequestParam(name = "hoVaTen", required = false) String hoVaTen
-    ) {
+            @RequestParam(name = "hoVaTen", required = false) String hoVaTen) {
         int pageSize = 8;
         String[] sortParams = sortField.split(",");
         String sortFieldName = sortParams[0];
         Sort.Direction sortDirection = (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc"))
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
 
         switch (sortFieldName) {
             case "createDate":
@@ -110,7 +151,8 @@ public class BillController {
         boolean isVendor = authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(r -> r.getAuthority().equals("ROLE_VENDOR"));
 
-        // ✅ STAFF chỉ xem bill do chính mình thanh toán (và theo chi nhánh đang gán nếu có)
+        // ✅ STAFF chỉ xem bill do chính mình thanh toán (và theo chi nhánh đang gán nếu
+        // có)
         if (isStaff) {
             String email = authentication.getName();
             Account account = accountRepository.findByEmail(email);
@@ -120,7 +162,7 @@ public class BillController {
             Long branchId = account.getBranch() != null ? account.getBranch().getId() : null;
             bills = billService.findByCashierIdAndBranchId(account.getId(), branchId, pageable);
 
-        // ✅ Nếu là vendor → chỉ lấy bill theo chi nhánh
+            // ✅ Nếu là vendor → chỉ lấy bill theo chi nhánh
         } else if (isVendor) {
             String email = authentication.getName();
             Long branchId = accountRepository.findBranchIdByEmail(email)
@@ -138,8 +180,7 @@ public class BillController {
                         trangThai, loaiDon,
                         soDienThoai != null ? soDienThoai.trim() : "",
                         hoVaTen != null ? hoVaTen.trim() : "",
-                        pageable
-                );
+                        pageable);
             } else {
                 bills = billService.findAll(pageable);
             }
@@ -151,14 +192,16 @@ public class BillController {
         return "admin/bill";
     }
 
-
     @GetMapping("/update-bill-status/{billId}")
-    public String updateBillStatus(Model model, @RequestParam(name = "page", defaultValue = "0") int page,
-                                   @RequestParam(name = "sort", defaultValue = "createDate,desc") String sortField, @PathVariable Long billId,
-                                   @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
+    public String updateBillStatus(Model model, Authentication authentication,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "sort", defaultValue = "createDate,desc") String sortField, @PathVariable Long billId,
+            @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
         try {
+            checkBillOwnership(billId, authentication);
             Bill bill = billService.updateStatus(trangThaiDonHang, billId);
-            redirectAttributes.addFlashAttribute("message", "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
+            redirectAttributes.addFlashAttribute("message",
+                    "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("message", "Error updating status");
@@ -168,22 +211,24 @@ public class BillController {
     }
 
     @GetMapping("/update-bill-status2/{billId}")
-    public String updateBillStatus2(Model model, @PathVariable Long billId,
-                                   @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
+    public String updateBillStatus2(Model model, Authentication authentication, @PathVariable Long billId,
+            @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
         try {
+            checkBillOwnership(billId, authentication);
             Bill bill = billService.updateStatus(trangThaiDonHang, billId);
-            redirectAttributes.addFlashAttribute("message", "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
+            redirectAttributes.addFlashAttribute("message",
+                    "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("message", "Error updating status");
         }
 
-        return "redirect:/admin/getbill-detail/" + billId ;
+        return "redirect:/admin/getbill-detail/" + billId;
     }
 
-
     @GetMapping("/getbill-detail/{maHoaDon}")
-    public String getBillDetail(Model model, @PathVariable("maHoaDon") Long maHoaDon) {
+    public String getBillDetail(Model model, Authentication authentication, @PathVariable("maHoaDon") Long maHoaDon) {
+        checkBillOwnership(maHoaDon, authentication);
 
         BillDetailDtoInterface billDetailDtoInterface = billService.getBillDetail(maHoaDon);
         List<BillDetailProduct> billDetailProducts = billService.getBillDetailProduct(maHoaDon);
@@ -207,16 +252,15 @@ public class BillController {
         return "admin/bill-detail";
     }
 
-
     @GetMapping("/export-bill")
     public void exportBill(
             HttpServletResponse response,
+            Authentication authentication,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "sort", defaultValue = "createDate,desc") String sortField,
             @RequestParam(name = "ngayTaoStart", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoStart,
-            @RequestParam(name  = "ngayTaoEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoEnd,
-            UriComponentsBuilder uriBuilder
-    ) throws IOException {
+            @RequestParam(name = "ngayTaoEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoEnd,
+            UriComponentsBuilder uriBuilder) throws IOException {
         int pageSize = 10;
         String[] sortParams = sortField.split(",");
         String sortFieldName = sortParams[0];
@@ -230,11 +274,33 @@ public class BillController {
 
         Sort sort = Sort.by(sortDirection, sortFieldName);
 
-
         Pageable pageable = PageRequest.of(page, pageSize, sort);
         Page<BillDtoInterface> bills;
-        bills = billService.findAll(pageable);
 
+        if (authentication != null) {
+            boolean isStaff = authentication.getAuthorities().stream()
+                    .anyMatch(r -> r.getAuthority().equals("ROLE_STAFF"));
+            boolean isVendor = authentication.getAuthorities().stream()
+                    .anyMatch(r -> r.getAuthority().equals("ROLE_VENDOR"));
+
+            if (isStaff) {
+                String email = authentication.getName();
+                Account account = accountRepository.findByEmail(email);
+                if (account == null)
+                    throw new NotFoundException("Không tìm thấy tài khoản nhân viên: " + email);
+                Long branchId = account.getBranch() != null ? account.getBranch().getId() : null;
+                bills = billService.findByCashierIdAndBranchId(account.getId(), branchId, pageable);
+            } else if (isVendor) {
+                String email = authentication.getName();
+                Long branchId = accountRepository.findBranchIdByEmail(email)
+                        .orElseThrow(() -> new NotFoundException("Không tìm thấy chi nhánh cho vendor: " + email));
+                bills = billService.findByBranchId(branchId, pageable);
+            } else {
+                bills = billService.findAll(pageable);
+            }
+        } else {
+            bills = billService.findAll(pageable);
+        }
 
         String exportUrl = uriBuilder.path("/export-bill")
                 .queryParam("page", page)
@@ -247,12 +313,15 @@ public class BillController {
     }
 
     @GetMapping("/export-pdf/{maHoaDon}")
-    public String exportPdf(HttpServletResponse response, @PathVariable("maHoaDon") Long maHoaDon) throws DocumentException, IOException {
+    public String exportPdf(HttpServletResponse response, Authentication authentication,
+            @PathVariable("maHoaDon") Long maHoaDon) throws DocumentException, IOException {
+        checkBillOwnership(maHoaDon, authentication);
         return billService.exportPdf(response, maHoaDon);
     }
 
     @GetMapping("/generate-pdf/{maHoaDon}")
-    public ResponseEntity<String> generatePDF(@PathVariable Long maHoaDon) {
+    public ResponseEntity<String> generatePDF(Authentication authentication, @PathVariable Long maHoaDon) {
+        checkBillOwnership(maHoaDon, authentication);
         // Your HTML content as a string
         String htmlContent = billService.getHtmlContent(maHoaDon);
 
@@ -262,10 +331,11 @@ public class BillController {
         return new ResponseEntity<>(htmlContent, headers, HttpStatus.OK);
     }
 
-
     @ResponseBody
     @GetMapping("/api/product/{billId}/bill")
-    public ResponseEntity<List<BillDetailProduct>> getAllProductByBillId(@PathVariable Long billId) {
+    public ResponseEntity<List<BillDetailProduct>> getAllProductByBillId(Authentication authentication,
+            @PathVariable Long billId) {
+        checkBillOwnership(billId, authentication);
         return ResponseEntity.ok(billService.getBillDetailProduct(billId));
     }
 
