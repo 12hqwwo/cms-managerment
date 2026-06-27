@@ -3,6 +3,8 @@ package com.project.WebAloTra.entity;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import org.hibernate.annotations.Where;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;

@@ -19,6 +19,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     Customer findTopByOrderByIdDesc();
 
+    Customer findByCode(String code);
+
     @Query("SELECT c FROM Customer c WHERE c.code LIKE %:keyword% OR c.name LIKE %:keyword% OR c.phoneNumber LIKE %:keyword%")
     Page<Customer> searchCustomerKeyword(String keyword,Pageable pageable);
 

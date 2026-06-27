@@ -1,508 +1,595 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/admin-layout.html}">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bán hàng tại quầy</title>
-
-    <link th:href="@{/admin/vendors/themify-icons/css/themify-icons.css}" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-<!--    <script th:src="@{/js/sweetalert.min.js}"></script>-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.js"></script>
-
-    <!--    <script th:src="@{/admin/assets/js/main.js}"></script>-->
-    <style>
-        * {
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 9999;
-            display: none;
-        }
-
-        #overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-
-            z-index: 2;
-            display: none;
-        }
-
-        .loading-spinner {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            border: 4px solid #fff;
-            border-top-color: #3498db;
-            border-radius: 50%;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: translate(-50%, -50%) rotate(0deg);
-            }
-
-            100% {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
-        }
-
-        .pos-product:hover {
-            cursor: pointer;
-            background-color: rgba(9, 100, 207, 0.1);
-            box-shadow: 2px 2px 4px #D9D9D9;
-            border-color: rgba(9, 100, 207, 0.1);
-        }
-
-        .tab-container {
-            display: flex;
-            align-items: center;
-        }
-
-        /* Styling for individual tabs */
-        .tab {
-            padding: 10px 20px;
-            background-color: #11398a;
-            border: 1px solid #ccc;
-            margin-right: 5px;
-            margin-left: 10px;
-            position: relative;
-            color: #fff;
-        }
-
-        .tab.active {
-            background-color: #fff;
-            color: #000;
-        }
-
-        .tab-list {
-            display: flex;
-        }
-
-        /* Styling for the close button on each tab */
-        .close-tab-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            cursor: pointer;
-        }
-
-        /* Styling for the plus button to add new tabs */
-        .add-tab-btn {
-            background: none;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .form-group.invalid .form-control {
-            border-color: #f33a58;
-        }
-
-        /* input[type='number']::-webkit-inner-spin-button,
-        input[type='number']::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .custom-number-input input:focus {
-            outline: none !important;
-        }
-
-        .custom-number-input button:focus {
-            outline: none !important;
-        }
-
-        .add-customer-form {
-            display: none;
-        }
-
-        .customer-item {
-            cursor: pointer;
-        }
-
-        .customer-item.active {
-            background-color: #00ccff;
-            color: #fff;
-        } */
-    </style>
 </head>
 
 <body>
-<div id="overlay"></div>
-<div id="loading-overlay">
-    <div class="loading-spinner"></div>
-</div>
-<div class="scan-container z-10 bg-white p-12 rounded-lg shadow-md absolute left-1/4 top-1/4 hidden">
-    <video id="qr-video" width="300" height="200" autoplay class="mb-4"></video>
-    <canvas id="qr-canvas" width="300" height="200" style="display: none"></canvas>
-    <button type="button" class="close-modal-scan absolute top-1 right-1 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                                        data-modal-hide="crypto-modal">
-                                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                         fill="none" viewBox="0 0 14 14">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                              stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                                    </svg>
-                                    <span class="sr-only">Close modal</span>
-                                </button>
-</div>
+    <div layout:fragment="content">
+        <link th:href="@{/admin/vendors/themify-icons/css/themify-icons.css}" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.js"></script>
+    
+        <style>
+            /* Khóa cứng chiều cao màn hình và chống cuộn ngoài trang */
+            html, body {
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+    
+            #right-panel {
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+    
+            /* Ẩn header layout vì POS có nav riêng, nhưng giữ sidebar */
+            #right-panel .header {
+                display: none !important;
+            }
+    
+            #right-panel .content {
+                padding: 0 !important;
+                background-color: #f8fafc;
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+    
+            /* Đảm bảo sidebar luôn hiện trên trang POS */
+            aside.left-panel {
+                display: table-cell !important;
+                width: 280px !important;
+                max-width: 280px !important;
+                height: 100vh !important;
+            }
+    
+            body.open aside.left-panel {
+                max-width: 70px !important;
+                width: 70px !important;
+            }
+    
+            /* Khắc phục xung đột Tailwind CSS khiến menu sidebar bị ẩn */
+            .left-panel .collapse {
+                visibility: visible !important;
+            }
+    
+            /* Tối ưu hóa thanh cuộn của sidebar navbar nếu bị tràn chiều dọc */
+            aside.left-panel .navbar {
+                max-height: 100vh !important;
+                overflow-y: auto !important;
+            }
+            aside.left-panel .navbar::-webkit-scrollbar {
+                width: 5px;
+            }
+            aside.left-panel .navbar::-webkit-scrollbar-track {
+                background: #272c33;
+            }
+            aside.left-panel .navbar::-webkit-scrollbar-thumb {
+                background: #4e545c;
+                border-radius: 3px;
+            }
+            aside.left-panel .navbar::-webkit-scrollbar-thumb:hover {
+                background: #6c757d;
+            }
+    
+            * {
+                font-family: Arial, Helvetica, sans-serif;
+            }
+    
+            /* Đảm bảo hiển thị nút chọn (radio) hình thức thanh toán */
+            input[type="radio"] {
+                -webkit-appearance: radio !important;
+                -moz-appearance: radio !important;
+                appearance: radio !important;
+                width: 16px !important;
+                height: 16px !important;
+                margin: 0 !important;
+                cursor: pointer !important;
+                display: inline-block !important;
+            }
+    
+            #loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 9999;
+                display: none;
+            }
+    
+            #overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+    
+                z-index: 2;
+                display: none;
+            }
+    
+            .loading-spinner {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 60px;
+                height: 60px;
+                border: 4px solid #fff;
+                border-top-color: #3498db;
+                border-radius: 50%;
+                animation: spin 1s ease-in-out infinite;
+            }
+    
+            @keyframes spin {
+                0% {
+                    transform: translate(-50%, -50%) rotate(0deg);
+                }
+    
+                100% {
+                    transform: translate(-50%, -50%) rotate(360deg);
+                }
+            }
+    
+            .pos-product:hover {
+                cursor: pointer;
+                background-color: rgba(9, 100, 207, 0.1);
+                box-shadow: 2px 2px 4px #D9D9D9;
+                border-color: rgba(9, 100, 207, 0.1);
+            }
+    
+            .tab-container {
+                display: flex;
+                align-items: center;
+            }
+    
+            .tab {
+                padding: 8px 16px;
+                background-color: transparent;
+                border: none;
+                margin-right: 8px;
+                margin-left: 0;
+                position: relative;
+                color: #cbd5e1;
+                border-radius: 9999px;
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+    
+            .tab:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: #fff;
+            }
+    
+            .tab.active {
+                background-color: #ffffff;
+                color: #92400e; /* amber-800 (Brown) */
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                font-weight: 700;
+            }
+    
+            .selected-customer {
+                padding: 8px 12px;
+                background-color: #f1f5f9;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+    
+            .tab-list {
+                display: flex;
+            }
+    
+            /* Styling for the close button on each tab */
+            .close-tab-btn {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                cursor: pointer;
+            }
+    
+            /* Styling for the plus button to add new tabs */
+            .add-tab-btn {
+                background: none;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+                cursor: pointer;
+            }
+    
+            .form-group.invalid .form-control {
+                border-color: #f33a58;
+            }
+        </style>
 
-<div class="qr-payment-container z-10 bg-white p-x-20 pt-20 pb-10 rounded-lg shadow-md absolute left-1/4 top-1/4 -translate-y-1/4 hidden">
-    <img src="" id="qr-payment" width="400" height="300" class="mb-4">
-    <button type="button" class="close-modal-payment absolute top-1 right-1 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            data-modal-hide="crypto-modal">
-        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-             fill="none" viewBox="0 0 14 14">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                  stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-        </svg>
-        <span class="sr-only">Close modal</span>
-    </button>
-    <div class="flex justify-center">
-        <button type="button" class="close-modal-payment outline outline-1 outline-blue-700 hover:outline-blue-800 font-medium rounded-lg text-sm px-5 py-2 me-2 mb-2 dark:outline-blue-600 dark:hover:outline-blue-700">Hủy</button>
-        <button id="confirm-pay" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">XÁC NHẬN ĐÃ THANH TOÁN</button>
-    </div>
-</div>
-
-
-<div id="interactive" class="viewport"></div>
-<nav class="" style="background-color: #0964CF; padding: 0 14px">
-    <div class="flex items-center">
-        <div class="search-container w- mr-2">
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                    </svg>
-                </div>
-                <input
-                        class="pl-10 bg-gray-50 border border-gray-300 text-gray-900 text-sm outline-none rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        type="search" placeholder="Thêm sản phẩm vào đơn" aria-label="Search" id="search-product"
-                        style="width: 500px">
-                <div
-                        class="list-search-product hidden bg-white mt-2 rounded-md absolute top-9 px-2 py-2 left-0 z-50 shadow-lg right-0 max-h-80 overflow-y-scroll">
-
-                </div>
-                <div class="no-search-found absolute px-2 py-2 hidden bg-white mt-2 rounded-md absolute top-9 px-2 py-2 left-0 z-50 shadow-lg right-0">
-                    <span class="text-gray-400 text italic">Không thấy sản phẩm nào</span>
-                </div>
-            </div>
+        <div id="overlay"></div>
+        <div id="loading-overlay">
+            <div class="loading-spinner"></div>
         </div>
-        
-        <div class="ml-4 mr-2 cursor-pointer hover:bg-black/[.54] rounded-lg" id="enable-camera-button">
-                <span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 256 256">
-                        <path fill="white"
-                              d="M232 48v40a8 8 0 0 1-16 0V56h-32a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8ZM72 200H40v-32a8 8 0 0 0-16 0v40a8 8 0 0 0 8 8h40a8 8 0 0 0 0-16Zm152-40a8 8 0 0 0-8 8v32h-32a8 8 0 0 0 0 16h40a8 8 0 0 0 8-8v-40a8 8 0 0 0-8-8ZM32 96a8 8 0 0 0 8-8V56h32a8 8 0 0 0 0-16H32a8 8 0 0 0-8 8v40a8 8 0 0 0 8 8Zm48-16a8 8 0 0 0-8 8v80a8 8 0 0 0 16 0V88a8 8 0 0 0-8-8Zm104 88V88a8 8 0 0 0-16 0v80a8 8 0 0 0 16 0Zm-40-88a8 8 0 0 0-8 8v80a8 8 0 0 0 16 0V88a8 8 0 0 0-8-8Zm-32 0a8 8 0 0 0-8 8v80a8 8 0 0 0 16 0V88a8 8 0 0 0-8-8Z" />
-                    </svg>
-                </span>
-        </div>
-        <div class="tab-container" data-tab-number="1">
-            <div class="tab-list">
-                <div data-tab-number="1" class="tab active font-bold relative cursor-pointer">
-
-                    Đơn <span>1</span>
-                </div>
-            </div>
-            <span class="add-tab-btn h-6 w-6 block hover:bg-gray-700 rounded-full flex justify-center items-center">
-                    <div>
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                            <path fill="white"
-                                  d="M16 3C8.832 3 3 8.832 3 16s5.832 13 13 13s13-5.832 13-13S23.168 3 16 3zm0 2c6.087 0 11 4.913 11 11s-4.913 11-11 11S5 22.087 5 16S9.913 5 16 5zm-1 5v5h-5v2h5v5h2v-5h5v-2h-5v-5h-2z" />
-                        </svg>
-                    </div>
-                </span>
-        </div>
-    </div>
-</nav>
-<div class="grid grid-cols-6 gaps-2 gap-2  bg-slate-50">
-    <div class="container mx-auto col-span-4">
-
-        <div class="h-full product-select-list" style="overflow-y: auto;">
-
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                    <tr>
-                        <th scope="col" class="px-2 py-3">
-                            STT
-                        </th>
-                        <th scope="col" class="px-3 py-3">
-                            Ảnh
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Tên sản phẩm
-                        </th>
-                        <th scope="col" class="px-3 py-3">
-                            % đường
-                        </th>
-                        <th scope="col" class="px-3 py-3">
-                            Cỡ
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Số lượng
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Đơn giá
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Thành tiền
-                        </th>
-                        <th scope="col"></th>
-                    </tr>
-                    </thead>
-                    <tbody data-tab-number="1" class="product-select-body active">
-
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-    </div>
-    <div class="border-solid col-span-2 border-1 border-teal-400 shadow shadow-lg px-4 py-4 min-h-screen">
-        <div>
-            <div id="currentDateTime" class="flex justify-end">
-                <span id="currentDate" class="text-gray-400 mr-3"></span>
-                <span id="currentTime" class="text-gray-400"></span>
-            </div>
-            <div class="search-customer-container w- my-3">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                  stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                        </svg>
-                    </div>
-                    <button id="add-customer-btn" data-modal-target="crypto-modal" data-modal-toggle="crypto-modal"
-                            class="absolute inset-y-0 right-0 top-1 flex items-center justify-center inline-block h-8 w-8 mr-2 cursor-pointer rounded-full hover:bg-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z" />
-                        </svg>
-                    </button>
-                    <input
-                            class="pl-10 w-full bg-gray-100 border border-gray-300 text-gray-900 text-md outline-none rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-1.5 py-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            type="text" placeholder="Thêm khách hàng (tùy chọn)" aria-label="Search" id="search-customer">
-                    <div id="crypto-modal" tabindex="-1" aria-hidden="true"
-                         class="fixed hidden top-0 left-0 right-0 z-50  w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                        <div class="relative w-full max-w-md max-h-full left-1/4 top-1/4">
-                            <!-- Modal content -->
-                            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                                <button type="button"
-                                        class="close-modal-customer absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                                        data-modal-hide="crypto-modal">
-                                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                         fill="none" viewBox="0 0 14 14">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                              stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                                    </svg>
-                                    <span class="sr-only">Close modal</span>
-                                </button>
-                                <!-- Modal header -->
-                                <div class="px-6 py-4 border-b rounded-t dark:border-gray-600">
-                                    <h3 class="text-base font-semibold text-gray-900 lg:text-xl dark:text-white">
-                                        Thêm khách hàng mới
-                                    </h3>
-                                </div>
-                                <!-- Modal body -->
-                                <div class="px-6 pt-6">
-                                    <form id="add-customer-form">
-                                        <div class="mb-4 form-group">
-                                            <label for="customerCode"
-                                                   class="block mb-1 text-md font-bold text-gray-900 dark:text-white">Mã khách hàng
-                                            </label>
-                                            <input type="customerCode" name="customerCode" id="customerCode"
-                                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                                   placeholder="--Tự động nếu bỏ trống--">
-                                        </div>
-                                        <div class="mb-4 form-group">
-                                            <label for="fullName"
-                                                   class="block mb-1 text-md font-bold text-gray-900 dark:text-white">Họ và
-                                                tên <span class="text-red-500"> *</span></label>
-
-                                            <input type="fullName" name="fullName" id="fullName"
-                                                   class="form-control bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                                   placeholder="Nguyen Van A">
-                                            <span class="error text-sm text-red-500"></span>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="phoneNumber"
-                                                   class="block mb-1 text-md font-bold text-gray-900 dark:text-white">Số điện thoại<span class="text-red-500"> *</span></label>
-
-                                            <input type="phoneNumber" name="phoneNumber" id="phoneNumber"
-                                                   placeholder="012345678"
-                                                   class="form-control bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                            >
-                                            <span class="error text-sm text-red-500"></span>
-                                        </div>
-                                        <div class="mt-4 flex items-center justify-end">
-                                            <button type="button"
-                                                    class="close-modal-customer text-blue-700 bg-white border border-1 border-blue-700 hover:text-blue-800 hover:border-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">Hủy</button>
-
-                                            <button id="save-customer-btn"
-                                                    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2">Lưu</button>
-
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="list-search-customer hidden absolute bg-white mt-2 rounded-md top-9 px-2 py-2 left-0 z-50 shadow-lg right-0 max-h-80 overflow-y-scroll">
-
-                    </div>
-                    <div class="no-search-customer-found px-2 py-2 hidden absolute bg-white mt-2 rounded-md absolute top-9 px-2 py-2 left-0 z-50 shadow-lg right-0">
-                        <span class="text-gray-400 text italic">Không thấy khách hàng nào</span>
-                    </div>
-                </div>
-                <div class="selected-customer active mt-2 border border-blue-400 rounded-md">
-                    <span class="font-bold italic text-gray-500">--Khách lẻ--</span>
-                </div>
-            </div>
-            <div class=" mb-3">
-                <div class="col">
-                    <h5 class="">Tổng tiền: </h5>
-                </div>
-                <div class="col">
-                    <h5 class="all-price font-bold text-2xl">0</h5>
-                </div>
-            </div>
-            <div class=" mb-3">
-                <div class="col">
-                    <h5>Voucher: </h5>
-                </div>
-                <div class="col">
-                    <h6 class="text-red-500 cursor-pointer voucher-choose-btn" >Click vào để chọn</h6>
-                    <div class="selected-voucher active"></div>
-                </div>
-            </div>
-
-
-            <div id="voucher-modal" tabindex="-1" aria-hidden="true"
-                 class="fixed hidden top-0 left-0 right-0 z-50  w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                <div class="relative w-full max-w-md max-h-full left-1/4 top-1/4">
-                    <!-- Modal content -->
-                    <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                        <button type="button"
-                                class="close-modal-voucher absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                                data-modal-hide="voucher-modal">
-                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                 fill="none" viewBox="0 0 14 14">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                      stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                        <!-- Modal header -->
-                        <div class="px-6 py-4 border-b rounded-t dark:border-gray-600">
-                            <h3 class="text-base font-semibold text-gray-900 lg:text-xl dark:text-white">
-                                Chọn mã giảm giá
-                            </h3>
-                        </div>
-                        <!-- Modal body -->
-                        <div class="px-6 py-6 vourcher-list max-h-80 overflow-y-auto">
-                            <div class="flex items-center shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 rounded cursor-pointer mb-2">
-                                <div class="flex items-center justify-center rounded w-14 bg-blue-100 h-20 mr-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12.79 21L3 11.21v2c0 .53.21 1.04.59 1.41l7.79 7.79c.78.78 2.05.78 2.83 0l6.21-6.21c.78-.78.78-2.05 0-2.83L12.79 21z"/><path fill="currentColor" d="M11.38 17.41c.78.78 2.05.78 2.83 0l6.21-6.21c.78-.78.78-2.05 0-2.83L12.63.58A2.04 2.04 0 0 0 11.21 0H5C3.9 0 3 .9 3 2v6.21c0 .53.21 1.04.59 1.41l7.79 7.79zM7.25 3a1.25 1.25 0 1 1 0 2.5a1.25 1.25 0 0 1 0-2.5z"/></svg>
-                                </div>
-<!--                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20.04 8.71V4h-4.7L12 .69L8.71 4H4v4.71L.69 12L4 15.34v4.7h4.71L12 23.35l3.34-3.31h4.7v-4.7L23.35 12l-3.31-3.29M8.83 7.05c.98 0 1.77.79 1.77 1.78a1.77 1.77 0 0 1-1.77 1.77c-.99 0-1.78-.79-1.78-1.77c0-.99.79-1.78 1.78-1.78M15.22 17c-.98 0-1.77-.8-1.77-1.78a1.77 1.77 0 0 1 1.77-1.77c.98 0 1.78.79 1.78 1.77A1.78 1.78 0 0 1 15.22 17m-6.72.03L7 15.53L15.53 7l1.5 1.5l-8.53 8.53Z"/></svg>-->
-
-                                <div class="w-full">
-                                    <p class="font-bold">Giảm <span>10K</span></p>
-                                    <p class="text-black text-sm">Cho đơn từ </p>
-                                    <span class="mr-2 text-sm text-gray-600">HSD: </span> <span class="text-sm text-gray-600">Đã dùng: </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class=" mb-3 hidden">
-                <div class="col">
-                    <h6>Giảm giá sản phẩm: </h6>
-                </div>
-                <div class="col">
-                    <h6 id="product-discount">0</h6>
-                </div>
-            </div>
-            <div class="">
-                <div class="col">
-                    <h6>Giảm giá voucher: </h6>
-                </div>
-                <div class="col">
-                    <h6 id="voucher-discount">0</h6>
-                </div>
-            </div>
-            <hr>
-            <div class=" mb-3 mt-2">
-                <div class="col">
-                    <h5 class="font-bold">Khách phải trả: </h5>
-                </div>
-                <div class="col">
-                    <h5 class="font-bold text-blue-500 text-2xl" id="last-price">0</h5>
-                </div>
-            </div>
-            <div class="">
-                <div class="col">
-                    <h6 class="font-bold">Tiền khách đưa: </h6>
-                </div>
-                <div class="col">
-                    <input class="border-none outline-none bg-transparent text-xl" type="text" name=""
-                           id="customerPayInput">
-                </div>
-            </div>
-            <hr>
-            <div class="mt-2">
-                <div class="col">
-                    <h6 class="text-blue-500">Tiền thừa trả khách: </h6>
-                </div>
-                <div class="col">
-                    <h6 class="text-xl" id="money-change">0</h6>
-                </div>
-            </div>
-
-            <div class="payment-method-group mt-4">
-                <input type="radio" th:value="1" name="paymentMethod" id="payment-offline" checked> <label
-                    class="mr-2">Tiền
-                mặt</label>
-                <!-- <input type="radio" th:value="4" name="paymentMethod" id="payment-card"> <label
-                class="mr-2">Thẻ</label> -->
-                <input type="radio" value="3" name="paymentMethod" id="payment-online"> <label class="mr-2">Chuyển
-                khoản</label>
-            </div>
-
-            <button
-                    class="text-white w-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-bold rounded-lg text-2xl px-5 py-4 mt-3 text-center"
-                    id="submitBtn" type="button">THANH TOÁN
+        <div class="scan-container z-10 bg-white p-12 rounded-lg shadow-md absolute left-1/4 top-1/4 hidden">
+            <video id="qr-video" width="300" height="200" autoplay class="mb-4"></video>
+            <canvas id="qr-canvas" width="300" height="200" style="display: none"></canvas>
+            <button type="button"
+                class="close-modal-scan absolute top-1 right-1 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                data-modal-hide="crypto-modal">
+                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 14 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                </svg>
+                <span class="sr-only">Close modal</span>
             </button>
-
         </div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
-                th:inline="javascript"></script>
+
+        <div
+            class="qr-payment-container z-10 bg-white p-x-20 pt-20 pb-10 rounded-lg shadow-md absolute left-1/4 top-1/4 -translate-y-1/4 hidden">
+            <img src="" id="qr-payment" width="400" height="300" class="mb-4">
+            <button type="button"
+                class="close-modal-payment absolute top-1 right-1 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                data-modal-hide="crypto-modal">
+                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 14 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                </svg>
+                <span class="sr-only">Close modal</span>
+            </button>
+            <div class="flex justify-center">
+                <button type="button"
+                    class="close-modal-payment outline outline-1 outline-blue-700 hover:outline-blue-800 font-medium rounded-lg text-sm px-5 py-2 me-2 mb-2 dark:outline-blue-600 dark:hover:outline-blue-700">Hủy</button>
+                <button id="confirm-pay" type="button"
+                    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">XÁC
+                    NHẬN ĐÃ THANH TOÁN</button>
+            </div>
+        </div>
+
+
+        <div id="interactive" class="viewport"></div>
+        <div class="flex flex-col h-screen overflow-hidden">
+            <nav class="flex-none py-3 px-6 shadow-md" style="background-color: #272c33;">
+                <div class="flex items-center justify-between w-full">
+                    <!-- Left Side: Menu Toggle, Search & Barcode -->
+                    <div class="flex items-center gap-3">
+                        <!-- Nút toggle sidebar -->
+                        <div class="cursor-pointer hover:bg-white/10 transition-colors p-1.5 rounded-lg flex items-center justify-center text-white/80 hover:text-white"
+                            id="pos-menu-toggle" title="Ẩn/Hiện menu">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </div>
+                        <div class="search-container mr-2">
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <svg class="w-4 h-4 text-white/50 group-focus-within:text-white transition-colors" aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                    </svg>
+                                </div>
+                                <input
+                                    class="pl-10 bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm rounded-full focus:ring-2 focus:ring-amber-700 focus:border-transparent block py-2 pr-4 transition-all w-64 md:w-80 lg:w-[400px] outline-none"
+                                    type="search" placeholder="Thêm sản phẩm vào đơn" aria-label="Search"
+                                    id="search-product">
+                                <div
+                                    class="list-search-product hidden bg-white mt-2 rounded-xl absolute top-full px-2 py-2 left-0 z-50 shadow-xl border border-slate-100 right-0 max-h-80 overflow-y-scroll text-slate-800">
+
+                                </div>
+                                <div
+                                    class="no-search-found absolute px-2 py-2 hidden bg-white mt-2 rounded-xl absolute top-full left-0 z-50 shadow-xl border border-slate-100 right-0 text-slate-800">
+                                    <span class="text-slate-400 text italic">Không thấy sản phẩm nào</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cursor-pointer hover:bg-white/10 transition-colors p-1.5 rounded-lg flex items-center justify-center text-white/80 hover:text-white"
+                            id="enable-camera-button" title="Quét mã vạch">
+                            <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 256 256" fill="currentColor">
+                                        d="M232 48v40a8 8 0 0 1-16 0V56h-32a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8ZM72 200H40v-32a8 8 0 0 0-16 0v40a8 8 0 0 0 8 8h40a8 8 0 0 0 0-16Zm152-40a8 8 0 0 0-8 8v32h-32a8 8 0 0 0 0 16h40a8 8 0 0 0 8-8v-40a8 8 0 0 0-8-8ZM32 96a8 8 0 0 0 8-8V56h32a8 8 0 0 0 0-16H32a8 8 0 0 0-8 8v40a8 8 0 0 0 8 8Zm48-16a8 8 0 0 0-8 8v80a8 8 0 0 0 16 0V88a8 8 0 0 0-8-8Zm104 88V88a8 8 0 0 0-16 0v80a8 8 0 0 0 16 0Zm-40-88a8 8 0 0 0-8 8v80a8 8 0 0 0 16 0V88a8 8 0 0 0-8-8Zm-32 0a8 8 0 0 0-8 8v80a8 8 0 0 0 16 0V88a8 8 0 0 0-8-8Z" />
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Invoice Tabs -->
+                    <div class="tab-container flex items-center" data-tab-number="1">
+                        <div class="tab-list flex">
+                            <div data-tab-number="1" class="tab active font-bold relative cursor-pointer">
+                                Đơn <span>1</span>
+                            </div>
+                        </div>
+                        <span
+                            class="add-tab-btn h-8 w-8 ml-2 block hover:bg-white/10 transition-colors rounded-full flex justify-center items-center cursor-pointer text-white/80 hover:text-white"
+                            title="Thêm đơn hàng">
+                            <div>
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
+                                    <path
+                                        d="M16 3C8.832 3 3 8.832 3 16s5.832 13 13 13s13-5.832 13-13S23.168 3 16 3zm0 2c6.087 0 11 4.913 11 11s-4.913 11-11 11S5 22.087 5 16S9.913 5 16 5zm-1 5v5h-5v2h5v5h2v-5h5v-2h-5v-5h-2z" />
+                                </svg>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+            </nav>
+            <div class="flex-1 grid grid-cols-6 gap-4 p-4 overflow-hidden bg-slate-50">
+                <div
+                    class="col-span-4 flex flex-col overflow-hidden bg-white rounded-xl shadow-md border border-slate-100 p-3">
+                    <div class="flex-1 overflow-y-auto">
+                        <div class="relative overflow-x-auto sm:rounded-lg">
+                            <table class="w-full text-sm text-left text-slate-600">
+                                <thead
+                                    class="text-xs text-slate-500 uppercase bg-slate-50/80 rounded-lg tracking-wider font-semibold border-b border-slate-200">
+                                    <tr>
+                                        <th scope="col" class="px-2 py-3">
+                                            STT
+                                        </th>
+                                        <th scope="col" class="px-3 py-3">
+                                            Ảnh
+                                        </th>
+                                        <th scope="col" class="px-6 py-3">
+                                            Tên sản phẩm
+                                        </th>
+                                        <th scope="col" class="px-3 py-3">
+                                            % đường
+                                        </th>
+                                        <th scope="col" class="px-3 py-3">
+                                            Cỡ
+                                        </th>
+                                        <th scope="col" class="px-6 py-3">
+                                            Số lượng
+                                        </th>
+                                        <th scope="col" class="px-6 py-3">
+                                            Đơn giá
+                                        </th>
+                                        <th scope="col" class="px-6 py-3">
+                                            Thành tiền
+                                        </th>
+                                        <th scope="col"></th>
+                                    </tr>
+                                </thead>
+                                <tbody data-tab-number="1" class="product-select-body active">
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="col-span-2 flex flex-col overflow-y-auto bg-white rounded-xl shadow-md border border-slate-100 p-6 relative">
+                    <div>
+                        <div id="currentDateTime" class="flex justify-end">
+                            <span id="currentDate" class="text-gray-400 mr-3"></span>
+                            <span id="currentTime" class="text-gray-400"></span>
+                        </div>
+                        <div class="search-customer-container w- my-3">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                    </svg>
+                                </div>
+                                <button id="add-customer-btn" data-modal-target="crypto-modal"
+                                    data-modal-toggle="crypto-modal"
+                                    class="absolute inset-y-0 right-0 top-1 flex items-center justify-center inline-block h-8 w-8 mr-2 cursor-pointer rounded-full hover:bg-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                        <path fill="currentColor" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z" />
+                                    </svg>
+                                </button>
+                                <input
+                                    class="pl-10 w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm outline-none rounded-lg focus:ring-2 focus:ring-[#272c33] focus:border-transparent block py-2 transition-all"
+                                    type="text" placeholder="Thêm khách hàng (tùy chọn)" aria-label="Search"
+                                    id="search-customer">
+                                <div id="crypto-modal" tabindex="-1" aria-hidden="true"
+                                    class="fixed hidden top-0 left-0 right-0 z-50  w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+                                    <div class="relative w-full max-w-md max-h-full left-1/4 top-1/4">
+                                        <!-- Modal content -->
+                                        <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                                            <button type="button"
+                                                class="close-modal-customer absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                                                data-modal-hide="crypto-modal">
+                                                <svg class="w-3 h-3" aria-hidden="true"
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                                                    <path stroke="currentColor" stroke-linecap="round"
+                                                        stroke-linejoin="round" stroke-width="2"
+                                                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                                                </svg>
+                                                <span class="sr-only">Close modal</span>
+                                            </button>
+                                            <!-- Modal header -->
+                                            <div class="px-6 py-4 border-b rounded-t dark:border-gray-600">
+                                                <h3
+                                                    class="text-base font-semibold text-gray-900 lg:text-xl dark:text-white">
+                                                    Thêm khách hàng mới
+                                                </h3>
+                                            </div>
+                                            <!-- Modal body -->
+                                            <div class="px-6 pt-6">
+                                                <form id="add-customer-form">
+                                                    <div class="mb-4 form-group">
+                                                        <label for="customerCode"
+                                                            class="block mb-1 text-md font-bold text-gray-900 dark:text-white">Mã
+                                                            khách hàng
+                                                        </label>
+                                                        <input type="customerCode" name="customerCode" id="customerCode"
+                                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                                                            placeholder="--Tự động nếu bỏ trống--">
+                                                    </div>
+                                                    <div class="mb-4 form-group">
+                                                        <label for="fullName"
+                                                            class="block mb-1 text-md font-bold text-gray-900 dark:text-white">Họ
+                                                            và
+                                                            tên <span class="text-red-500"> *</span></label>
+
+                                                        <input type="fullName" name="fullName" id="fullName"
+                                                            class="form-control bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                                                            placeholder="Nguyen Van A">
+                                                        <span class="error text-sm text-red-500"></span>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="phoneNumber"
+                                                            class="block mb-1 text-md font-bold text-gray-900 dark:text-white">Số
+                                                            điện thoại<span class="text-red-500"> *</span></label>
+
+                                                        <input type="phoneNumber" name="phoneNumber" id="phoneNumber"
+                                                            placeholder="012345678"
+                                                            class="form-control bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                                                        <span class="error text-sm text-red-500"></span>
+                                                    </div>
+                                                    <div class="mt-4 flex items-center justify-end">
+                                                        <button type="button"
+                                                            class="close-modal-customer text-blue-700 bg-white border border-1 border-blue-700 hover:text-blue-800 hover:border-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">Hủy</button>
+
+                                                        <button id="save-customer-btn"
+                                                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2">Lưu</button>
+
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="list-search-customer hidden absolute bg-white mt-2 rounded-xl top-full px-2 py-2 left-0 z-50 shadow-xl border border-slate-100 right-0 max-h-80 overflow-y-scroll text-slate-800">
+
+                                </div>
+                                <div
+                                    class="no-search-customer-found px-2 py-2 hidden absolute bg-white mt-2 rounded-xl absolute top-full left-0 z-50 shadow-xl border border-slate-100 right-0 text-slate-800">
+                                    <span class="text-slate-400 text italic">Không thấy khách hàng nào</span>
+                                </div>
+                            </div>
+                            <div class="selected-customer active mt-2">
+                                <span class="font-bold italic text-gray-500">--Khách lẻ--</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h5 class="font-medium text-slate-600">Tổng tiền:</h5>
+                            <h5 class="all-price font-bold text-xl text-slate-800">0</h5>
+                        </div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h5 class="font-medium text-slate-600">Voucher:</h5>
+                            <div class="text-right">
+                                <h6 class="text-red-500 cursor-pointer voucher-choose-btn font-medium hover:underline">
+                                    Click để chọn</h6>
+                                <div class="selected-voucher active"></div>
+                            </div>
+                        </div>
+
+
+                        <div id="voucher-modal" tabindex="-1" aria-hidden="true"
+                            class="fixed hidden top-0 left-0 right-0 z-50  w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+                            <div class="relative w-full max-w-md max-h-full left-1/4 top-1/4">
+                                <!-- Modal content -->
+                                <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                                    <button type="button"
+                                        class="close-modal-voucher absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                                        data-modal-hide="voucher-modal">
+                                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 14 14">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                                stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                                        </svg>
+                                        <span class="sr-only">Close modal</span>
+                                    </button>
+                                    <!-- Modal header -->
+                                    <div class="px-6 py-4 border-b rounded-t dark:border-gray-600">
+                                        <h3 class="text-base font-semibold text-gray-900 lg:text-xl dark:text-white">
+                                            Chọn mã giảm giá
+                                        </h3>
+                                    </div>
+                                    <!-- Modal body -->
+                                    <div class="px-6 py-6 vourcher-list max-h-80 overflow-y-auto">
+                                        <div
+                                            class="flex items-center shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 rounded cursor-pointer mb-2">
+                                            <div
+                                                class="flex items-center justify-center rounded w-14 bg-blue-100 h-20 mr-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24">
+                                                    <path fill="currentColor"
+                                                        d="M12.79 21L3 11.21v2c0 .53.21 1.04.59 1.41l7.79 7.79c.78.78 2.05.78 2.83 0l6.21-6.21c.78-.78.78-2.05 0-2.83L12.79 21z" />
+                                                    <path fill="currentColor"
+                                                        d="M11.38 17.41c.78.78 2.05.78 2.83 0l6.21-6.21c.78-.78.78-2.05 0-2.83L12.63.58A2.04 2.04 0 0 0 11.21 0H5C3.9 0 3 .9 3 2v6.21c0 .53.21 1.04.59 1.41l7.79 7.79zM7.25 3a1.25 1.25 0 1 1 0 2.5a1.25 1.25 0 0 1 0-2.5z" />
+                                                </svg>
+                                            </div>
+                                            <!--                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20.04 8.71V4h-4.7L12 .69L8.71 4H4v4.71L.69 12L4 15.34v4.7h4.71L12 23.35l3.34-3.31h4.7v-4.7L23.35 12l-3.31-3.29M8.83 7.05c.98 0 1.77.79 1.77 1.78a1.77 1.77 0 0 1-1.77 1.77c-.99 0-1.78-.79-1.78-1.77c0-.99.79-1.78 1.78-1.78M15.22 17c-.98 0-1.77-.8-1.77-1.78a1.77 1.77 0 0 1 1.77-1.77c.98 0 1.78.79 1.78 1.77A1.78 1.78 0 0 1 15.22 17m-6.72.03L7 15.53L15.53 7l1.5 1.5l-8.53 8.53Z"/></svg>-->
+
+                                            <div class="w-full">
+                                                <p class="font-bold">Giảm <span>10K</span></p>
+                                                <p class="text-black text-sm">Cho đơn từ </p>
+                                                <span class="mr-2 text-sm text-gray-600">HSD: </span> <span
+                                                    class="text-sm text-gray-600">Đã dùng: </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="flex justify-between items-center mb-3 hidden">
+                            <h6 class="font-medium text-slate-600">Giảm giá sản phẩm:</h6>
+                            <h6 id="product-discount" class="font-semibold text-slate-800">0</h6>
+                        </div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h6 class="font-medium text-slate-600">Giảm giá voucher:</h6>
+                            <h6 id="voucher-discount" class="font-semibold text-red-600">0</h6>
+                        </div>
+                        <hr class="my-2 border-slate-200">
+                        <div class="flex justify-between items-center mb-3 mt-2">
+                            <h5 class="font-bold text-slate-800 text-lg">Khách phải trả:</h5>
+                            <h5 class="font-bold text-red-600 text-2xl" id="last-price">0</h5>
+                        </div>
+                        <div
+                            class="flex justify-between items-center mb-3 bg-slate-50 p-2 rounded border border-slate-200">
+                            <h6 class="font-semibold text-slate-700">Tiền khách đưa:</h6>
+                            <input
+                                class="border-none outline-none bg-transparent text-right font-bold text-lg text-slate-800 w-32"
+                                type="text" placeholder="0" id="customerPayInput">
+                        </div>
+                        <hr class="my-2 border-slate-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <h6 class="font-medium text-slate-600">Tiền thừa trả khách:</h6>
+                            <h6 class="text-xl font-bold text-emerald-600" id="money-change">0</h6>
+                        </div>
+
+                        <div class="payment-method-group mt-4 pt-4 border-t border-slate-200">
+                            <span class="font-semibold text-slate-700 block mb-3">Hình thức thanh toán:</span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="cursor-pointer block relative">
+                                    <input type="radio" th:value="1" name="paymentMethod" id="payment-offline" checked class="peer sr-only">
+                                    <div class="flex items-center justify-center p-3 rounded-lg border-2 border-slate-200 bg-white peer-checked:border-[#272c33] peer-checked:bg-orange-50 text-slate-700 peer-checked:text-[#272c33] hover:bg-slate-50 transition-all">
+                                        <span class="font-medium ml-4">Tiền mặt</span>
+                                    </div>
+                                    <svg class="w-5 h-5 text-[#272c33] opacity-0 peer-checked:opacity-100 transition-opacity absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </label>
+                                <label class="cursor-pointer block relative">
+                                    <input type="radio" value="3" name="paymentMethod" id="payment-online" class="peer sr-only">
+                                    <div class="flex items-center justify-center p-3 rounded-lg border-2 border-slate-200 bg-white peer-checked:border-[#272c33] peer-checked:bg-orange-50 text-slate-700 peer-checked:text-[#272c33] hover:bg-slate-50 transition-all">
+                                        <span class="font-medium ml-4">Chuyển khoản</span>
+                                    </div>
+                                    <svg class="w-5 h-5 text-[#272c33] opacity-0 peer-checked:opacity-100 transition-opacity absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button
+                            class="text-white w-full bg-[#272c33] hover:bg-[#1a1d22] transform hover:-translate-y-1 shadow-lg shadow-black/20 transition-all duration-300 focus:ring-4 focus:outline-none focus:ring-gray-400 font-bold rounded-xl text-2xl px-5 py-4 mt-5 text-center tracking-wide"
+                            id="submitBtn" type="button">THANH TOÁN
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" th:inline="javascript"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
         <script th:src="@{/admin/assets/js/validator.js}"></script>
@@ -536,15 +623,20 @@
         </script>
         <script th:inline="javascript">
 
-        var currentBranchId = /*[[${#authentication.principal.branchId}]]*/ null;
-        console.log("Branch ID hiện tại:", currentBranchId);
+            var currentBranchId = /*[[${#authentication.principal.branchId}]]*/ null;
+            console.log("Branch ID hiện tại:", currentBranchId);
 
             $(document).ready(() => {
+                // Toggle sidebar từ nút trên nav POS
+                $('#pos-menu-toggle').on('click', function () {
+                    $('body').toggleClass('open');
+                });
+
                 let voucherChoosed;
-                var maxQuantiyAllow=99999999;
+                var maxQuantiyAllow = 99999999;
                 let tabQuantity = 1;
-                var currentUserRole = /*[[${#authentication.getPrincipal().getAuthorities()}]]*/ [];
-                if(currentUserRole[0].authority == 'ROLE_VENDOR' || currentUserRole[0].authority == 'ROLE_STAFF') {
+                var currentUserRole = /*[[${#authentication.getPrincipal().getAuthorities()}]]*/[];
+                if (currentUserRole[0].authority == 'ROLE_VENDOR' || currentUserRole[0].authority == 'ROLE_STAFF') {
                     maxQuantiyAllow = 20;
                 }
 
@@ -576,7 +668,7 @@
                 $('.add-tab-btn').click(function () {
 
                     // Set mở tối đa 7 tab
-                    if($('.tab').length > 6) {
+                    if ($('.tab').length > 6) {
                         Toastify({
                             text: "Bạn chỉ được mở tối đa 7 đơn",
                             className: "error",
@@ -590,9 +682,9 @@
                     var lastTabNumber = parseInt($('.tab-container .tab:last-child').attr('data-tab-number'));
 
                     // Tạo một tab mới với số thứ tự tăng dần
-                    var newTab = $(`<div data-tab-number="${lastTabNumber + 1}" class="tab font-bold relative cursor-pointer">
+                    var newTab = $(`<div data-tab-number="${lastTabNumber + 1}" class="tab font-bold relative cursor-pointer flex items-center pr-8">
                             Đơn <span> ${lastTabNumber + 1}</span>
-                            <div class="remove-tab-btn absolute top-0.5 right-0 cursor-pointer">
+                            <div class="remove-tab-btn absolute right-2 text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
                             <svg class="" xmlns="http://www.w3.org/2000/svg" width="12" height="12"
                                 viewBox="0 0 32 32">
                                 <path fill="currentColor"
@@ -603,10 +695,10 @@
 
                     // Thêm tab mới vào danh sách
                     $('.tab-list').append(newTab);
-                    var body  = $(`<tbody data-tab-number="${lastTabNumber + 1}" class="product-select-body hidden"></tbody>`)
+                    var body = $(`<tbody data-tab-number="${lastTabNumber + 1}" class="product-select-body hidden"></tbody>`)
                     $('table').append(body)
 
-                    var selectedCustomer = $(`<div class="selected-customer mt-2 border border-blue-400 rounded-md hidden">
+                    var selectedCustomer = $(`<div class="selected-customer mt-2 hidden">
 <span class="font-bold italic text-gray-500">--Khách lẻ--</span>
 </div>`)
                     $('.search-customer-container').append(selectedCustomer)
@@ -644,10 +736,10 @@
                         // var previousElement = element.prev('.product-select-body');
                         // previousElement.addClass('active')
                         // previousElement.removeClass('hidden')
-                        if(element.hasClass('active')) {
-                            $(`.tab[data-tab-number='${tabNumber-1}']`).addClass('active')
-                            $(`.product-select-body[data-tab-number='${tabNumber-1}']`).addClass('active')
-                            $(`.product-select-body[data-tab-number='${tabNumber-1}']`).removeClass('hidden')
+                        if (element.hasClass('active')) {
+                            $(`.tab[data-tab-number='${tabNumber - 1}']`).addClass('active')
+                            $(`.product-select-body[data-tab-number='${tabNumber - 1}']`).addClass('active')
+                            $(`.product-select-body[data-tab-number='${tabNumber - 1}']`).removeClass('hidden')
                             calculateAllPrice()
                             calculateLastPrice()
                         }
@@ -692,7 +784,7 @@
                 })
 
                 $("#search-product").on('focus', function () {
-                    if($(this).val().trim() != "") {
+                    if ($(this).val().trim() != "") {
                         $('.no-search-found').addClass('hidden')
                         $('.list-search-product').removeClass('hidden')
                     }
@@ -771,7 +863,7 @@
                     const discountedPrice = productDetailSe.discountedPrice
                     var discountedPriceFormatted
                     var htmlPrice = ''
-                    if(discountedPrice) {
+                    if (discountedPrice) {
                         discountedPriceFormatted = formatNumber(discountedPrice)
                         htmlPrice = `<td class=" px-6 py-4 text-lg">
                                         <span class="flex flex-col">
@@ -782,7 +874,7 @@
                                 <td class="total-price-product px-6 py-4 text-blue-400 font-bold text-lg">
                                     ${discountedPriceFormatted}
                                 </td>`
-                    }else  {
+                    } else {
                         htmlPrice = `<td class="product-select-price px-6 py-4 text-lg">
                                     ${productPrice}
                                 </td>
@@ -808,16 +900,10 @@
                                 <td class="px-3 py-4 text-base">
                                     ${productDetailSe.size.name}
                                 </td>
-                                <td class="px-6 py-4 text-lg">
-                                    <div class="custom-number-input h-10 w-32">
-                                        <div class="flex flex-row h-10 w-full rounded-lg relative bg-transparent mt-1">
-
-                                            <input type="number"
-                                                class="product-select-quantity outline-none focus:outline-none text-center w-full bg-gray-200 font-semibold text-md hover:text-black focus:text-black  md:text-basecursor-default flex items-center text-gray-700  outline-none"
-                                                name="custom-input-number${productDetailSe.id}" value="1" min="1"></input>
-
-                                        </div>
-                                    </div>
+                                <td class="px-6 py-4">
+                                    <input type="number"
+                                        class="product-select-quantity w-16 p-1 border border-slate-300 rounded text-center font-semibold text-slate-800 focus:ring-1 focus:ring-slate-500 focus:border-slate-500 outline-none"
+                                        name="custom-input-number${productDetailSe.id}" value="1" min="1"></input>
                                 </td>
 
                                 ${htmlPrice}
@@ -864,7 +950,7 @@
                     })
 
                     $('.product-select-quantity').on('focusout', function () {
-                        if($(this).val() == 0 || $(this).val() == "") {
+                        if ($(this).val() == 0 || $(this).val() == "") {
                             $(this).val(1)
                             $(this).trigger("change")
                         }
@@ -872,9 +958,9 @@
                     $('.product-select-quantity').on('input change', function (e) {
 
                         var val;
-                        if($(this).val() == "") {
+                        if ($(this).val() == "") {
                             val = 1
-                        }else  {
+                        } else {
                             val = parseInt($(this).val())
                         }
                         const productItem = $(this).parent().parent().parent().parent()
@@ -888,7 +974,7 @@
                             $(this).val(maxQuan)
                         }
 
-                        if(val > maxQuantiyAllow) {
+                        if (val > maxQuantiyAllow) {
                             Swal.fire({
                                 title: "Lỗi",
                                 text: "Bạn chỉ được cho phép bán tối đa " + maxQuantiyAllow,
@@ -917,7 +1003,7 @@
                         productList.forEach(product => {
                             product.productDetailDtos.forEach(productDetail => {
                                 var price = ``
-                                if(productDetail.discountedPrice) {
+                                if (productDetail.discountedPrice) {
                                     price = `<span>
                                                 <span class="product-old-price text-sm line-through text-gray-500 italic">${productDetail.price}</span>
                                                 <span class="product-price text-md font-bold text-blue-500">${productDetail.discountedPrice}</span>
@@ -928,7 +1014,7 @@
                                                 <span class="product-price text-md font-bold text-blue-500">${productDetail.price}</span>
                                             </span>`
                                 }
-                                html += `<div class="search-product-item-container hover:bg-blue-50 rounded-sm cursor-pointer">
+                                html += `<div class="search-product-item-container hover:bg-orange-50 rounded-lg transition-colors cursor-pointer mb-1">
                             <div data-product-id="${product.id}" data-product-detail-id="${productDetail.id}" class="search-product-item flex items-center px-2 py-2 ">
                                 <div class="image-container w-12 mr-2">
                                     <img class="w-full" src="/${product.imageUrl}" alt="">
@@ -1029,29 +1115,29 @@
                 }
 
                 function calculateVoucherPrice() {
-                    if(voucherChoosed) {
-                        if(pay.totalMoney < voucherChoosed.minimumAmountInCart) {
+                    if (voucherChoosed) {
+                        if (pay.totalMoney < voucherChoosed.minimumAmountInCart) {
                             $('.selected-voucher.active').html('')
                             $('.selected-voucher.active').attr('selected-id', '')
                             voucherChoosed = null
                             return
                         }
-                        if(voucherChoosed.percentage) {
+                        if (voucherChoosed.percentage) {
                             var value = Math.round(pay.totalMoney * voucherChoosed.percentage / 100)
-                            if(value > voucherChoosed.maximumAmount) {
+                            if (value > voucherChoosed.maximumAmount) {
                                 pay.vourcher = voucherChoosed.maximumAmount
                             }
                             else {
                                 pay.vourcher = value
                             }
                             voucherDiscount.innerText = formatNumber(pay.vourcher)
-                        }else {
-                            if(voucherChoosed.discountAmount) {
+                        } else {
+                            if (voucherChoosed.discountAmount) {
                                 voucherDiscount.innerText = formatNumber(voucherChoosed.discountAmount)
 
                             }
                         }
-                    }else {
+                    } else {
                         voucherDiscount.innerText = '0'
                         calculateLastPrice()
                     }
@@ -1064,7 +1150,7 @@
                         lastPrice.innerText = formatNumber(lastPriceValue.toString())
                         pay.requireMoney = lastPriceValue
                         pay.customerChange = pay.customerPay - pay.requireMoney
-                        if(pay.customerPay > 0) {
+                        if (pay.customerPay > 0) {
                             updateCustomerChange()
                         }
                     }
@@ -1114,7 +1200,7 @@
 
                 function updateCustomerChange() {
                     pay.customerChange = pay.customerPay - pay.requireMoney
-                    if(pay.customerChange > 0) {
+                    if (pay.customerChange > 0) {
                         $("#money-change").text(formatNumber(pay.customerChange))
                     }
                     else {
@@ -1195,7 +1281,7 @@
                         $('.list-search-customer').removeClass('hidden')
                         var html = '';
                         customerList.forEach(item => {
-                            html += `<div class="search-customer-item-container hover:bg-blue-50 rounded-sm cursor-pointer">
+                            html += `<div class="search-customer-item-container hover:bg-orange-50 rounded-lg transition-colors cursor-pointer mb-1">
                             <div class="search-customer-item p-2 flex justify-between items-center" data-customer-id="${item.id}">
                                 <div>
                                     <span class="font-bold text-md customer-name">${item.name}</span> <br>
@@ -1210,7 +1296,7 @@
                         $('.list-search-customer').html(html)
 
                         // var customerInfo = {}
-                        $('.search-customer-item').on('click', function(e) {
+                        $('.search-customer-item').on('click', function (e) {
                             var item = $(e.currentTarget);
                             var customerCode = item.find('.customer-code').text()
                             var customerName = item.find('.customer-name').text()
@@ -1233,7 +1319,7 @@
                 }
 
                 $("#search-customer").on('focus', function () {
-                    if($(this).val().trim() != "") {
+                    if ($(this).val().trim() != "") {
                         $('.no-search-customer-found').addClass('hidden')
                         $('.list-search-customer').removeClass('hidden')
                     }
@@ -1334,7 +1420,7 @@
 
                 function loadHtmlVoucherSelectList(voucherList) {
                     var html = ''
-                    if(voucherList.length > 0) {
+                    if (voucherList.length > 0) {
                         voucherList.forEach(item => {
                             var amount = parseInt(item.discountAmount);
                             var minimumAmountInCart = parseInt(item.minimumAmountInCart);
@@ -1352,16 +1438,16 @@
                                        </svg>`
                                 htmlAmount = `<p class="font-bold">Giảm <span>${item.percentage}%</span></p>`
                             }
-                            if(type == 2) {
+                            if (type == 2) {
                                 svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12.79 21L3 11.21v2c0 .53.21 1.04.59 1.41l7.79 7.79c.78.78 2.05.78 2.83 0l6.21-6.21c.78-.78.78-2.05 0-2.83L12.79 21z"/><path fill="currentColor" d="M11.38 17.41c.78.78 2.05.78 2.83 0l6.21-6.21c.78-.78.78-2.05 0-2.83L12.63.58A2.04 2.04 0 0 0 11.21 0H5C3.9 0 3 .9 3 2v6.21c0 .53.21 1.04.59 1.41l7.79 7.79zM7.25 3a1.25 1.25 0 1 1 0 2.5a1.25 1.25 0 0 1 0-2.5z"/></svg>`
                                 htmlAmount = `<p class="font-bold">Giảm <span>${amount} đ</span></p>`
                             }
 
-                            if(maximumAmount) {
+                            if (maximumAmount) {
                                 htmlMaxAmount = `<span class="ml-2">Giảm tối đa: ${maximumAmount}</span>`
                             }
 
-                            html+=`<div data-voucher="${item.id}" class="flex items-center shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 rounded cursor-pointer mb-2 voucher-item">
+                            html += `<div data-voucher="${item.id}" class="flex items-center shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 rounded cursor-pointer mb-2 voucher-item">
                                 <div class="flex items-center justify-center rounded w-14 bg-blue-100 h-20 mr-2">
                                     ${svg}
                                 </div>
@@ -1385,7 +1471,7 @@
                     $('.voucher-item').on('click', function () {
                         const voucherId = $(this).attr('data-voucher')
                         const item = voucherList.find(item => item.id == voucherId)
-                        if(item.minimumAmountInCart > parseFloat(removeAnyNonDigit(allPrice.textContent))) {
+                        if (item.minimumAmountInCart > parseFloat(removeAnyNonDigit(allPrice.textContent))) {
                             Swal.fire({
                                 title: "Lỗi",
                                 text: "Giá trị đơn hàng không đủ để áp dụng mã giảm giá này",
@@ -1412,7 +1498,7 @@
                                             <path fill="currentColor" d="M20.04 8.71V4h-4.7L12 .69L8.71 4H4v4.71L.69 12L4 15.34v4.7h4.71L12 23.35l3.34-3.31h4.7v-4.7L23.35 12l-3.31-3.29M8.83 7.05c.98 0 1.77.79 1.77 1.78a1.77 1.77 0 0 1-1.77 1.77c-.99 0-1.78-.79-1.78-1.77c0-.99.79-1.78 1.78-1.78M15.22 17c-.98 0-1.77-.8-1.77-1.78a1.77 1.77 0 0 1 1.77-1.77c.98 0 1.78.79 1.78 1.77A1.78 1.78 0 0 1 15.22 17m-6.72.03L7 15.53L15.53 7l1.5 1.5l-8.53 8.53Z"/>
                                        </svg>`
                         }
-                        if(type == 2) {
+                        if (type == 2) {
                             amount = parseInt(item.discountAmount);
                             textHead = `<p class="font-bold text-sm">Giảm <span>${amount}</span></p>
 `
@@ -1420,7 +1506,7 @@
 `
                         }
 
-                        if(maximumAmount) {
+                        if (maximumAmount) {
                             htmlMaxAmount = `<span class="ml-2">Giảm tối đa: ${maximumAmount}</span>`
                         }
 
@@ -1487,7 +1573,7 @@
                         return;
                     }
 
-                    if(pay.customerPay == '') {
+                    if (pay.customerPay == '') {
                         Swal.fire({
                             title: "Lỗi",
                             text: "Vui lòng nhập số tiền khách đưa",
@@ -1596,7 +1682,7 @@
                     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                 }
 
-//-------------------------- ========XỬ LÝ QUÉT MÃ========== ================================-----------------------------------------------------
+                //-------------------------- ========XỬ LÝ QUÉT MÃ========== ================================-----------------------------------------------------
                 var video = document.getElementById("qr-video");
                 var canvas = document.getElementById("qr-canvas");
                 var ctx = canvas.getContext("2d");
@@ -1630,7 +1716,7 @@
                     }
                 });
 
-                $('.close-modal-scan').click(function() {
+                $('.close-modal-scan').click(function () {
                     $(".scan-container").addClass('hidden')
                     if (stream) {
                         stream.getTracks().forEach(function (track) {
@@ -1661,23 +1747,23 @@
                                     var productDetail = data.productDetailDtos[0];
                                     var result = handleAddToOrder(productDetail, productDetail.id, true, data);
                                     var text = ''
-                                    if(result == 1) {
+                                    if (result == 1) {
                                         Swal.fire({
                                             title: "Thông báo",
                                             text: "Sản phẩm này đã hết",
                                             icon: "error"
                                         }).then((result) => {
-                                            if(result.isConfirmed) {
+                                            if (result.isConfirmed) {
                                                 scanInterval = setInterval(scanBarcode, 60);
                                             }
                                         });
-                                    }else {
+                                    } else {
                                         Swal.fire({
                                             title: "Thông báo",
                                             text: "Thêm sản phẩm mới thành công",
                                             icon: "success"
                                         }).then((result) => {
-                                            if(result.isConfirmed) {
+                                            if (result.isConfirmed) {
                                                 scanInterval = setInterval(scanBarcode, 60);
                                             }
                                         });
@@ -1690,7 +1776,7 @@
                                         text: xhr.responseJSON.message,
                                         icon: "error"
                                     }).then((result) => {
-                                        if(result.isConfirmed) {
+                                        if (result.isConfirmed) {
                                             scanInterval = setInterval(scanBarcode, 60);
                                         }
                                     })
@@ -1708,7 +1794,7 @@
         <script th:inline="javascript">
 
             //current ROle
-            var currentUserRole = /*[[${#authentication.getPrincipal().getAuthorities()}]]*/ [];
+            var currentUserRole = /*[[${#authentication.getPrincipal().getAuthorities()}]]*/[];
             function onlyAllowNumberInput(e) {
                 const key = e.key;
                 if (key === '-') {
@@ -1717,7 +1803,6 @@
             }
         </script>
     </div>
-</div>
 </body>
 
 </html>

@@ -20,14 +20,15 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
+        System.out.println("=== DANG NHAP VOI EMAIL: [" + username + "]");
         Account account = accountRepository.findByEmail(username);
 
         if (account != null) {
-           
+            System.out.println("=== TIM THAY ACCOUNT TRONG DB: " + account.getEmail() + " | Hash: " + account.getPassword() + " | Active: " + account.isNonLocked());
             return new CustomUserDetails(account);
         }
 
+        System.out.println("=== KHONG TIM THAY TAI KHOAN TRONG DB VOI EMAIL: [" + username + "]");
         throw new UsernameNotFoundException("Không tìm thấy tài khoản có email: " + username);
     }
 }

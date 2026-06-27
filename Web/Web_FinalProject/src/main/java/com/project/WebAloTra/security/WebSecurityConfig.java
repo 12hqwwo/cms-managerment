@@ -35,7 +35,7 @@ public class WebSecurityConfig {
 	@Configuration
 	public static class AppConfiguration {
 		@Bean
-		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationSuccessHandler successHandler) throws Exception {
 			http
 					// ✅ Bật CORS trước
 					.cors().configurationSource(request -> {
@@ -74,7 +74,8 @@ public class WebSecurityConfig {
 							"/admin/size-detail/**", "/admin/color-list", "/admin/color-create", "/admin/edit-color/**",
 							"/admin/pos", "/admin/getbill-detail/**", "/admin/export-bill", "/admin/generate-pdf/**", "/admin/export-pdf/**", "/admin/api/product/**/bill", "/admin-only/bill-return",
 							"/admin-only/bill-return-create", "/admin-only/bill-return-detail/**",
-							"/admin-only/product-discount", "/admin-only/product-discount-create")
+							"/admin-only/product-discount", "/admin-only/product-discount-create",
+							"/admin/chat", "/admin/api/chat/**")
 					.hasAnyRole("STAFF", "VENDOR", "ADMIN")
 
 					.antMatchers("/api/orderAdmin").hasAnyRole("STAFF", "VENDOR", "ADMIN")
@@ -89,7 +90,7 @@ public class WebSecurityConfig {
 					.and().formLogin().loginPage("/user-login") // trang login
 					.loginProcessingUrl("/user_login") // action form login
 					.usernameParameter("email") // dùng email làm username
-					.defaultSuccessUrl("/", true) // chuyển về trang chủ sau khi login
+					.successHandler(successHandler) // chuyển hướng theo vai trò
 					.permitAll().and().logout().logoutUrl("/user_logout").logoutSuccessUrl("/").permitAll().and()
 					.rememberMe().key("AbcDefgHijklmnOp_123456789").rememberMeParameter("remember-me")
 					.tokenValiditySeconds(7 * 24 * 60 * 60);
@@ -100,9 +101,24 @@ public class WebSecurityConfig {
 
 		@Bean
 		public AuthenticationSuccessHandler successHandler() {
-			SavedRequestAwareAuthenticationSuccessHandler handler = new SavedRequestAwareAuthenticationSuccessHandler();
-			handler.setDefaultTargetUrl("/");
-			return handler;
+			return (request, response, authentication) -> {
+				java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> authorities = authentication.getAuthorities();
+				String redirectUrl = "/";
+				for (org.springframework.security.core.GrantedAuthority authority : authorities) {
+					String role = authority.getAuthority();
+					if (role.equals("ROLE_ADMIN")) {
+						redirectUrl = "/admin/thong-ke-doanh-thu";
+						break;
+					} else if (role.equals("ROLE_VENDOR")) {
+						redirectUrl = "/admin/thong-ke-doanh-thu";
+						break;
+					} else if (role.equals("ROLE_STAFF")) {
+						redirectUrl = "/admin/pos";
+						break;
+					}
+				}
+				response.sendRedirect(redirectUrl);
+			};
 		}
 
 		@Bean
