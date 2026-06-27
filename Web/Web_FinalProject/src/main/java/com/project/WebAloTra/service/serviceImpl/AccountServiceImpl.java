@@ -126,8 +126,9 @@ public class AccountServiceImpl implements AccountService {
         if (!changePasswordDto.getNewPassword().equals(changePasswordDto.getConfirmPassword())) {
             throw new ShopApiException(HttpStatus.BAD_REQUEST, "Xác nhận mật khẩu không khớp");
         }
-        account.setPassword(passwordEncoder.encode(changePasswordDto.getNewPassword()));
-        accountRepository.save(account);
+        // Thay thế bằng Stored Procedure
+        String encodedNewPassword = passwordEncoder.encode(changePasswordDto.getNewPassword());
+        accountRepository.changePassword(account.getId(), account.getPassword(), encodedNewPassword, account.getEmail());
     }
 
     @Override

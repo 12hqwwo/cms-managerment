@@ -44,61 +44,60 @@
 					</a></li>
 
 
-					<!-- ✅ Quản lý sản phẩm (chỉ ADMIN) -->
+					<!-- ✅ Quản lý sản phẩm -->
 					<li class="menu-item-has-children dropdown"
-						sec:authorize="hasRole('ADMIN')"><a href="#"
+						sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a href="#"
 						class="dropdown-toggle" data-toggle="dropdown"
 						aria-haspopup="true" aria-expanded="false"> <i
 							class="menu-icon fa fa-laptop"></i>Quản lý sản phẩm
 					</a>
 						<ul class="sub-menu children dropdown-menu">
-							<li><a th:href="@{/admin/product-all}"><i
+							<li sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a th:href="@{/admin/product-all}"><i
 									class="fas fa-tshirt"></i>Sản phẩm</a></li>
-							<li><a th:href="@{/admin/topping-management}"><i
+							<li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/topping-management}"><i
 									class="fas fa-plus-circle"></i>Topping</a></li>
-							<li><a th:href="@{/admin/color-list}"><i
+							<li sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a th:href="@{/admin/color-list}"><i
 									class="fas fa-palette"></i>Thể tích đường</a></li>
-							<li><a th:href="@{/admin/size-all}"><i
+							<li sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a th:href="@{/admin/size-all}"><i
 									class="fas fa-ruler"></i>Size</a></li>
-							<li><a th:href="@{/admin/brand-all}"><i
+							<li sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a th:href="@{/admin/brand-all}"><i
 									class="far fa-copyright"></i>Nhãn hàng</a></li>
-							<li><a th:href="@{/admin/category-all}"><i
+							<li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/category-all}"><i
 									class="fas fa-cubes"></i>Loại sản phẩm</a></li>
-							<li><a th:href="@{/admin/material-all}"><i
+							<li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/material-all}"><i
 									class="fab fa-cotton-bureau"></i>Loại trà</a></li>
 						</ul></li>
 
-
-
-					<!-- ✅ Công cụ khuyến mãi (chỉ ADMIN mới thấy) -->
+					<!-- ✅ Công cụ khuyến mãi -->
+					<!-- ✅ Công cụ khuyến mãi -->
 					<li class="menu-item-has-children dropdown"
-						sec:authorize="hasRole('ADMIN')"><a href="#"
+						sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a href="#"
 						class="dropdown-toggle" data-toggle="dropdown"
 						aria-haspopup="true" aria-expanded="false"> <i
 							class="menu-icon fa fa-american-sign-language-interpreting"></i>
 							Công cụ khuyến mãi
 					</a>
 						<ul class="sub-menu children dropdown-menu">
-							<li><a th:href="@{/admin-only/discount-code}"> <i
+							<li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin-only/discount-code}"> <i
 									class="fa fa-hand-peace-o"></i>Mã giảm giá
 							</a></li>
-							<li><a th:href="@{/admin-only/product-discount}"> <i
+							<li sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a th:href="@{/admin-only/product-discount}"> <i
 									class="fas fa-tag"></i>Giảm giá sản phẩm
 							</a></li>
 						</ul></li>
 
 					<!-- ✅ Thống kê -->
 					<li class="menu-item-has-children dropdown"
-						sec:authorize="hasRole('ADMIN')"><a href="#"
+						sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a href="#"
 						class="dropdown-toggle" data-toggle="dropdown"
 						aria-haspopup="true" aria-expanded="false"> <i
 							class="menu-icon fas fa-project-diagram"></i>Thống kê
 					</a>
 						<ul class="sub-menu children dropdown-menu">
-							<li><a th:href="@{/admin/thong-ke-doanh-thu}"> <i
+							<li sec:authorize="hasAnyRole('ADMIN', 'VENDOR', 'STAFF')"><a th:href="@{/admin/thong-ke-doanh-thu}"> <i
 									class="fas fa-chart-line"></i>Doanh thu (Hệ thống)
 							</a></li>
-							<li><a th:href="@{/admin/thong-ke-san-pham}"> <i
+							<li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/thong-ke-san-pham}"> <i
 									class="fas fa-chart-pie"></i>Sản phẩm
 							</a></li>
 						</ul></li>
@@ -127,10 +126,10 @@
 						th:href="@{/admin/bill-list}"> <i class="menu-icon fas fa-file-invoice"></i>
 							Hóa đơn
 					</a></li>
-					<!-- 💬 Chat hỗ trợ khách hàng (chỉ ADMIN thấy) -->
-					<li sec:authorize="hasRole('ADMIN')"><a
+					<!-- 💬 Chat hỗ trợ khách hàng (ADMIN & STAFF thấy) -->
+					<li sec:authorize="hasAnyRole('ADMIN','STAFF')"><a
 						th:href="@{/admin/chat}"> <i class="menu-icon fa fa-comments"></i>
-							💬 Chat hỗ trợ khách hàng
+							Chat hỗ trợ khách hàng
 					</a></li>
 
 					<li><a th:href="@{/profile}"><i

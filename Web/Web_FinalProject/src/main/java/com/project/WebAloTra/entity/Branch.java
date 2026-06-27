@@ -48,6 +48,19 @@ public class Branch implements Serializable {
     @JsonIgnore
     private List<Account> vendorAccounts;
 
+    public void setVendorAccount(Account account) {
+        if (this.vendorAccounts == null) {
+            this.vendorAccounts = new java.util.ArrayList<>();
+        }
+        if (account == null) {
+            this.vendorAccounts.clear();
+        } else {
+            this.vendorAccounts.clear();
+            this.vendorAccounts.add(account);
+            account.setBranch(this);
+        }
+    }
+
     @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<BranchInventory> inventories;

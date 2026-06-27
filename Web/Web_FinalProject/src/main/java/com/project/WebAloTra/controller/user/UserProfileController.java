@@ -22,6 +22,15 @@ public class UserProfileController {
     public String viewProfilePage(Model model) {
         AccountDto accountDto = accountService.getAccountLogin();
         model.addAttribute("profile", accountDto);
+        
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdminOrStaffOrVendor = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") 
+                            || a.getAuthority().equals("ROLE_STAFF") 
+                            || a.getAuthority().equals("ROLE_VENDOR"));
+        if (isAdminOrStaffOrVendor) {
+            return "admin/profile";
+        }
         return "/user/profile";
     }
 

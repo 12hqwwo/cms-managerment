@@ -75,7 +75,7 @@ public class Product implements Serializable {
         if (image != null && !image.isEmpty()) {
             return image.get(0).getLink();
         }
-        return "/images/default-product.png";
+        return "images/default-product.png";
     }
 
     // ✅ Hàm tiện ích: lấy giá thấp nhất trong các chi tiết

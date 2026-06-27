@@ -1,8 +1,11 @@
 package com.project.WebAloTra.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.project.WebAloTra.entity.Account;
 
@@ -39,4 +42,17 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Account findByCustomer_PhoneNumber(String phoneNumber);
 
     Account findTopByOrderByIdDesc();
+
+    /**
+     * Gọi Stored Procedure PROC_CHANGE_PASSWORD để đổi mật khẩu và lưu lịch sử
+     */
+    @Transactional
+    @Modifying
+    @Query(value = "CALL PROC_CHANGE_PASSWORD(:accountId, :oldPassword, :newPassword, :changedBy)", nativeQuery = true)
+    void changePassword(
+            @Param("accountId") Long accountId,
+            @Param("oldPassword") String oldPassword,
+            @Param("newPassword") String newPassword,
+            @Param("changedBy") String changedBy
+    );
 }

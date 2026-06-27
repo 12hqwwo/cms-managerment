@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/admin-layout.html}">
 <head>
 <meta charset="UTF-8">
 <title>💬 Chat hỗ trợ khách hàng</title>
@@ -32,7 +34,7 @@ body {
 
 .chat-users h5 {
 	padding: 15px;
-	background: #007bff;
+	background: #272c33;
 	color: white;
 	margin: 0;
 }
@@ -80,7 +82,7 @@ body {
 }
 
 .chat-message.admin .bubble {
-	background: #007bff;
+	background: #272c33;
 	color: white;
 }
 
@@ -93,6 +95,7 @@ body {
 </head>
 
 <body>
+	<div layout:fragment="content">
 	<div class="chat-container">
 		<div class="chat-users">
 			<h5>👥 Người dùng</h5>
@@ -108,7 +111,7 @@ body {
 				<input type="text" id="messageInput" placeholder="Nhập tin nhắn..."
 					style="flex: 1; border: none; padding: 10px;">
 				<button id="sendBtn"
-					style="background: #007bff; color: white; border: none; padding: 0 15px;">
+					style="background: #272c33; color: white; border: none; padding: 0 15px; transition: background 0.2s ease;">
 					Gửi ➤</button>
 			</div>
 		</div>
@@ -287,5 +290,6 @@ body {
 	});
 
   </script>
+	</div>
 </body>
 </html>

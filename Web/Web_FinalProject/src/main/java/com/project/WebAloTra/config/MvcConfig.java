@@ -16,6 +16,14 @@ public class MvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         exposeDirectory("uploads", registry);
         exposeDirectory("upload-barcode", registry);
+        
+        // Map static assets in the root folder dynamically
+        registry.addResourceHandler("/**")
+                .addResourceLocations(
+                    "file:static/", 
+                    "file:Web/Web_FinalProject/static/", 
+                    "classpath:/static/"
+                );
     }
     @Override
     public void addCorsMappings(CorsRegistry registry) {
