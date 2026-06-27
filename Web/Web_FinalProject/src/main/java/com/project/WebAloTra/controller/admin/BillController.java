@@ -1,6 +1,5 @@
 package com.project.WebAloTra.controller.admin;
 
-
 import com.lowagie.text.DocumentException;
 import com.project.WebAloTra.dto.Bill.*;
 import com.project.WebAloTra.entity.Account;
@@ -41,9 +40,9 @@ import java.util.List;
 @RequestMapping("/admin")
 public class BillController {
 
-	@Autowired
-	private AccountRepository accountRepository;
-	
+    @Autowired
+    private AccountRepository accountRepository;
+
     @Autowired
     private BillService billService;
     @PersistenceContext
@@ -61,13 +60,13 @@ public class BillController {
             @RequestParam(name = "trangThai", required = false) String trangThai,
             @RequestParam(name = "loaiDon", required = false) String loaiDon,
             @RequestParam(name = "soDienThoai", required = false) String soDienThoai,
-            @RequestParam(name = "hoVaTen", required = false) String hoVaTen
-    ) {
+            @RequestParam(name = "hoVaTen", required = false) String hoVaTen) {
         int pageSize = 8;
         String[] sortParams = sortField.split(",");
         String sortFieldName = sortParams[0];
         Sort.Direction sortDirection = (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc"))
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
 
         switch (sortFieldName) {
             case "createDate":
@@ -110,7 +109,8 @@ public class BillController {
         boolean isVendor = authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(r -> r.getAuthority().equals("ROLE_VENDOR"));
 
-        // ✅ STAFF chỉ xem bill do chính mình thanh toán (và theo chi nhánh đang gán nếu có)
+        // ✅ STAFF chỉ xem bill do chính mình thanh toán (và theo chi nhánh đang gán nếu
+        // có)
         if (isStaff) {
             String email = authentication.getName();
             Account account = accountRepository.findByEmail(email);
@@ -120,7 +120,7 @@ public class BillController {
             Long branchId = account.getBranch() != null ? account.getBranch().getId() : null;
             bills = billService.findByCashierIdAndBranchId(account.getId(), branchId, pageable);
 
-        // ✅ Nếu là vendor → chỉ lấy bill theo chi nhánh
+            // ✅ Nếu là vendor → chỉ lấy bill theo chi nhánh
         } else if (isVendor) {
             String email = authentication.getName();
             Long branchId = accountRepository.findBranchIdByEmail(email)
@@ -138,8 +138,7 @@ public class BillController {
                         trangThai, loaiDon,
                         soDienThoai != null ? soDienThoai.trim() : "",
                         hoVaTen != null ? hoVaTen.trim() : "",
-                        pageable
-                );
+                        pageable);
             } else {
                 bills = billService.findAll(pageable);
             }
@@ -151,14 +150,14 @@ public class BillController {
         return "admin/bill";
     }
 
-
     @GetMapping("/update-bill-status/{billId}")
     public String updateBillStatus(Model model, @RequestParam(name = "page", defaultValue = "0") int page,
-                                   @RequestParam(name = "sort", defaultValue = "createDate,desc") String sortField, @PathVariable Long billId,
-                                   @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
+            @RequestParam(name = "sort", defaultValue = "createDate,desc") String sortField, @PathVariable Long billId,
+            @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
         try {
             Bill bill = billService.updateStatus(trangThaiDonHang, billId);
-            redirectAttributes.addFlashAttribute("message", "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
+            redirectAttributes.addFlashAttribute("message",
+                    "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("message", "Error updating status");
@@ -169,18 +168,18 @@ public class BillController {
 
     @GetMapping("/update-bill-status2/{billId}")
     public String updateBillStatus2(Model model, @PathVariable Long billId,
-                                   @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
+            @RequestParam String trangThaiDonHang, RedirectAttributes redirectAttributes) {
         try {
             Bill bill = billService.updateStatus(trangThaiDonHang, billId);
-            redirectAttributes.addFlashAttribute("message", "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
+            redirectAttributes.addFlashAttribute("message",
+                    "Hóa đơn " + bill.getCode() + " cập nhật trạng thái thành công!");
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("message", "Error updating status");
         }
 
-        return "redirect:/admin/getbill-detail/" + billId ;
+        return "redirect:/admin/getbill-detail/" + billId;
     }
-
 
     @GetMapping("/getbill-detail/{maHoaDon}")
     public String getBillDetail(Model model, @PathVariable("maHoaDon") Long maHoaDon) {
@@ -197,8 +196,9 @@ public class BillController {
                 tongTopping = billDetailProduct.getTongTopping();
             }
 
-            // ✅ Tổng tiền = (giá sản phẩm + topping) * số lượng
-            double thanhTien = (billDetailProduct.getTongTien() + tongTopping) * q;
+            // ✅ Tổng tiền = (giá sản phẩm * số lượng) + (tổng topping * số lượng)
+            // (getTongTien() từ database đã tính sẵn giá_sản_phẩm * số_lượng)
+            double thanhTien = billDetailProduct.getTongTien() + (tongTopping * q);
             total += thanhTien;
         }
         model.addAttribute("billDetailProduct", billDetailProducts);
@@ -207,16 +207,14 @@ public class BillController {
         return "admin/bill-detail";
     }
 
-
     @GetMapping("/export-bill")
     public void exportBill(
             HttpServletResponse response,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "sort", defaultValue = "createDate,desc") String sortField,
             @RequestParam(name = "ngayTaoStart", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoStart,
-            @RequestParam(name  = "ngayTaoEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoEnd,
-            UriComponentsBuilder uriBuilder
-    ) throws IOException {
+            @RequestParam(name = "ngayTaoEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoEnd,
+            UriComponentsBuilder uriBuilder) throws IOException {
         int pageSize = 10;
         String[] sortParams = sortField.split(",");
         String sortFieldName = sortParams[0];
@@ -230,11 +228,9 @@ public class BillController {
 
         Sort sort = Sort.by(sortDirection, sortFieldName);
 
-
         Pageable pageable = PageRequest.of(page, pageSize, sort);
         Page<BillDtoInterface> bills;
         bills = billService.findAll(pageable);
-
 
         String exportUrl = uriBuilder.path("/export-bill")
                 .queryParam("page", page)
@@ -247,7 +243,8 @@ public class BillController {
     }
 
     @GetMapping("/export-pdf/{maHoaDon}")
-    public String exportPdf(HttpServletResponse response, @PathVariable("maHoaDon") Long maHoaDon) throws DocumentException, IOException {
+    public String exportPdf(HttpServletResponse response, @PathVariable("maHoaDon") Long maHoaDon)
+            throws DocumentException, IOException {
         return billService.exportPdf(response, maHoaDon);
     }
 
@@ -261,7 +258,6 @@ public class BillController {
 
         return new ResponseEntity<>(htmlContent, headers, HttpStatus.OK);
     }
-
 
     @ResponseBody
     @GetMapping("/api/product/{billId}/bill")

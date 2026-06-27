@@ -18,6 +18,8 @@ import com.project.WebAloTra.service.AddressShippingService;
 import com.project.WebAloTra.service.BillService;
 import com.project.WebAloTra.service.CartService;
 import com.project.WebAloTra.service.DiscountCodeService;
+import com.project.WebAloTra.service.BranchService;
+import com.project.WebAloTra.entity.Branch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,61 +34,63 @@ public class ShoppingCartController {
 	private final DiscountCodeService discountCodeService;
 	private final AddressShippingService addressShippingService;
 	private final ProductRepository productRepository;
+	private final BranchService branchService;
 
 	public ShoppingCartController(CartService cartService, BillService billService,
 			DiscountCodeService discountCodeService, AddressShippingService addressShippingService,
-			ProductRepository productRepository) {
+			ProductRepository productRepository, BranchService branchService) {
 		this.cartService = cartService;
 		this.billService = billService;
 		this.discountCodeService = discountCodeService;
 		this.addressShippingService = addressShippingService;
 		this.productRepository = productRepository;
+		this.branchService = branchService;
 	}
 
 	@GetMapping("/shoping-cart")
-    public String viewShoppingCart(Model model, HttpSession session) {
-        List<CartDto> cartDtoList = new ArrayList<>();
-        boolean isGuest = true;
+	public String viewShoppingCart(Model model, HttpSession session) {
+		List<CartDto> cartDtoList = new ArrayList<>();
+		boolean isGuest = true;
 
-        // ✅ Nếu người dùng đăng nhập -> lấy giỏ hàng từ DB
-        try {
-            List<CartDto> userCart = cartService.getAllCartByAccountId();
-            if (userCart != null && !userCart.isEmpty()) {
-                cartDtoList = userCart;
-                isGuest = false;
-            }
-        } catch (Exception ignored) {
-            // User chưa đăng nhập hoặc không có giỏ hàng trong DB
-        }
+		// ✅ Nếu người dùng đăng nhập -> lấy giỏ hàng từ DB
+		try {
+			List<CartDto> userCart = cartService.getAllCartByAccountId();
+			if (userCart != null && !userCart.isEmpty()) {
+				cartDtoList = userCart;
+				isGuest = false;
+			}
+		} catch (Exception ignored) {
+			// User chưa đăng nhập hoặc không có giỏ hàng trong DB
+		}
 
-        // ✅ Nếu Guest -> lấy giỏ hàng từ session
-        if (isGuest) {
-            List<GuestCartDto> guestCart = (List<GuestCartDto>) session.getAttribute("guestCart");
-            
-            if (guestCart != null && !guestCart.isEmpty()) {
-                for (GuestCartDto g : guestCart) {
-                    CartDto c = new CartDto();
-                    
-                    // ✅ Set ID giả để JavaScript có thể hoạt động
-                    c.setId(g.getProductId());  // Dùng productId làm cartId tạm
-                    c.setQuantity(g.getQuantity());
+		// ✅ Nếu Guest -> lấy giỏ hàng từ session
+		if (isGuest) {
+			List<GuestCartDto> guestCart = (List<GuestCartDto>) session.getAttribute("guestCart");
 
-                    // ✅ Map thông tin sản phẩm
-                    ProductCart p = new ProductCart();
-                    p.setProductId(g.getProductId());  // ✅ Sửa từ setId() → setProductId()
-                    p.setName(g.getName());
-                    p.setImageUrl(g.getImageUrl());
-                    p.setPrice(g.getPrice());
+			if (guestCart != null && !guestCart.isEmpty()) {
+				for (GuestCartDto g : guestCart) {
+					CartDto c = new CartDto();
 
-                    c.setProduct(p);
-                    
-                    // ✅ QUAN TRỌNG: Set detail = null để HTML biết là guest cart
-                    c.setDetail(null);
+					// ✅ Set ID giả để JavaScript có thể hoạt động
+					c.setId(g.getProductId()); // Dùng productId làm cartId tạm
+					c.setQuantity(g.getQuantity());
 
-                    cartDtoList.add(c);
-                }
-            }
-        }
+					// ✅ Map thông tin sản phẩm
+					ProductCart p = new ProductCart();
+					p.setProductId(g.getProductId()); // ✅ Sửa từ setId() → setProductId()
+					p.setName(g.getName());
+					p.setImageUrl(g.getImageUrl());
+					p.setPrice(g.getPrice());
+
+					c.setProduct(p);
+
+					// ✅ QUAN TRỌNG: Set detail = null để HTML biết là guest cart
+					c.setDetail(null);
+
+					cartDtoList.add(c);
+				}
+			}
+		}
 
 		// ✅ Mã giảm giá và địa chỉ (nếu có)
 		Page<DiscountCodeDto> discountCodeList = Page.empty();
@@ -101,11 +105,18 @@ public class ShoppingCartController {
 		} catch (Exception ignored) {
 		}
 
+		List<Branch> activeBranches = new ArrayList<>();
+		try {
+			activeBranches = branchService.getActiveBranches();
+		} catch (Exception ignored) {
+		}
+
 		// ✅ Gửi dữ liệu ra view
 		model.addAttribute("discountCodes", discountCodeList.getContent());
 		model.addAttribute("addressShippings", addressShippingDtos);
 		model.addAttribute("carts", cartDtoList);
 		model.addAttribute("isGuest", isGuest);
+		model.addAttribute("branches", activeBranches);
 
 		return "user/shoping-cart";
 	}

@@ -72,7 +72,9 @@ public class WebSecurityConfig {
 							"/admin/product/**", "/admin/product-all", "/admin/product-create", "/admin/brand-all",
 							"/admin/brand-create", "/admin/brand-detail/**", "/admin/size-all", "/admin/size-create",
 							"/admin/size-detail/**", "/admin/color-list", "/admin/color-create", "/admin/edit-color/**",
-							"/admin/pos", "/admin/getbill-detail/**", "/admin/export-bill", "/admin/generate-pdf/**", "/admin/export-pdf/**", "/admin/api/product/**/bill", "/admin-only/bill-return",
+							"/admin/pos", "/admin/getbill-detail/**", "/admin/update-bill-status/**",
+							"/admin/update-bill-status2/**", "/admin/export-bill", "/admin/generate-pdf/**",
+							"/admin/export-pdf/**", "/admin/api/product/**/bill", "/admin-only/bill-return",
 							"/admin-only/bill-return-create", "/admin-only/bill-return-detail/**",
 							"/admin-only/product-discount", "/admin-only/product-discount-create")
 					.hasAnyRole("STAFF", "VENDOR", "ADMIN")
@@ -111,13 +113,13 @@ public class WebSecurityConfig {
 		}
 
 		@Bean
-        public WebSecurityCustomizer webSecurityCustomizer(HttpFirewall firewall) {
-            return (web) -> web
-                    .httpFirewall(firewall)
-                    .ignoring()
-                    .antMatchers("/img/**", "/js/**", "/css/**", "/fonts/**", "/plugins/**",
-                            "/vendor/**", "/static/**", "/webjars/**", "/images/**", "/favicon.ico",
-                            "/error", "/uploads/**", "/upload-barcode/**");
-        }
+		public WebSecurityCustomizer webSecurityCustomizer(HttpFirewall firewall) {
+			return (web) -> web
+					.httpFirewall(firewall)
+					.ignoring()
+					.antMatchers("/img/**", "/js/**", "/css/**", "/fonts/**", "/plugins/**",
+							"/vendor/**", "/static/**", "/webjars/**", "/images/**", "/favicon.ico",
+							"/error", "/uploads/**", "/upload-barcode/**");
+		}
 	}
 }

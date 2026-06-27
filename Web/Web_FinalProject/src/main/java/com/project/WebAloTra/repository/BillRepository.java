@@ -78,7 +78,8 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	List<BillDtoInterface> listBill();
 
 	/*
-	 * ============================= TÄ‚Å’M BILL MĂ¡Â»ÂI NHĂ¡ÂºÂ¤T =============================
+	 * ============================= TÄ‚Å’M BILL MĂ¡Â»ÂI NHĂ¡ÂºÂ¤T
+	 * =============================
 	 */
 	Bill findTopByOrderByIdDesc();
 
@@ -92,7 +93,8 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	int updateStatus(@Param("status") String status, @Param("id") Long id);
 
 	/*
-	 * ============================= GĂ¡ÂºÂ®N BILL ID VÄ‚â‚¬O PAYMENT SAU THANH TOÄ‚ÂN
+	 * ============================= GĂ¡ÂºÂ®N BILL ID VÄ‚â‚¬O PAYMENT SAU THANH
+	 * TOÄ‚ÂN
 	 * =============================
 	 */
 	@Modifying
@@ -101,7 +103,8 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	int updateBillAndStatus(@Param("billId") Long billId, @Param("paymentId") Long paymentId);
 
 	/*
-	 * ============================= LĂ¡ÂºÂ¤Y CHI TIĂ¡ÂºÂ¾T BILL =============================
+	 * ============================= LĂ¡ÂºÂ¤Y CHI TIĂ¡ÂºÂ¾T BILL
+	 * =============================
 	 */
 	@Query(value = """
 			SELECT
@@ -212,74 +215,69 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	 * =============================
 	 */
 	@Query(value = """
-		    SELECT TRUNC(b.create_date) AS "date",
-		           COALESCE(SUM(b.amount), 0) 
-		           - COALESCE(SUM(br.returnMoney), 0) 
-		           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
-		    FROM bill b
-		    LEFT JOIN bill_return br ON b.id = br.bill_id
-		    LEFT JOIN return_detail rd ON br.id = rd.return_id
-		    LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
-		    WHERE EXTRACT(YEAR FROM b.create_date) = :year
-		      AND EXTRACT(MONTH FROM b.create_date) = :month
-		      AND b.status = 'HOAN_THANH'
-		      AND (:branchId IS NULL OR b.branch_id = :branchId OR b.cashier_account_id = :branchId)
-		    GROUP BY TRUNC(b.create_date)
-		    ORDER BY TRUNC(b.create_date)
-		    """, nativeQuery = true)
-		List<Object[]> statisticRevenueDayInMonth(
-		    @Param("month") String month,
-		    @Param("year") String year,
-		    @Param("branchId") Long branchId
-		);
-
+			SELECT TRUNC(b.create_date) AS "date",
+			       COALESCE(SUM(b.amount), 0)
+			       - COALESCE(SUM(br.returnMoney), 0)
+			       + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
+			FROM bill b
+			LEFT JOIN bill_return br ON b.id = br.bill_id
+			LEFT JOIN return_detail rd ON br.id = rd.return_id
+			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+			WHERE EXTRACT(YEAR FROM b.create_date) = :year
+			  AND EXTRACT(MONTH FROM b.create_date) = :month
+			  AND b.status = 'HOAN_THANH'
+			  AND (:branchId IS NULL OR b.branch_id = :branchId OR b.cashier_account_id = :branchId)
+			GROUP BY TRUNC(b.create_date)
+			ORDER BY TRUNC(b.create_date)
+			""", nativeQuery = true)
+	List<Object[]> statisticRevenueDayInMonth(
+			@Param("month") String month,
+			@Param("year") String year,
+			@Param("branchId") Long branchId);
 
 	/*
-	 * ============================= THĂ¡Â»ÂNG KÄ‚Â DOANH THU THEO NGÄ‚â‚¬Y (DAILY)
+	 * ============================= THĂ¡Â»ÂNG KÄ‚Â DOANH THU THEO NGÄ‚â‚¬Y
+	 * (DAILY)
 	 * =============================
 	 */
-		@Query(value = """
-			    SELECT TO_CHAR(b.create_date, 'YYYY-MM-DD') AS "date",
-			           COALESCE(SUM(b.amount), 0) 
-			           - COALESCE(SUM(br.returnMoney), 0)
-			           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
-			    FROM bill b
-			    LEFT JOIN bill_return br ON b.id = br.bill_id
-			    LEFT JOIN return_detail rd ON br.id = rd.return_id
-			    LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
-			    WHERE b.status = 'HOAN_THANH'
-			      AND (b.create_date BETWEEN TO_TIMESTAMP(:fromDate, 'YYYY-MM-DD') AND TO_TIMESTAMP(:toDate, 'YYYY-MM-DD'))
-			      AND (:branchId IS NULL OR b.branch_id = :branchId OR b.cashier_account_id = :branchId)
-			    GROUP BY TO_CHAR(b.create_date, 'YYYY-MM-DD')
-			    ORDER BY TO_CHAR(b.create_date, 'YYYY-MM-DD')
-			    """, nativeQuery = true)
-			List<Object[]> statisticRevenueDaily(
-			    @Param("fromDate") String fromDate,
-			    @Param("toDate") String toDate,
-			    @Param("branchId") Long branchId
-			);
+	@Query(value = """
+			SELECT TO_CHAR(b.create_date, 'YYYY-MM-DD') AS "date",
+			       COALESCE(SUM(b.amount), 0)
+			       - COALESCE(SUM(br.returnMoney), 0)
+			       + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
+			FROM bill b
+			LEFT JOIN bill_return br ON b.id = br.bill_id
+			LEFT JOIN return_detail rd ON br.id = rd.return_id
+			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+			WHERE b.status = 'HOAN_THANH'
+			  AND (b.create_date BETWEEN TO_TIMESTAMP(:fromDate, 'YYYY-MM-DD HH24:MI:SS') AND TO_TIMESTAMP(:toDate, 'YYYY-MM-DD HH24:MI:SS'))
+			  AND (:branchId IS NULL OR b.branch_id = :branchId OR b.cashier_account_id = :branchId)
+			GROUP BY TO_CHAR(b.create_date, 'YYYY-MM-DD')
+			ORDER BY TO_CHAR(b.create_date, 'YYYY-MM-DD')
+			""", nativeQuery = true)
+	List<Object[]> statisticRevenueDaily(
+			@Param("fromDate") String fromDate,
+			@Param("toDate") String toDate,
+			@Param("branchId") Long branchId);
 
-
-			@Query(value = """
-				    SELECT EXTRACT(MONTH FROM b.create_date) AS "month",
-				           COALESCE(SUM(b.amount), 0)
-				           - COALESCE(SUM(br.returnMoney), 0)
-				           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
-				    FROM bill b
-				    LEFT JOIN bill_return br ON b.id = br.bill_id
-				    LEFT JOIN return_detail rd ON br.id = rd.return_id
-				    LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
-				    WHERE EXTRACT(YEAR FROM b.create_date) = :year
-				      AND b.status = 'HOAN_THANH'
-				      AND (:branchId IS NULL OR b.branch_id = :branchId OR b.cashier_account_id = :branchId)
-				    GROUP BY EXTRACT(MONTH FROM b.create_date)
-				    ORDER BY EXTRACT(MONTH FROM b.create_date)
-				    """, nativeQuery = true)
-				List<Object[]> statisticRevenueMonthInYear(
-				    @Param("year") String year,
-				    @Param("branchId") Long branchId
-				);
-
+	@Query(value = """
+			SELECT EXTRACT(MONTH FROM b.create_date) AS "month",
+			       COALESCE(SUM(b.amount), 0)
+			       - COALESCE(SUM(br.returnMoney), 0)
+			       + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
+			FROM bill b
+			LEFT JOIN bill_return br ON b.id = br.bill_id
+			LEFT JOIN return_detail rd ON br.id = rd.return_id
+			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+			WHERE EXTRACT(YEAR FROM b.create_date) = :year
+			  AND b.status = 'HOAN_THANH'
+			  AND (:branchId IS NULL OR b.branch_id = :branchId OR b.cashier_account_id = :branchId)
+			GROUP BY EXTRACT(MONTH FROM b.create_date)
+			ORDER BY EXTRACT(MONTH FROM b.create_date)
+			""", nativeQuery = true)
+	List<Object[]> statisticRevenueMonthInYear(
+			@Param("year") String year,
+			@Param("branchId") Long branchId);
 
 	/*
 	 * ============================= REFUND / THĂ¡Â»ÂNG KÄ‚Â KHÄ‚ÂC
@@ -293,7 +291,8 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	List<RefundDto> findListNeedRefund();
 
 	/*
-	 * ============================= BILL Ă„ÂĂ¡Â»Â¦ Ă„ÂIĂ¡Â»â‚¬U KIĂ¡Â»â€ N TRĂ¡ÂºÂ¢ HÄ‚â‚¬NG (7 NGÄ‚â‚¬Y)
+	 * ============================= BILL Ă„ÂĂ¡Â»Â¦ Ă„ÂIĂ¡Â»â‚¬U KIĂ¡Â»â€ N
+	 * TRĂ¡ÂºÂ¢ HÄ‚â‚¬NG (7 NGÄ‚â‚¬Y)
 	 * =============================
 	 */
 	@Query(value = "SELECT * FROM bill b " + "WHERE (SYSDATE - b.create_date) <= 7 "
@@ -301,7 +300,8 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Page<Bill> findValidBillToReturn(Pageable pageable);
 
 	/*
-	 * ============================= THĂ¡Â»ÂNG KÄ‚Â SĂ¡Â»Â Ă„ÂĂ†Â N THEO TRĂ¡ÂºÂ NG THÄ‚ÂI
+	 * ============================= THĂ¡Â»ÂNG KÄ‚Â SĂ¡Â»Â Ă„ÂĂ†Â N THEO
+	 * TRĂ¡ÂºÂ NG THÄ‚ÂI
 	 * =============================
 	 */
 	@Query(value = """
@@ -459,34 +459,34 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Page<Bill> getBillByStatus(@Param("customerId") Long customerId, @Param("status") String status, Pageable pageable);
 
 	/*
-	 * ============================= THĂ¡Â»ÂNG KÄ‚Â DOANH THU THEO THÄ‚ÂNG (FORM MONTH)
+	 * ============================= THĂ¡Â»ÂNG KÄ‚Â DOANH THU THEO THÄ‚ÂNG (FORM
+	 * MONTH)
 	 * =============================
 	 */
-	
-	@Query(value = """
-		    SELECT TO_CHAR(b.create_date, 'MM-YYYY') AS "month",
-		           COALESCE(SUM(b.amount), 0)
-		           - COALESCE(SUM(br.returnMoney), 0)
-		           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
-		    FROM bill b
-		    LEFT JOIN bill_return br ON b.id = br.bill_id
-		    LEFT JOIN return_detail rd ON br.id = rd.return_id
-		    LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
-		    WHERE b.status = 'HOAN_THANH'
-		      AND (b.create_date BETWEEN TO_TIMESTAMP(:fromDate, 'YYYY-MM-DD') AND TO_TIMESTAMP(:toDate, 'YYYY-MM-DD'))
-		      AND (:branchId IS NULL OR b.branch_id, b.cashier_account_id = :branchId)
-		    GROUP BY TO_CHAR(b.create_date, 'MM-YYYY')
-		    ORDER BY TO_CHAR(b.create_date, 'MM-YYYY')
-		    """, nativeQuery = true)
-		List<Object[]> statisticRevenueFormMonth(
-		    @Param("fromDate") String fromDate,
-		    @Param("toDate") String toDate,
-		    @Param("branchId") Long branchId
-		);
 
+	@Query(value = """
+			SELECT TO_CHAR(b.create_date, 'MM-YYYY') AS "month",
+			       COALESCE(SUM(b.amount), 0)
+			       - COALESCE(SUM(br.returnMoney), 0)
+			       + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
+			FROM bill b
+			LEFT JOIN bill_return br ON b.id = br.bill_id
+			LEFT JOIN return_detail rd ON br.id = rd.return_id
+			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+			WHERE b.status = 'HOAN_THANH'
+			  AND (b.create_date BETWEEN TO_TIMESTAMP(:fromDate, 'YYYY-MM-DD') AND TO_TIMESTAMP(:toDate, 'YYYY-MM-DD'))
+			  AND (:branchId IS NULL OR b.branch_id, b.cashier_account_id = :branchId)
+			GROUP BY TO_CHAR(b.create_date, 'MM-YYYY')
+			ORDER BY TO_CHAR(b.create_date, 'MM-YYYY')
+			""", nativeQuery = true)
+	List<Object[]> statisticRevenueFormMonth(
+			@Param("fromDate") String fromDate,
+			@Param("toDate") String toDate,
+			@Param("branchId") Long branchId);
 
 	/*
-	 * ============================= TĂ¡Â»â€NG DOANH THU TOÄ‚â‚¬N HĂ¡Â»â€  THĂ¡Â»ÂNG
+	 * ============================= TĂ¡Â»â€NG DOANH THU TOÄ‚â‚¬N HĂ¡Â»â€ 
+	 * THĂ¡Â»ÂNG
 	 * =============================
 	 */
 	@Query(value = "SELECT " + "COALESCE(SUM(b.amount), 0) - COALESCE(SUM(br.returnMoney), 0) + "
@@ -497,14 +497,16 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Double calculateTotalRevenue();
 
 	/*
-	 * ============================= TĂ¡Â»â€NG SĂ¡Â»Â BILL CHĂ¡Â»Å“ XÄ‚ÂC NHĂ¡ÂºÂ¬N
+	 * ============================= TĂ¡Â»â€NG SĂ¡Â»Â BILL CHĂ¡Â»Å“ XÄ‚ÂC
+	 * NHĂ¡ÂºÂ¬N
 	 * =============================
 	 */
 	@Query(value = "SELECT COUNT(*) FROM bill WHERE status = 'CHO_XAC_NHAN'", nativeQuery = true)
 	int getTotalBillStatusWaiting();
 
 	/*
-	 * ============================= TĂ¡Â»â€NG DOANH THU TRONG KHOĂ¡ÂºÂ¢NG NGÄ‚â‚¬Y (FROM - TO)
+	 * ============================= TĂ¡Â»â€NG DOANH THU TRONG KHOĂ¡ÂºÂ¢NG NGÄ‚â‚¬Y
+	 * (FROM - TO)
 	 * =============================
 	 */
 	@Query(value = """
@@ -560,44 +562,44 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			    ORDER BY EXTRACT(MONTH FROM b.create_date)
 			""", nativeQuery = true)
 	List<Object[]> statisticRevenueMonthByBranch(@Param("branchId") Long branchId, @Param("year") String year);
-	
+
 	// ================== DOANH THU THEO CHI NHÄ‚ÂNH ==================
 
-	// Ă¢Å“â€¦ TĂ¡Â»â€¢ng doanh thu theo chi nhÄ‚Â¡nh (DÄ‚Â¹ng Oracle Function FN_GET_BRANCH_REVENUE)
+	// Ă¢Å“â€¦ TĂ¡Â»â€¢ng doanh thu theo chi nhÄ‚Â¡nh (DÄ‚Â¹ng Oracle Function
+	// FN_GET_BRANCH_REVENUE)
 	@Query(value = """
-			SELECT 
-			    COALESCE(SUM(b.amount), 0)
-			    - COALESCE(SUM(br.return_money), 0)
-			    + COALESCE(SUM(rd.quantity_return * pd.price), 0)
-			FROM bill b 
-			LEFT JOIN bill_return br ON b.id = br.bill_id 
-			LEFT JOIN return_detail rd ON br.id = rd.return_id 
-			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
-			WHERE b.status = 'HOAN_THANH' AND b.branch_id = :branchId
-	""", nativeQuery = true)
+					SELECT
+					    COALESCE(SUM(b.amount), 0)
+					    - COALESCE(SUM(br.returnMoney), 0)
+					    + COALESCE(SUM(rd.quantityReturn * pd.price), 0)
+					FROM bill b
+					LEFT JOIN bill_return br ON b.id = br.bill_id
+					LEFT JOIN return_detail rd ON br.id = rd.return_id
+					LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+					WHERE b.status = 'HOAN_THANH' AND b.branch_id = :branchId
+			""", nativeQuery = true)
 	Double calculateTotalRevenueByBranch(@Param("branchId") Long branchId);
 
-
-	// Ă¢Å“â€¦ TĂ¡Â»â€¢ng doanh thu theo ngÄ‚Â y vÄ‚Â  chi nhÄ‚Â¡nh (DÄ‚Â¹ng Oracle Function FN_GET_BRANCH_REVENUE)
+	// Ă¢Å“â€¦ TĂ¡Â»â€¢ng doanh thu theo ngÄ‚Â y vÄ‚Â  chi nhÄ‚Â¡nh (DÄ‚Â¹ng Oracle
+	// Function FN_GET_BRANCH_REVENUE)
 	@Query(value = """
-			SELECT 
-			    COALESCE(SUM(b.amount), 0)
-			    - COALESCE(SUM(br.return_money), 0)
-			    + COALESCE(SUM(rd.quantity_return * pd.price), 0)
-			FROM bill b 
-			LEFT JOIN bill_return br ON b.id = br.bill_id 
-			LEFT JOIN return_detail rd ON br.id = rd.return_id 
-			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
-			WHERE b.status = 'HOAN_THANH' AND b.branch_id = :branchId
-			  AND (b.create_date BETWEEN :fromDate AND :toDate)
-	""", nativeQuery = true)
+					SELECT
+					    COALESCE(SUM(b.amount), 0)
+					    - COALESCE(SUM(br.returnMoney), 0)
+					    + COALESCE(SUM(rd.quantityReturn * pd.price), 0)
+					FROM bill b
+					LEFT JOIN bill_return br ON b.id = br.bill_id
+					LEFT JOIN return_detail rd ON br.id = rd.return_id
+					LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+					WHERE b.status = 'HOAN_THANH' AND b.branch_id = :branchId
+					  AND (b.create_date BETWEEN :fromDate AND :toDate)
+			""", nativeQuery = true)
 	Double calculateTotalRevenueFromDateByBranch(
-	        @Param("fromDate") LocalDateTime fromDate,
-	        @Param("toDate") LocalDateTime toDate,
-	        @Param("branchId") Long branchId);
+			@Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate,
+			@Param("branchId") Long branchId);
 
-	
-		@Query(value = """
+	@Query(value = """
 			    SELECT * FROM (
 			        SELECT p.name AS productName,
 			               SUM(bd.quantity) AS totalQuantity,
@@ -606,68 +608,63 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			        JOIN bill_detail bd ON b.id = bd.bill_id
 			        JOIN product_detail pd ON bd.product_detail_id = pd.id
 			        JOIN product p ON pd.product_id = p.id
-			        WHERE b.status = 'HOAN_THANH' 
+			        WHERE b.status = 'HOAN_THANH'
 			          AND b.branch_id = :branchId
 			        GROUP BY p.name
 			        ORDER BY SUM(bd.quantity) DESC
 			    ) WHERE ROWNUM <= 10
 			""", nativeQuery = true)
-			List<BestSellerProduct> getBestSellerProductByBranch(@Param("branchId") Long branchId);
-		@Query(value = """
-		        SELECT 
-		            b.id AS maHoaDon,
-		            b.code AS maDinhDanh,
-		            c.name AS hoVaTen,
-		            c.phone_number AS soDienThoai,
-		            b.create_date AS ngayTao,
-		            COALESCE(b.amount, 0) AS tongTien,
-		            b.status AS trangThai,
-		            b.invoice_type AS loaiDon,
-		            pm.name AS hinhThucThanhToan,
-		            COALESCE(ca.email, '') AS nhanVienThanhToan,
-		            COALESCE(br.code, '') AS maDoiTra
-		        FROM bill b
-		        LEFT JOIN customer c ON b.customer_id = c.id
-		        LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
-		        LEFT JOIN account ca ON b.cashier_account_id = ca.id
-		        LEFT JOIN bill_return br ON b.id = br.bill_id
-		        WHERE b.branch_id = :branchId
-		        """,
-		        countQuery = "SELECT COUNT(*) FROM bill WHERE branch_id = :branchId",
-		        nativeQuery = true)
-		Page<BillDtoInterface> findByBranchId(@Param("branchId") Long branchId, Pageable pageable);
+	List<BestSellerProduct> getBestSellerProductByBranch(@Param("branchId") Long branchId);
 
-		@Query(value = """
-		        SELECT 
-		            b.id AS maHoaDon,
-		            b.code AS maDinhDanh,
-		            c.name AS hoVaTen,
-		            c.phone_number AS soDienThoai,
-		            b.create_date AS ngayTao,
-		            COALESCE(b.amount, 0) AS tongTien,
-		            b.status AS trangThai,
-		            b.invoice_type AS loaiDon,
-		            pm.name AS hinhThucThanhToan,
-		            COALESCE(ca.email, '') AS nhanVienThanhToan,
-		            COALESCE(br.code, '') AS maDoiTra
-		        FROM bill b
-		        LEFT JOIN customer c ON b.customer_id = c.id
-		        LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
-		        LEFT JOIN account ca ON b.cashier_account_id = ca.id
-		        LEFT JOIN bill_return br ON b.id = br.bill_id
-		        WHERE b.cashier_account_id = :cashierId
-		          AND (:branchId IS NULL OR b.branch_id = :branchId)
-		        """,
-		        countQuery = """
-		        SELECT COUNT(*)
-		        FROM bill b
-		        WHERE b.cashier_account_id = :cashierId
-		          AND (:branchId IS NULL OR b.branch_id = :branchId)
-		        """,
-		        nativeQuery = true)
-		Page<BillDtoInterface> findByCashierIdAndBranchId(@Param("cashierId") Long cashierId, @Param("branchId") Long branchId, Pageable pageable);
+	@Query(value = """
+			SELECT
+			    b.id AS maHoaDon,
+			    b.code AS maDinhDanh,
+			    c.name AS hoVaTen,
+			    c.phone_number AS soDienThoai,
+			    b.create_date AS ngayTao,
+			    COALESCE(b.amount, 0) AS tongTien,
+			    b.status AS trangThai,
+			    b.invoice_type AS loaiDon,
+			    pm.name AS hinhThucThanhToan,
+			    COALESCE(ca.email, '') AS nhanVienThanhToan,
+			    COALESCE(br.code, '') AS maDoiTra
+			FROM bill b
+			LEFT JOIN customer c ON b.customer_id = c.id
+			LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+			LEFT JOIN account ca ON b.cashier_account_id = ca.id
+			LEFT JOIN bill_return br ON b.id = br.bill_id
+			WHERE b.branch_id = :branchId
+			""", countQuery = "SELECT COUNT(*) FROM bill WHERE branch_id = :branchId", nativeQuery = true)
+	Page<BillDtoInterface> findByBranchId(@Param("branchId") Long branchId, Pageable pageable);
 
-
+	@Query(value = """
+			SELECT
+			    b.id AS maHoaDon,
+			    b.code AS maDinhDanh,
+			    c.name AS hoVaTen,
+			    c.phone_number AS soDienThoai,
+			    b.create_date AS ngayTao,
+			    COALESCE(b.amount, 0) AS tongTien,
+			    b.status AS trangThai,
+			    b.invoice_type AS loaiDon,
+			    pm.name AS hinhThucThanhToan,
+			    COALESCE(ca.email, '') AS nhanVienThanhToan,
+			    COALESCE(br.code, '') AS maDoiTra
+			FROM bill b
+			LEFT JOIN customer c ON b.customer_id = c.id
+			LEFT JOIN payment_method pm ON b.payment_method_id = pm.id
+			LEFT JOIN account ca ON b.cashier_account_id = ca.id
+			LEFT JOIN bill_return br ON b.id = br.bill_id
+			WHERE b.cashier_account_id = :cashierId
+			  AND (:branchId IS NULL OR b.branch_id = :branchId)
+			""", countQuery = """
+			SELECT COUNT(*)
+			FROM bill b
+			WHERE b.cashier_account_id = :cashierId
+			  AND (:branchId IS NULL OR b.branch_id = :branchId)
+			""", nativeQuery = true)
+	Page<BillDtoInterface> findByCashierIdAndBranchId(@Param("cashierId") Long cashierId,
+			@Param("branchId") Long branchId, Pageable pageable);
 
 }
-
