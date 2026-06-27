@@ -936,11 +936,23 @@
 		        updateRevenue("revenueWeek", data.revenueWeek);
 		        updateRevenue("revenueMonth", data.revenueMonth);
 		
-		        // ✅ Gọi vẽ lại biểu đồ theo chi nhánh
-		        callApiGetInMonth($('#month').val(), $('#year').val(), branchId);
-		        callApiGetInYear($('#monthYear').val(), branchId);
-		        callApiStatisInTime($('#dateStart').val(), $('#dateEnd').val(), branchId);
-		        callApiStatisticInMonth($('#monthStart').val(), $('#monthEnd').val(), branchId);
+                // ✅ Cập nhật nhãn
+                $('#revenueAll').next('h6').text('Doanh thu chi nhánh');
+                $('#revenueToday').next('h6').text('Hôm nay (chi nhánh)');
+                $('#revenueWeek').next('h6').text('Tuần này (chi nhánh)');
+                $('#revenueMonth').next('h6').text('Tháng này (chi nhánh)');
+  		
+  		        // ✅ Gọi vẽ lại biểu đồ theo chi nhánh
+  		        callApiGetInMonth($('#month').val(), $('#year').val(), branchId);
+  		        callApiGetInYear($('#monthYear').val(), branchId);
+  		        
+  		        if ($('#dateStart').val() && $('#dateEnd').val()) {
+  		            callApiStatisInTime($('#dateStart').val(), $('#dateEnd').val(), branchId);
+  		        }
+  		        
+  		        if ($('#monthStart').val() && $('#monthEnd').val()) {
+  		            callApiStatisticInMonth($('#monthStart').val(), $('#monthEnd').val(), branchId);
+  		        }
 		
 		        Toastify({
 		            text: "✅ Đã tải xong thống kê cho " + branchName,

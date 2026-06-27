@@ -28,7 +28,9 @@ public class AccountMngController {
     @GetMapping("/admin-only/account-management")
     public String viewAccountManagementPage(Model model) {
         List<Account> accountList = accountService.findAllAccount();
+        List<Branch> branchList = branchService.getAllBranches();
         model.addAttribute("accountList", accountList);
+        model.addAttribute("branchList", branchList);
         return "/admin/account";
     }
 
@@ -47,9 +49,16 @@ public class AccountMngController {
     }
 
     @PostMapping("/account/change-role")
-    public String openAccount(@ModelAttribute("email") String email, @ModelAttribute("role") Long roleId, RedirectAttributes redirectAttributes) {
-        Account account = accountService.changeRole(email, roleId);
-        redirectAttributes.addFlashAttribute("message", "Tài khoản " + account.getEmail() + " đã đổi thành quyền thành công");
+    public String changeAccountRole(@ModelAttribute("email") String email, 
+                                    @ModelAttribute("role") Long roleId, 
+                                    @org.springframework.web.bind.annotation.RequestParam(value = "branchId", required = false) Long branchId,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            Account account = accountService.changeRole(email, roleId, branchId);
+            redirectAttributes.addFlashAttribute("message", "Tài khoản " + account.getEmail() + " đã đổi quyền thành công");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/admin-only/account-management";
     }
 

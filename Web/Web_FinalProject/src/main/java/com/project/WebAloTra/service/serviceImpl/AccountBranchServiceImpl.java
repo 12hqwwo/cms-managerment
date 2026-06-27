@@ -49,14 +49,10 @@ public class AccountBranchServiceImpl implements AccountBranchService {
             Account account = optionalAccount.get();
             Branch branch = optionalBranch.get();
 
-            // Liên kết 2 chiều
+            // Account là owning side (có branch_id FK), chỉ cần set từ Account
             account.setBranch(branch);
-            branch.setVendorAccount(account);
-
             account.setUpdateDate(LocalDateTime.now());
-            branch.setUpdateDate(LocalDateTime.now());
 
-            branchRepository.save(branch);
             return accountRepository.save(account);
         }
         throw new RuntimeException("Không tìm thấy account hoặc branch tương ứng.");
@@ -90,10 +86,8 @@ public class AccountBranchServiceImpl implements AccountBranchService {
         Optional<Role> vendorRole = roleRepository.findByName(RoleName.ROLE_VENDOR);
         vendorRole.ifPresent(account::setRole);
 
-        savedBranch.setVendorAccount(account);
-
+        // Account là owning side, chỉ cần save account là đủ
         accountRepository.save(account);
-        branchRepository.save(savedBranch);
 
         return account;
     }
@@ -116,10 +110,8 @@ public class AccountBranchServiceImpl implements AccountBranchService {
             Account account = optionalAccount.get();
             Branch branch = account.getBranch();
 
-            if (branch != null) {
-                branch.setVendorAccount(null);
-                branchRepository.save(branch);
-            }
+            // Branch là inverse side, không cần update Branch
+            // Chỉ cần set null từ phía Account (owning side)
 
             account.setBranch(null);
             account.setUpdateDate(LocalDateTime.now());
@@ -141,7 +133,6 @@ public class AccountBranchServiceImpl implements AccountBranchService {
         branch.setActive(true);
         branch.setCreateDate(LocalDateTime.now());
         branch.setUpdateDate(LocalDateTime.now());
-        branch.setVendorAccount(account);
 
         Branch savedBranch = branchRepository.save(branch);
         account.setBranch(savedBranch);

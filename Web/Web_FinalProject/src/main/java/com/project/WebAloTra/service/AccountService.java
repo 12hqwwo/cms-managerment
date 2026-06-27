@@ -20,7 +20,7 @@ public interface AccountService {
 
     Account openAccount(Long id);
 
-    Account changeRole(String email, Long roleId);
+    Account changeRole(String email, Long roleId, Long branchId);
 
     AccountDto getAccountLogin();
 

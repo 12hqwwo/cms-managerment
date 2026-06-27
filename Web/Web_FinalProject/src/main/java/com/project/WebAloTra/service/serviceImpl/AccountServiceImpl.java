@@ -11,6 +11,7 @@ import com.project.WebAloTra.dto.AddressShipping.AddressShippingDto;
 import com.project.WebAloTra.dto.Statistic.UserStatistic;
 import com.project.WebAloTra.entity.Account;
 import com.project.WebAloTra.entity.AddressShipping;
+import com.project.WebAloTra.entity.Branch;
 import com.project.WebAloTra.entity.Customer;
 import com.project.WebAloTra.entity.Role;
 import com.project.WebAloTra.exception.ShopApiException;
@@ -83,11 +84,47 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account changeRole(String email, Long roleId) {
+    public Account changeRole(String email, Long roleId, Long branchId) {
         Account account = accountRepository.findByEmail(email);
+        Account currentLoginUser = UserLoginUtil.getCurrentLogin();
+
+        // Prevent self-demotion and modifying other admins
+        if (account.getRole() != null && account.getRole().getId() == 1L) {
+            if (currentLoginUser != null && account.getEmail().equalsIgnoreCase(currentLoginUser.getEmail())) {
+                if (roleId != 1L) {
+                    throw new RuntimeException("Bạn không thể tự giáng cấp quyền của chính mình!");
+                }
+            } else {
+                throw new RuntimeException("Bạn không có quyền thay đổi Role của một Admin khác!");
+            }
+        }
+
         Role role = new Role();
         role.setId(roleId);
         account.setRole(role);
+        
+        // If role is Staff (2) or Vendor (5), assign branch if provided
+        if (roleId == 2L || roleId == 5L) {
+            if (branchId != null) {
+                if (roleId == 5L) {
+                    // Validation: A branch can only have 1 vendor
+                    List<Account> branchAccounts = accountRepository.findByBranch_Id(branchId);
+                    for (Account acc : branchAccounts) {
+                        if (acc.getRole() != null && acc.getRole().getId() == 5L && !acc.getEmail().equalsIgnoreCase(email)) {
+                            throw new RuntimeException("Chi nhánh này đã có Vendor (Người quản lý) khác được gán!");
+                        }
+                    }
+                }
+
+                Branch branch = new Branch();
+                branch.setId(branchId);
+                account.setBranch(branch);
+            }
+        } else {
+            // For other roles, remove branch assignment
+            account.setBranch(null);
+        }
+        
         return accountRepository.save(account);
     }
 

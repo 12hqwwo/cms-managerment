@@ -14,18 +14,18 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Account findByEmail(String email);
 
     /**
-     * ✅ Tìm branch_id của vendor theo email đăng nhập
-     * (Cần có quan hệ ManyToOne giữa Account và Branch)
+     * âœ… TĂ¬m branch_id cá»§a vendor theo email Ä‘Äƒng nháº­p
+     * (Cáº§n cĂ³ quan há»‡ ManyToOne giá»¯a Account vĂ  Branch)
      */
     @Query(value = "SELECT branch_id FROM account WHERE email = :email", nativeQuery = true)
     Optional<Long> findBranchIdByEmail(@Param("email") String email);
 
     /**
-     * ✅ Thống kê số lượng tài khoản được tạo theo tháng
+     * âœ… Thá»‘ng kĂª sá»‘ lÆ°á»£ng tĂ i khoáº£n Ä‘Æ°á»£c táº¡o theo thĂ¡ng
      */
     @Query(value = """
             SELECT 
-                TO_CHAR(a.create_date, 'MM-YYYY') AS month,
+                TO_CHAR(a.create_date, 'MM-YYYY') AS "month",
                 COUNT(a.id) AS count
             FROM account a
             WHERE a.create_date BETWEEN TO_TIMESTAMP(:startDate, 'YYYY-MM-DD') AND TO_TIMESTAMP(:endDate, 'YYYY-MM-DD')
@@ -38,5 +38,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Account findByCustomer_PhoneNumber(String phoneNumber);
 
+    List<Account> findByBranch_Id(Long branchId);
+
     Account findTopByOrderByIdDesc();
 }
+

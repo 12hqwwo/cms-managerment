@@ -10,8 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.project.WebAloTra.entity.Account;
 import com.project.WebAloTra.entity.Bill;
 import com.project.WebAloTra.entity.Branch;
+import com.project.WebAloTra.repository.AccountRepository;
 import com.project.WebAloTra.repository.BillRepository;
 import com.project.WebAloTra.repository.BranchRepository;
 import com.project.WebAloTra.service.BranchService;
@@ -33,6 +35,9 @@ public class BranchRestController {
 
     @Autowired
     private BillRepository billRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
 
     /**
      * API chi tiết chi nhánh - doanh thu 7 ngày + 10 hóa đơn gần nhất
@@ -67,6 +72,29 @@ public class BranchRestController {
             response.put("branchId", branchId);
             response.put("branchName", branch.getBranchName());
             response.put("branchCode", branch.getBranchCode());
+            response.put("address", branch.getAddress());
+            response.put("phone", branch.getPhone());
+            response.put("email", branch.getEmail());
+
+            List<Account> branchAccounts = accountRepository.findByBranch_Id(branchId);
+            Map<String, Object> vendor = null;
+            List<Map<String, Object>> staffs = new ArrayList<>();
+
+            for (Account acc : branchAccounts) {
+                Map<String, Object> accMap = new HashMap<>();
+                accMap.put("email", acc.getEmail());
+                accMap.put("name", acc.getCustomer() != null ? acc.getCustomer().getName() : "N/A");
+                accMap.put("phone", acc.getCustomer() != null ? acc.getCustomer().getPhoneNumber() : "N/A");
+                
+                if (acc.getRole() != null && acc.getRole().getId() == 5L) { // Vendor
+                    vendor = accMap;
+                } else if (acc.getRole() != null && acc.getRole().getId() == 2L) { // Staff
+                    staffs.add(accMap);
+                }
+            }
+            response.put("vendor", vendor);
+            response.put("staffs", staffs);
+
             response.put("revenueDates", revenueDates);
             response.put("revenueValues", revenueValues);
 

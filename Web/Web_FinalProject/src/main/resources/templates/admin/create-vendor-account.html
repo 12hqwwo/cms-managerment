@@ -50,33 +50,66 @@
 
             <!-- Form Tạo Vendor Account -->
             <form id="vendor-form" method="post" action="#" class="needs-validation">
-                <!-- Phần 0: Chọn Tài Khoản hoặc Tạo Mới -->
-                <div class="form-section">
-                    <h5>I. Chọn Tài Khoản Vendor</h5>
+                <!-- Phần 1: Tạo Tài Khoản Mới -->
+                <div class="form-section" id="newAccountSection">
+                    <h5>I. Thông Tin Tài Khoản Mới</h5>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Loại Tài Khoản <span class="red_require">*</span></label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="accountType" id="existingAccount" value="existing" checked>
-                            <label class="form-check-label" for="existingAccount">
-                                Chọn Tài Khoản Có Sẵn
-                            </label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email <span class="red_require">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="Nhập email" required>
+                                <div class="invalid-feedback">
+                                    Email không hợp lệ
+                                </div>
+                            </div>
                         </div>
-                        
-
-                    <!-- Phần chọn account có sẵn -->
-                    <div id="existingAccountSection" class="mb-3">
-                        <label for="selectAccount" class="form-label">Chọn Tài Khoản <span class="red_require">*</span></label>
-                        <select class="form-select" id="selectAccount" name="accountId">
-                            <option value="">-- Chọn một tài khoản --</option>
-                            <th:block th:each="account : ${availableAccounts}">
-                                <option th:value="${account.id}" th:text="${account.email} + ' (' + ${account.code} + ')'"></option>
-                            </th:block>
-                        </select>
-                        <small class="form-text text-muted">Danh sách tài khoản chưa có chi nhánh</small>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="code" class="form-label">Mã Tài Khoản <span class="red_require">*</span></label>
+                                <input type="text" class="form-control" id="code" name="code" 
+                                       placeholder="VD: NV001, VENDOR_HN..." required>
+                                <div class="invalid-feedback">
+                                    Mã tài khoản không được để trống
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Mật Khẩu <span class="red_require">*</span></label>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="Nhập mật khẩu" required minlength="6">
+                                <div class="invalid-feedback">
+                                    Mật khẩu phải có ít nhất 6 ký tự
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Xác Nhận Mật Khẩu <span class="red_require">*</span></label>
+                                <input type="password" class="form-control" id="confirmPassword" 
+                                       placeholder="Nhập lại mật khẩu" required>
+                                <div class="invalid-feedback">
+                                    Vui lòng xác nhận mật khẩu
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phoneNumber" class="form-label">Số Điện Thoại Tài Khoản</label>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" 
+                                       placeholder="Nhập số điện thoại tài khoản">
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Phần 2: Thông tin Chi Nhánh -->
                 <div class="form-section">
                     <h5>II. Thông Tin Chi Nhánh (Branch)</h5>
@@ -154,25 +187,10 @@
         </div>
 
         <script>
-            // Hiển thị/ẩn phần tạo tài khoản mới
-            document.querySelectorAll('input[name="accountType"]').forEach((elem) => {
-                elem.addEventListener("change", function(event) {
-                    var value = event.target.value;
-                    if(value === "new") {
-                        document.getElementById("newAccountSection").style.display = "block";
-                        document.getElementById("existingAccountSection").style.display = "none";
-                    } else {
-                        document.getElementById("newAccountSection").style.display = "none";
-                        document.getElementById("existingAccountSection").style.display = "block";
-                    }
-                });
-            });
-
             // Validate form trước khi submit
             document.getElementById('vendor-form').addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                const accountType = document.querySelector('input[name="accountType"]:checked').value;
                 const branchCode = document.getElementById('branchCode').value;
                 const branchName = document.getElementById('branchName').value;
                 const branchAddress = document.getElementById('branchAddress').value;
@@ -193,44 +211,33 @@
                     branchEmail: branchEmail
                 };
 
-                if (accountType === "existing") {
-                    // Chọn account có sẵn
-                    const accountIdStr = document.getElementById('selectAccount').value;
-                    if (!accountIdStr) {
-                        alert('Vui lòng chọn một tài khoản!');
-                        return;
-                    }
-                    data.accountId = parseInt(accountIdStr); // Convert string to number
-                    submitAssignBranchForm(data);
-                } else {
-                    // Tạo account mới
-                    const email = document.getElementById('email').value;
-                    const code = document.getElementById('code').value;
-                    const password = document.getElementById('password').value;
-                    const confirmPassword = document.getElementById('confirmPassword').value;
-                    const phoneNumber = document.getElementById('phoneNumber').value;
+                // Tạo account mới
+                const email = document.getElementById('email').value;
+                const code = document.getElementById('code').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const phoneNumber = document.getElementById('phoneNumber').value;
 
-                    if (!email || !code || !password || !confirmPassword) {
-                        alert('Vui lòng điền đầy đủ thông tin tài khoản!');
-                        return;
-                    }
-
-                    if (password !== confirmPassword) {
-                        alert('Mật khẩu không khớp!');
-                        return;
-                    }
-
-                    if (password.length < 6) {
-                        alert('Mật khẩu phải có ít nhất 6 ký tự!');
-                        return;
-                    }
-
-                    data.email = email;
-                    data.code = code;
-                    data.password = password;
-                    data.phoneNumber = phoneNumber;
-                    submitCreateVendorForm(data);
+                if (!email || !code || !password || !confirmPassword) {
+                    alert('Vui lòng điền đầy đủ thông tin tài khoản!');
+                    return;
                 }
+
+                if (password !== confirmPassword) {
+                    alert('Mật khẩu không khớp!');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                    return;
+                }
+
+                data.email = email;
+                data.code = code;
+                data.password = password;
+                data.phoneNumber = phoneNumber;
+                submitCreateVendorForm(data);
             });
 
             // Gửi request tạo vendor account mới

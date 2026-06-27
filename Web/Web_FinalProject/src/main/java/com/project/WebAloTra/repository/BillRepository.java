@@ -24,7 +24,7 @@ import java.util.List;
 public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificationExecutor<Bill> {
 
 	/*
-	 * ============================= DANH SÁCH BILL (PHÂN TRANG)
+	 * ============================= DANH SÄ‚ÂCH BILL (PHÄ‚â€N TRANG)
 	 * =============================
 	 */
 	@Query(value = """
@@ -51,7 +51,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Page<BillDtoInterface> listBill(Pageable pageable);
 
 	/*
-	 * ============================= DANH SÁCH BILL KHÔNG PHÂN TRANG
+	 * ============================= DANH SÄ‚ÂCH BILL KHÄ‚â€NG PHÄ‚â€N TRANG
 	 * =============================
 	 */
 	@Query(value = """
@@ -78,12 +78,12 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	List<BillDtoInterface> listBill();
 
 	/*
-	 * ============================= TÌM BILL MỚI NHẤT =============================
+	 * ============================= TÄ‚Å’M BILL MĂ¡Â»ÂI NHĂ¡ÂºÂ¤T =============================
 	 */
 	Bill findTopByOrderByIdDesc();
 
 	/*
-	 * ============================= CẬP NHẬT TRẠNG THÁI BILL
+	 * ============================= CĂ¡ÂºÂ¬P NHĂ¡ÂºÂ¬T TRĂ¡ÂºÂ NG THÄ‚ÂI BILL
 	 * =============================
 	 */
 	@Modifying
@@ -92,7 +92,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	int updateStatus(@Param("status") String status, @Param("id") Long id);
 
 	/*
-	 * ============================= GẮN BILL ID VÀO PAYMENT SAU THANH TOÁN
+	 * ============================= GĂ¡ÂºÂ®N BILL ID VÄ‚â‚¬O PAYMENT SAU THANH TOÄ‚ÂN
 	 * =============================
 	 */
 	@Modifying
@@ -101,7 +101,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	int updateBillAndStatus(@Param("billId") Long billId, @Param("paymentId") Long paymentId);
 
 	/*
-	 * ============================= LẤY CHI TIẾT BILL =============================
+	 * ============================= LĂ¡ÂºÂ¤Y CHI TIĂ¡ÂºÂ¾T BILL =============================
 	 */
 	@Query(value = """
 			SELECT
@@ -140,7 +140,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	BillDetailDtoInterface getbill_detail(@Param("maHoaDon") Long maHoaDon);
 
 	/*
-	 * ============================= LỌC BILL (PHÂN TRANG)
+	 * ============================= LĂ¡Â»Å’C BILL (PHÄ‚â€N TRANG)
 	 * =============================
 	 */
 	@Query(value = """
@@ -174,7 +174,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			@Param("soDienThoai") String soDienThoai, @Param("hoVaTen") String hoVaTen, Pageable pageable);
 
 	/*
-	 * ============================= LỌC BILL (KHÔNG PHÂN TRANG)
+	 * ============================= LĂ¡Â»Å’C BILL (KHÄ‚â€NG PHÄ‚â€N TRANG)
 	 * =============================
 	 */
 	@Query(value = """
@@ -208,11 +208,11 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			@Param("soDienThoai") String soDienThoai, @Param("hoVaTen") String hoVaTen);
 
 	/*
-	 * ============================= CÁC THỐNG KÊ DOANH THU
+	 * ============================= CÄ‚ÂC THĂ¡Â»ÂNG KÄ‚Â DOANH THU
 	 * =============================
 	 */
 	@Query(value = """
-		    SELECT TRUNC(b.create_date) AS date,
+		    SELECT TRUNC(b.create_date) AS "date",
 		           COALESCE(SUM(b.amount), 0) 
 		           - COALESCE(SUM(br.returnMoney), 0) 
 		           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
@@ -235,11 +235,11 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
 
 	/*
-	 * ============================= THỐNG KÊ DOANH THU THEO NGÀY (DAILY)
+	 * ============================= THĂ¡Â»ÂNG KÄ‚Â DOANH THU THEO NGÄ‚â‚¬Y (DAILY)
 	 * =============================
 	 */
 		@Query(value = """
-			    SELECT TO_CHAR(b.create_date, 'YYYY-MM-DD') AS date,
+			    SELECT TO_CHAR(b.create_date, 'YYYY-MM-DD') AS "date",
 			           COALESCE(SUM(b.amount), 0) 
 			           - COALESCE(SUM(br.returnMoney), 0)
 			           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
@@ -261,7 +261,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
 
 			@Query(value = """
-				    SELECT EXTRACT(MONTH FROM b.create_date) AS month,
+				    SELECT EXTRACT(MONTH FROM b.create_date) AS "month",
 				           COALESCE(SUM(b.amount), 0)
 				           - COALESCE(SUM(br.returnMoney), 0)
 				           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
@@ -282,7 +282,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
 
 	/*
-	 * ============================= REFUND / THỐNG KÊ KHÁC
+	 * ============================= REFUND / THĂ¡Â»ÂNG KÄ‚Â KHÄ‚ÂC
 	 * =============================
 	 */
 	@Query(value = "SELECT b.code AS billCode, b.id AS billId, pm.orderId AS orderId, c.name AS customerName, "
@@ -293,7 +293,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	List<RefundDto> findListNeedRefund();
 
 	/*
-	 * ============================= BILL ĐỦ ĐIỀU KIỆN TRẢ HÀNG (7 NGÀY)
+	 * ============================= BILL Ă„ÂĂ¡Â»Â¦ Ă„ÂIĂ¡Â»â‚¬U KIĂ¡Â»â€ N TRĂ¡ÂºÂ¢ HÄ‚â‚¬NG (7 NGÄ‚â‚¬Y)
 	 * =============================
 	 */
 	@Query(value = "SELECT * FROM bill b " + "WHERE (SYSDATE - b.create_date) <= 7 "
@@ -301,7 +301,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Page<Bill> findValidBillToReturn(Pageable pageable);
 
 	/*
-	 * ============================= THỐNG KÊ SỐ ĐƠN THEO TRẠNG THÁI
+	 * ============================= THĂ¡Â»ÂNG KÄ‚Â SĂ¡Â»Â Ă„ÂĂ†Â N THEO TRĂ¡ÂºÂ NG THÄ‚ÂI
 	 * =============================
 	 */
 	@Query(value = """
@@ -344,7 +344,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	List<BillDetailProduct> getbill_detailProduct(@Param("maHoaDon") Long maHoaDon);
 
 	/*
-	 * ============================= BILL DÀNH CHO USER (/cart-status)
+	 * ============================= BILL DÄ‚â‚¬NH CHO USER (/cart-status)
 	 * =============================
 	 */
 	@Query(value = """
@@ -401,7 +401,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Page<Bill> getBillByAccount(@Param("customerId") Long customerId, Pageable pageable);
 
 	/*
-	 * ============================= BILL DÀNH CHO USER THEO TRẠNG THÁI
+	 * ============================= BILL DÄ‚â‚¬NH CHO USER THEO TRĂ¡ÂºÂ NG THÄ‚ÂI
 	 * =============================
 	 */
 	@Query(value = """
@@ -459,12 +459,12 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Page<Bill> getBillByStatus(@Param("customerId") Long customerId, @Param("status") String status, Pageable pageable);
 
 	/*
-	 * ============================= THỐNG KÊ DOANH THU THEO THÁNG (FORM MONTH)
+	 * ============================= THĂ¡Â»ÂNG KÄ‚Â DOANH THU THEO THÄ‚ÂNG (FORM MONTH)
 	 * =============================
 	 */
 	
 	@Query(value = """
-		    SELECT TO_CHAR(b.create_date, 'MM-YYYY') AS month,
+		    SELECT TO_CHAR(b.create_date, 'MM-YYYY') AS "month",
 		           COALESCE(SUM(b.amount), 0)
 		           - COALESCE(SUM(br.returnMoney), 0)
 		           + COALESCE(SUM(rd.quantityReturn * pd.price), 0) AS revenue
@@ -486,7 +486,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
 
 	/*
-	 * ============================= TỔNG DOANH THU TOÀN HỆ THỐNG
+	 * ============================= TĂ¡Â»â€NG DOANH THU TOÄ‚â‚¬N HĂ¡Â»â€  THĂ¡Â»ÂNG
 	 * =============================
 	 */
 	@Query(value = "SELECT " + "COALESCE(SUM(b.amount), 0) - COALESCE(SUM(br.returnMoney), 0) + "
@@ -497,14 +497,14 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	Double calculateTotalRevenue();
 
 	/*
-	 * ============================= TỔNG SỐ BILL CHỜ XÁC NHẬN
+	 * ============================= TĂ¡Â»â€NG SĂ¡Â»Â BILL CHĂ¡Â»Å“ XÄ‚ÂC NHĂ¡ÂºÂ¬N
 	 * =============================
 	 */
 	@Query(value = "SELECT COUNT(*) FROM bill WHERE status = 'CHO_XAC_NHAN'", nativeQuery = true)
 	int getTotalBillStatusWaiting();
 
 	/*
-	 * ============================= TỔNG DOANH THU TRONG KHOẢNG NGÀY (FROM - TO)
+	 * ============================= TĂ¡Â»â€NG DOANH THU TRONG KHOĂ¡ÂºÂ¢NG NGÄ‚â‚¬Y (FROM - TO)
 	 * =============================
 	 */
 	@Query(value = """
@@ -536,7 +536,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
 	@Query(value = """
 			    SELECT
-			        TO_CHAR(b.create_date, 'YYYY-MM-DD') AS date,
+			        TO_CHAR(b.create_date, 'YYYY-MM-DD') AS "date",
 			        COALESCE(SUM(b.amount), 0) AS revenue
 			    FROM bill b
 			    WHERE b.branch_id = :branchId
@@ -550,7 +550,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
 	@Query(value = """
 			    SELECT
-			        EXTRACT(MONTH FROM b.create_date) AS month,
+			        EXTRACT(MONTH FROM b.create_date) AS "month",
 			        COALESCE(SUM(b.amount), 0) AS revenue
 			    FROM bill b
 			    WHERE b.branch_id = :branchId
@@ -561,18 +561,35 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			""", nativeQuery = true)
 	List<Object[]> statisticRevenueMonthByBranch(@Param("branchId") Long branchId, @Param("year") String year);
 	
-	// ================== DOANH THU THEO CHI NHÁNH ==================
+	// ================== DOANH THU THEO CHI NHÄ‚ÂNH ==================
 
-	// ✅ Tổng doanh thu theo chi nhánh (Dùng Oracle Function FN_GET_BRANCH_REVENUE)
+	// Ă¢Å“â€¦ TĂ¡Â»â€¢ng doanh thu theo chi nhÄ‚Â¡nh (DÄ‚Â¹ng Oracle Function FN_GET_BRANCH_REVENUE)
 	@Query(value = """
-	    SELECT FN_GET_BRANCH_REVENUE(:branchId, DATE '2000-01-01', SYSDATE) FROM DUAL
+			SELECT 
+			    COALESCE(SUM(b.amount), 0)
+			    - COALESCE(SUM(br.return_money), 0)
+			    + COALESCE(SUM(rd.quantity_return * pd.price), 0)
+			FROM bill b 
+			LEFT JOIN bill_return br ON b.id = br.bill_id 
+			LEFT JOIN return_detail rd ON br.id = rd.return_id 
+			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+			WHERE b.status = 'HOAN_THANH' AND b.branch_id = :branchId
 	""", nativeQuery = true)
 	Double calculateTotalRevenueByBranch(@Param("branchId") Long branchId);
 
 
-	// ✅ Tổng doanh thu theo ngày và chi nhánh (Dùng Oracle Function FN_GET_BRANCH_REVENUE)
+	// Ă¢Å“â€¦ TĂ¡Â»â€¢ng doanh thu theo ngÄ‚Â y vÄ‚Â  chi nhÄ‚Â¡nh (DÄ‚Â¹ng Oracle Function FN_GET_BRANCH_REVENUE)
 	@Query(value = """
-	    SELECT FN_GET_BRANCH_REVENUE(:branchId, :fromDate, :toDate) FROM DUAL
+			SELECT 
+			    COALESCE(SUM(b.amount), 0)
+			    - COALESCE(SUM(br.return_money), 0)
+			    + COALESCE(SUM(rd.quantity_return * pd.price), 0)
+			FROM bill b 
+			LEFT JOIN bill_return br ON b.id = br.bill_id 
+			LEFT JOIN return_detail rd ON br.id = rd.return_id 
+			LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
+			WHERE b.status = 'HOAN_THANH' AND b.branch_id = :branchId
+			  AND (b.create_date BETWEEN :fromDate AND :toDate)
 	""", nativeQuery = true)
 	Double calculateTotalRevenueFromDateByBranch(
 	        @Param("fromDate") LocalDateTime fromDate,
@@ -653,3 +670,4 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 
 
 }
+

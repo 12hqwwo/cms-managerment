@@ -3,6 +3,7 @@ package com.project.WebAloTra.service.serviceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.project.WebAloTra.entity.Branch;
 import com.project.WebAloTra.repository.BranchRepository;
@@ -74,10 +75,18 @@ public class BranchServiceImpl implements BranchService {
         return null;
     }
 
+
+
+
+
     @Override
     @Transactional
     public void deleteBranch(Long id) {
-        branchRepository.deleteById(id);
+        try {
+            branchRepository.deleteById(id);
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("KhÄ‚Â´ng thĂ¡Â»Æ’ xÄ‚Â³a chi nhÄ‚Â¡nh nÄ‚Â y vÄ‚Â¬ Ă„â€˜ang chĂ¡Â»Â©a dĂ¡Â»Â¯ liĂ¡Â»â€¡u rÄ‚Â ng buĂ¡Â»â„¢c (TÄ‚Â i khoĂ¡ÂºÂ£n, HÄ‚Â³a Ă„â€˜Ă†Â¡n, Kho...).");
+        }
     }
 
     @Override

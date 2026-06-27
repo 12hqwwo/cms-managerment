@@ -38,7 +38,7 @@ public class BrandServiceImpl implements BrandService {
         if(brand.getCode() == null) {
             throw new ShopApiException(HttpStatus.BAD_REQUEST, "Vui lòng nhập mã nhãn hàng");
         }
-        if(brandRepository.existsByCode(brand.getCode().trim())) {
+        if(brand.getCode() != null && brandRepository.existsByCode(brand.getCode().trim())) {
             throw new ShopApiException(HttpStatus.BAD_REQUEST, "Mã nhãn hàng đã tồn tại");
         }
         brand.setStatus(1);

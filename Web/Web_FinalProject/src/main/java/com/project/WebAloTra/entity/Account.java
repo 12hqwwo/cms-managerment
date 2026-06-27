@@ -39,6 +39,7 @@ public class Account implements Serializable {
     @Column(name = "is_non_locked", nullable = false)
     private boolean isNonLocked = true;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = true)
     private Customer customer;
@@ -47,7 +48,7 @@ public class Account implements Serializable {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id", nullable = true)
     private Branch branch;
 
