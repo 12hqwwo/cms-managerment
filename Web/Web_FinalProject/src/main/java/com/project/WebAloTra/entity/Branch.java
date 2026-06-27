@@ -51,4 +51,17 @@ public class Branch implements Serializable {
     @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<BranchInventory> inventories;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public Account getVendorAccount() {
+        if (vendorAccounts != null && !vendorAccounts.isEmpty()) {
+            for (Account account : vendorAccounts) {
+                if (account.getRole() != null && "ROLE_VENDOR".equals(account.getRole().getName().name())) {
+                    return account;
+                }
+            }
+        }
+        return null;
+    }
 }

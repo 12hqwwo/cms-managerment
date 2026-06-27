@@ -31,9 +31,11 @@ public class Customer {
 
     private String email;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AddressShipping> addressShippings;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToOne(cascade = CascadeType.ALL,
             mappedBy = "customer",
             fetch = FetchType.LAZY,

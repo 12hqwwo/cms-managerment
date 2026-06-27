@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{admin/admin-layout.html}">
+
+<head>
+<meta charset="UTF-8">
+<title>Danh sách sản phẩm</title>
+</head>
+<body>
+	<div layout:fragment="content">
+
+		<h4>Quản lý sản phẩm</h4>
+
+		<form th:action="@{/admin/product-all}" method="GET">
+			<div class="my-3">
+				<div class="form-row">
+					<!-- Các trường lọc giữ nguyên -->
+					<!-- ... -->
+				</div>
+				<button type="submit" class="btn btn-primary m-1">
+					<i class="fa fa-search"></i> Tìm kiếm
+				</button>
+				<a th:href="@{/admin/product-all}" class="btn btn-secondary m-1">
+					Hủy bỏ</a>
+			</div>
+		</form>
+
+		<a href="/admin/product-create"
+			class="btn btn-success my-3 float-right"><i
+			class="fa fa-plus-square"></i> <span>Thêm sản phẩm</span></a>
+		<table class="table my-3">
+			<thead class="thead-light">
+				<tr>
+					<th scope="col">Mã sản phẩm</th>
+					<th scope="col">Tên sản phẩm</th>
+					<th scope="col">Nhãn hàng</th>
+					<th scope="col">Loại trà</th>
+					<th scope="col">Danh mục</th>
+					<th scope="col">Trạng thái</th>
+					<th scope="col">Thao tác</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="item :${items}">
+					<td><a
+						th:href="@{'/admin/chi-tiet-san-pham/'+ ${item.maSanPham}}"
+						th:text="${item.maSanPham}"></a></td>
+					<td><a
+						th:href="@{'/admin/chi-tiet-san-pham/'+ ${item.maSanPham}}"
+						th:text="${item.tenSanPham}"></a></td>
+					<td th:text="${item.nhanHang}"></td>
+					<td th:text="${item.chatLieu}"></td>
+					<td th:text="${item.theLoai}"></td>
+					<td><span th:switch="${item.trangThai}"> <span
+							th:case="0">Đang khởi tạo</span> <span th:case="1">Còn bán</span>
+							<span th:case="2">Ngừng bán</span>
+					</span></td>
+					<td>
+						<div class="d-flex align-items-center">
+							<!-- Xóa -->
+							<button type="button" class="btn btn-link p-0 delete-btn"
+								th:attr="data-product-id=${item.idSanPham}" title="Xóa sản phẩm">
+								<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+									viewBox="0 0 20 20">
+									<path fill="red"
+										d="M2.93 17.07A10 10 0 1 1 17.07 2.93A10 10 0 0 1 2.93 17.07zm1.41-1.41A8 8 0 1 0 15.66 4.34A8 8 0 0 0 4.34 15.66zm9.9-8.49L11.41 10l2.83 2.83l-1.41 1.41L10 11.41l-2.83 2.83l-1.41-1.41L8.59 10L5.76 7.17l1.41-1.41L10 8.59l2.83-2.83l1.41 1.41z" /></svg>
+							</button>
+							<!-- Sửa -->
+							<a th:href="@{'/admin/product-edit/' + ${item.maSanPham}}"
+								class="btn btn-link p-0 ml-2" title="Sửa sản phẩm"> <svg
+									xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+									viewBox="0 0 20 20">
+									<path fill="#007bff"
+										d="M2 14.5V18h3.5l10.29-10.29-3.5-3.5L2 14.5zm14.71-9.29a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" /></svg>
+							</a>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<!-- Phân trang giữ nguyên -->
+		<!-- ... -->
+		<script th:inline="javascript">
+        $(document).ready(function () {
+            $('.delete-btn').on('click', function (e) {
+                e.stopPropagation();
+                Swal.fire({
+                    title: "Xác nhận?",
+                    text: `Bạn chắc chắn muốn xóa sản phẩm này?`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    cancelButtonText: 'Hủy',
+                    confirmButtonText: 'Xác nhận',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const id = $(this).attr('data-product-id');
+                        window.location.href = `/admin/product-delete/${id}`;
+                    }
+                });
+            });
+        });
+    </script>
+	</div>
+</body>
+</html>

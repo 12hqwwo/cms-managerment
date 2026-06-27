@@ -3,6 +3,7 @@ package com.project.WebAloTra.service.serviceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.project.WebAloTra.entity.Branch;
 import com.project.WebAloTra.repository.BranchRepository;
@@ -77,7 +78,16 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public void deleteBranch(Long id) {
-        branchRepository.deleteById(id);
+        try {
+            Branch branch = branchRepository.findById(id).orElse(null);
+            if (branch != null) {
+                branch.setActive(false);
+                branchRepository.save(branch);
+            }
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException(
+                    "Không thể xóa chi nhánh này vì đang chứa dữ liệu ràng buộc (Tài khoản, Hóa đơn, Kho...).");
+        }
     }
 
     @Override

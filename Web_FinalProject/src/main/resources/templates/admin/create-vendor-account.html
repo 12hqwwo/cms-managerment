@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/admin-layout.html}">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo Tài Khoản Vendor</title>
+    <style>
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+        .form-section h5 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .red_require {
+            color: red;
+            font-weight: bold;
+        }
+        .success-message {
+            color: green;
+            margin-top: 10px;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container mt-4">
+            <h3>Tạo Tài Khoản Vendor và Chi Nhánh</h3>
+            <hr>
+
+            <!-- Alert Message -->
+            <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${message}">
+                <strong>Thành công!</strong> <span th:text="${message}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" th:if="${error}">
+                <strong>Lỗi!</strong> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- Form Tạo Vendor Account -->
+            <form id="vendor-form" method="post" action="#" class="needs-validation">
+                <!-- Phần 0: Chọn Tài Khoản hoặc Tạo Mới -->
+                <div class="form-section">
+                    <h5>I. Chọn Tài Khoản Vendor</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Loại Tài Khoản <span class="red_require">*</span></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accountType" id="existingAccount" value="existing" checked>
+                            <label class="form-check-label" for="existingAccount">
+                                Chọn Tài Khoản Có Sẵn
+                            </label>
+                        </div>
+                        
+
+                    <!-- Phần chọn account có sẵn -->
+                    <div id="existingAccountSection" class="mb-3">
+                        <label for="selectAccount" class="form-label">Chọn Tài Khoản <span class="red_require">*</span></label>
+                        <select class="form-select" id="selectAccount" name="accountId">
+                            <option value="">-- Chọn một tài khoản --</option>
+                            <th:block th:each="account : ${availableAccounts}">
+                                <option th:value="${account.id}" th:text="${account.email} + ' (' + ${account.code} + ')'"></option>
+                            </th:block>
+                        </select>
+                        <small class="form-text text-muted">Danh sách tài khoản chưa có chi nhánh</small>
+                    </div>
+
+                    
+                <!-- Phần 2: Thông tin Chi Nhánh -->
+                <div class="form-section">
+                    <h5>II. Thông Tin Chi Nhánh (Branch)</h5>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="branchCode" class="form-label">Mã Chi Nhánh <span class="red_require">*</span></label>
+                                <input type="text" class="form-control" id="branchCode" name="branchCode" 
+                                       placeholder="BR_HN, BR_HCM..." required>
+                                <div class="invalid-feedback">
+                                    Mã chi nhánh không được để trống
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="branchName" class="form-label">Tên Chi Nhánh <span class="red_require">*</span></label>
+                                <input type="text" class="form-control" id="branchName" name="branchName" 
+                                       placeholder="Chi nhánh Hà Nội" required>
+                                <div class="invalid-feedback">
+                                    Tên chi nhánh không được để trống
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="branchAddress" class="form-label">Địa Chỉ <span class="red_require">*</span></label>
+                                <input type="text" class="form-control" id="branchAddress" name="branchAddress" 
+                                       placeholder="Nhập địa chỉ chi nhánh" required>
+                                <div class="invalid-feedback">
+                                    Địa chỉ không được để trống
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="branchPhone" class="form-label">Số Điện Thoại Chi Nhánh <span class="red_require">*</span></label>
+                                <input type="tel" class="form-control" id="branchPhone" name="branchPhone" 
+                                       placeholder="Nhập số điện thoại" required>
+                                <div class="invalid-feedback">
+                                    Số điện thoại không được để trống
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="branchEmail" class="form-label">Email Chi Nhánh <span class="red_require">*</span></label>
+                                <input type="email" class="form-control" id="branchEmail" name="branchEmail" 
+                                       placeholder="Nhập email chi nhánh" required>
+                                <div class="invalid-feedback">
+                                    Email chi nhánh không hợp lệ
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nút Hành Động -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <i class="fas fa-save"></i> Tạo Vendor Account
+                    </button>
+                    <a href="/admin-only/account-management" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Quay Lại
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            // Hiển thị/ẩn phần tạo tài khoản mới
+            document.querySelectorAll('input[name="accountType"]').forEach((elem) => {
+                elem.addEventListener("change", function(event) {
+                    var value = event.target.value;
+                    if(value === "new") {
+                        document.getElementById("newAccountSection").style.display = "block";
+                        document.getElementById("existingAccountSection").style.display = "none";
+                    } else {
+                        document.getElementById("newAccountSection").style.display = "none";
+                        document.getElementById("existingAccountSection").style.display = "block";
+                    }
+                });
+            });
+
+            // Validate form trước khi submit
+            document.getElementById('vendor-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const accountType = document.querySelector('input[name="accountType"]:checked').value;
+                const branchCode = document.getElementById('branchCode').value;
+                const branchName = document.getElementById('branchName').value;
+                const branchAddress = document.getElementById('branchAddress').value;
+                const branchPhone = document.getElementById('branchPhone').value;
+                const branchEmail = document.getElementById('branchEmail').value;
+
+                // Kiểm tra thông tin branch
+                if (!branchCode || !branchName || !branchAddress || !branchPhone || !branchEmail) {
+                    alert('Vui lòng điền đầy đủ thông tin chi nhánh!');
+                    return;
+                }
+
+                let data = {
+                    branchCode: branchCode,
+                    branchName: branchName,
+                    branchAddress: branchAddress,
+                    branchPhone: branchPhone,
+                    branchEmail: branchEmail
+                };
+
+                if (accountType === "existing") {
+                    // Chọn account có sẵn
+                    const accountIdStr = document.getElementById('selectAccount').value;
+                    if (!accountIdStr) {
+                        alert('Vui lòng chọn một tài khoản!');
+                        return;
+                    }
+                    data.accountId = parseInt(accountIdStr); // Convert string to number
+                    submitAssignBranchForm(data);
+                } else {
+                    // Tạo account mới
+                    const email = document.getElementById('email').value;
+                    const code = document.getElementById('code').value;
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    const phoneNumber = document.getElementById('phoneNumber').value;
+
+                    if (!email || !code || !password || !confirmPassword) {
+                        alert('Vui lòng điền đầy đủ thông tin tài khoản!');
+                        return;
+                    }
+
+                    if (password !== confirmPassword) {
+                        alert('Mật khẩu không khớp!');
+                        return;
+                    }
+
+                    if (password.length < 6) {
+                        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                        return;
+                    }
+
+                    data.email = email;
+                    data.code = code;
+                    data.password = password;
+                    data.phoneNumber = phoneNumber;
+                    submitCreateVendorForm(data);
+                }
+            });
+
+            // Gửi request tạo vendor account mới
+            function submitCreateVendorForm(data) {
+            	fetch('[[@{/api/admin/accounts-branches/assign-branch-with-info}]]', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    alert('Tạo vendor account thành công!');
+                    window.location.href = '/admin-only/account-management';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra: ' + error.message);
+                });
+            }
+
+            // Gửi request gán branch cho account hiện có
+            function submitAssignBranchForm(data) {
+                console.log("Gửi request assign-branch-with-info với data:", JSON.stringify(data, null, 2));
+                
+                fetch('/api/admin/accounts-branches/assign-branch-with-info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    console.log("Response headers:", response.headers);
+                    return response.text().then(text => {
+                        console.log("Response body:", text);
+                        try {
+                            return JSON.parse(text);
+                        } catch(e) {
+                            console.error("Lỗi parse JSON:", e);
+                            return { error: text };
+                        }
+                    });
+                })
+                .then(result => {
+                    console.log("Result:", result);
+                    if (result.error) {
+                        alert('Có lỗi: ' + (result.error || JSON.stringify(result)));
+                    } else {
+                        alert('Gán branch thành công!');
+                        setTimeout(() => {
+                            window.location.href = '/admin/branch-management';
+                        }, 1000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra: ' + error.message);
+                });
+            }
+
+            // Enable Bootstrap validation
+            (function() {
+                'use strict';
+                window.addEventListener('load', function() {
+                    const forms = document.querySelectorAll('.needs-validation');
+                    Array.prototype.slice.call(forms).forEach(function(form) {
+                        form.addEventListener('submit', function(event) {
+                            if (!form.checkValidity()) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                            form.classList.add('was-validated');
+                        }, false);
+                    });
+                }, false);
+            })();
+        </script>
+    </div>
+</body>
+</html>

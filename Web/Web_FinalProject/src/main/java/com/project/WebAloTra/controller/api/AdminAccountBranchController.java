@@ -67,7 +67,7 @@ public class AdminAccountBranchController {
             branch.setEmail(request.getBranchEmail());
 
             Account updatedAccount = accountBranchService.assignBranchWithInfo(request.getAccountId(), branch);
-            return ResponseEntity.ok(new SuccessResponse("Gán branch thành công", updatedAccount));
+            return ResponseEntity.ok(new SuccessResponse("Gán branch thành công", null));
         } catch (Exception e) {
             logger.error("Lỗi gán branch cho account", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

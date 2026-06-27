@@ -23,7 +23,8 @@ public class StatisticServiceImpl implements StatisticService {
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
 
-    public StatisticServiceImpl(BillRepository billRepository, ProductRepository productRepository, CustomerRepository customerRepository) {
+    public StatisticServiceImpl(BillRepository billRepository, ProductRepository productRepository,
+            CustomerRepository customerRepository) {
         this.billRepository = billRepository;
         this.productRepository = productRepository;
         this.customerRepository = customerRepository;
@@ -44,8 +45,8 @@ public class StatisticServiceImpl implements StatisticService {
         Map<LocalDate, Double> revenueMap = new HashMap<>();
 
         for (Object[] result : results) {
-            java.sql.Date sqlDate = (java.sql.Date) result[0];
-            LocalDate date = sqlDate.toLocalDate();
+            java.sql.Timestamp timestamp = (java.sql.Timestamp) result[0];
+            LocalDate date = timestamp.toLocalDateTime().toLocalDate();
             Double revenue = ((Number) result[1]).doubleValue();
             revenueMap.put(date, revenue);
         }
@@ -71,8 +72,7 @@ public class StatisticServiceImpl implements StatisticService {
         List<Object[]> results = billRepository.statisticRevenueDaily(
                 startDateTime.format(formatter),
                 endDateTime.format(formatter),
-                branchId
-        );
+                branchId);
 
         Map<LocalDate, BigDecimal> result = new LinkedHashMap<>();
 
@@ -84,7 +84,7 @@ public class StatisticServiceImpl implements StatisticService {
 
         for (Object[] object : results) {
             LocalDate orderDate = LocalDate.parse((String) object[0]);
-            BigDecimal totalAmount = BigDecimal.valueOf((Double) object[1]);
+            BigDecimal totalAmount = BigDecimal.valueOf(((Number) object[1]).doubleValue());
             result.put(orderDate, result.getOrDefault(orderDate, BigDecimal.ZERO).add(totalAmount));
         }
 
@@ -103,8 +103,8 @@ public class StatisticServiceImpl implements StatisticService {
 
         Map<Integer, BigDecimal> revenueMap = new HashMap<>();
         for (Object[] result : results) {
-            int month = (Integer) result[0];
-            BigDecimal totalAmount = BigDecimal.valueOf((Double) result[1]);
+            int month = ((Number) result[0]).intValue();
+            BigDecimal totalAmount = BigDecimal.valueOf(((Number) result[1]).doubleValue());
             revenueMap.put(month, revenueMap.getOrDefault(month, BigDecimal.ZERO).add(totalAmount));
         }
 
@@ -130,15 +130,14 @@ public class StatisticServiceImpl implements StatisticService {
         List<Object[]> results = billRepository.statisticRevenueFormMonth(
                 startDate.format(formatter),
                 endDate.format(formatter),
-                branchId
-        );
+                branchId);
 
         DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("MM-yyyy");
         Map<String, BigDecimal> revenueMap = results.stream()
                 .collect(Collectors.groupingBy(
                         result -> (String) result[0],
-                        Collectors.reducing(BigDecimal.ZERO, r -> BigDecimal.valueOf((Double) r[1]), BigDecimal::add)
-                ));
+                        Collectors.reducing(BigDecimal.ZERO, r -> BigDecimal.valueOf(((Number) r[1]).doubleValue()),
+                                BigDecimal::add)));
 
         return startDate.datesUntil(endDate.plusDays(1), java.time.Period.ofMonths(1))
                 .map(month -> {
@@ -180,6 +179,7 @@ public class StatisticServiceImpl implements StatisticService {
     public List<OrderStatistic> getStatisticOrder() {
         return billRepository.statisticOrder();
     }
+
     @Override
     public List<BestSellerProduct> getBestSellerProductByBranch(Long branchId) {
         return billRepository.getBestSellerProductByBranch(branchId);

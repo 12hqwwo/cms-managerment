@@ -1,0 +1,41 @@
+﻿[0] XĂ‚Y Dá»°NG WEBSITE Há»† THá»NG QUáº¢N LĂ CHUá»–I Cá»¬A HĂ€NG TRĂ€ Sá»®A 
+[1] 1. MĂ´ táº£ kiáº¿n trĂºc
+[2] XĂ¢y dá»±ng má»™t á»©ng dá»¥ng web theo mĂ´ hĂ¬nh 3 lá»›p (3-layer model), yĂªu cáº§u phĂ¢n tĂ¡ch rĂµ rĂ ng nhiá»‡m vá»¥ giá»¯a cĂ¡c táº§ng:
+[3] Presentation Layer (Giao diá»‡n): Xá»­ lĂ½ hiá»ƒn thá»‹ (Sá»­ dá»¥ng Thymeleaf, HTML/CSS/JS). Tiáº¿p nháº­n request tá»« client.
+[4] Business Layer (Xá»­ lĂ½ nghiá»‡p vá»¥): Chá»©a cĂ¡c Controller/Service (Java). Xá»­ lĂ½ cĂ¡c logic má»m nhÆ° gá»­i Email, OTP, Web-socket chat realtime, upload áº£nh, xuáº¥t PDF/Excel.
+[5] Data Layer (Lá»›p dá»¯ liá»‡u & Báº£o máº­t): Truy xuáº¥t CSDL Oracle.
+[6] 2. YĂªu cáº§u nghiá»‡p vá»¥ & ChĂ­nh sĂ¡ch báº£o máº­t (Thá»±c hiá»‡n trĂªn Oracle)
+[7] 2.1. Quáº£n lĂ½ TĂ i khoáº£n & Äá»‹nh danh (Profile - DAC)
+[8] ChĂ­nh sĂ¡ch máº­t kháº©u: Máº·c Ä‘á»‹nh giá»›i háº¡n Ä‘Äƒng nháº­p sai 3 láº§n sáº½ khĂ³a tĂ i khoáº£n táº¡m thá»i (Lock account). YĂªu cáº§u Ä‘á»•i máº­t kháº©u Ä‘á»‹nh ká»³ (PASSWORD_LIFE_TIME) vĂ  khĂ´ng Ä‘Æ°á»£c dĂ¹ng láº¡i máº­t kháº©u cÅ© (PASSWORD_REUSE_MAX).
+[9] Kiá»ƒm soĂ¡t Session: Máº·c Ä‘á»‹nh nhĂ¢n viĂªn bĂ¡n hĂ ng táº¡i quáº§y POS chá»‰ Ä‘Æ°á»£c phĂ©p duy trĂ¬ 1 phiĂªn Ä‘Äƒng nháº­p táº¡i má»™t thá»i Ä‘iá»ƒm (SESSIONS_PER_USER = 1).
+[10] 2.2. Quáº£n lĂ½ Vai trĂ² & PhĂ¢n quyá»n (Role & RBAC)
+[11] PhĂ¢n cáº¥p káº¿ thá»«a: Tá»• chá»©c cĂ¡c Role theo thá»© tá»± ROLE_ADMIN > ROLE_VENDOR (Quáº£n lĂ½ chi nhĂ¡nh) > ROLE_STAFF (NhĂ¢n viĂªn bĂ¬nh thÆ°á»ng).
+[12] Háº¡n cháº¿ DML (Data Manipulation Language): Tuyá»‡t Ä‘á»‘i khĂ´ng cáº¥p quyá»n DELETE trĂªn cĂ¡c báº£ng liĂªn quan Ä‘áº¿n tĂ i chĂ­nh (BILL, PAYMENT, BILL_DETAIL). Há»§y Ä‘Æ¡n pháº£i dĂ¹ng lá»‡nh UPDATE tráº¡ng thĂ¡i.
+[13] ROLE_STAFF chá»‰ Ä‘Æ°á»£c INSERT trong hĂ³a Ä‘Æ¡n, khĂ´ng Ä‘Æ°á»£c UPDATE giĂ¡ tiá»n hay tá»•ng tiá»n.
+[14] Báº£o máº­t qua Procedure: KhĂ¡ch hĂ ng (ROLE_USER) khĂ´ng cĂ³ quyá»n DML trá»±c tiáº¿p. Viá»‡c Ä‘áº·t hĂ ng pháº£i thĂ´ng qua viá»‡c gá»i Procedure (PROC_CREATE_ORDER) Ä‘á»ƒ DB kiá»ƒm tra toĂ n váº¹n dá»¯ liá»‡u.
+[15] 2.3. Kiá»ƒm soĂ¡t truy cáº­p má»©c dĂ²ng & NhĂ£n dá»¯ liá»‡u (VPD & OLS - MAC)
+[16] Biá»‡t láº­p theo Chi nhĂ¡nh (Branch Isolation): * Sá»­ dá»¥ng VPD vĂ  OLS (nhĂ£n Compartment/Group) Ä‘á»ƒ Ä‘áº£m báº£o ROLE_VENDOR (Quáº£n lĂ½ chi nhĂ¡nh) chá»‰ xem Ä‘Æ°á»£c Dá»¯ liá»‡u Tá»“n kho (BRANCH_INVENTORY), doanh thu (BILL) vĂ  sáº£n pháº©m thuá»™c chi nhĂ¡nh cá»§a mĂ¬nh. RiĂªng ROLE_STAFF chá»‰ cĂ³ thá»ƒ truy cáº­p vĂ o POS (bĂ¡n hĂ ng táº¡i gian hĂ ng). 
+[17] Biá»‡t láº­p theo khĂ¡ch hĂ ng: Sá»­ dá»¥ng VPD lá»c dá»¯ liá»‡u theo account_id / customer_id trĂªn cĂ¡c báº£ng giá» hĂ ng (CART), Ä‘Æ¡n hĂ ng (BILL), Ä‘á»‹a chá»‰ giao hĂ ng (ADDRESS_SHIPPING), wishlist. khĂ¡ch hĂ ng nĂ o chá»‰ tháº¥y dá»¯ liá»‡u cá»§a khĂ¡ch hĂ ng Ä‘Ă³.
+[18] Soft-delete Global: Ăp dá»¥ng chĂ­nh sĂ¡ch VPD trĂªn toĂ n DB Ä‘á»ƒ tá»± Ä‘á»™ng ná»‘i thĂªm Ä‘iá»u kiá»‡n delete_flag = 0 vĂ o má»i cĂ¢u SELECT cá»§a á»©ng dá»¥ng.
+[19] 2.4. Che giáº¥u dá»¯ liá»‡u (Data Redaction) / Masking 
+[20] Báº£o vá»‡ PII (ThĂ´ng tin Ä‘á»‹nh danh cĂ¡ nhĂ¢n) cá»§a khĂ¡ch hĂ ng. TrĂªn báº£ng CUSTOMER, sá»­ dá»¥ng DBMS_REDACT Ä‘á»ƒ che giáº¥u (Masking) sá»‘ Ä‘iá»‡n thoáº¡i (vĂ­ dá»¥: 09 *** 9) vĂ  email Ä‘á»‘i vá»›i ROLE_STAFF. Chá»‰ quáº£n lĂ½ cáº¥p cao má»›i Ä‘Æ°á»£c xem báº£n rĂµ.
+[21] 2.5. GiĂ¡m sĂ¡t & Kiá»ƒm toĂ¡n (Fine-Grained Auditing - FGA)
+[22] Thiáº¿t láº­p FGA Ä‘á»ƒ báº¯t cĂ¡c hĂ nh vi cĂ³ rá»§i ro gian láº­n:
+[23] Ghi log má»i thao tĂ¡c UPDATE thay Ä‘á»•i má»©c giáº£m giĂ¡ (discount_amount, percentage) trĂªn báº£ng DISCOUNT_CODE.
+[24] Báº«y sá»± kiá»‡n láº­p phiáº¿u hoĂ n tiá»n (BILL_RETURN) báº¥t thÆ°á»ng.
+[25] Ghi log má»©c cáº£nh bĂ¡o cao vá»›i má»i lá»‡nh UPDATE sá»‘ lÆ°á»£ng tá»“n kho (BRANCH_INVENTORY) Ä‘Æ°á»£c cháº¡y báº±ng script thá»§ cĂ´ng thay vĂ¬ qua luá»“ng chuáº©n cá»§a á»©ng dá»¥ng.
+[26] 3. Báº£ng Ăp dá»¥ng CĂ´ng nghá»‡ Báº£o máº­t (DĂ nh cho Sinh viĂªn)
+[27] Sinh viĂªn dá»±a vĂ o báº£ng mapping dÆ°á»›i Ä‘Ă¢y Ä‘á»ƒ biáº¿t cáº§n Ă¡p dá»¥ng ká»¹ thuáº­t Oracle nĂ o cho Module tÆ°Æ¡ng á»©ng trĂªn Java:
+=== TABLES ===
+--- TABLE 0 ---
+NhĂ³m chá»©c nÄƒng (Java Controllers) | CÆ¡ cháº¿ báº£o máº­t Ă¡p dá»¥ng (Oracle DB)
+ÄÄƒng kĂ½, ÄÄƒng nháº­p, Äá»•i MK (AuthController, ProfileController) | PROFILE: Giá»›i háº¡n sai 3 láº§n, PASSWORD_LIFE_TIME, PASSWORD_REUSE_MAX.
+Quáº£n lĂ½ TĂ i khoáº£n / NhĂ¢n viĂªn (AccountMngController) | PhĂ¢n quyá»n ROLE, Role Hierarchy, thiáº¿t láº­p OLS phĂ¢n cáº¥p (Admin > Vendor > Staff).
+Sáº£n pháº©m, Danh má»¥c, Topping (ProductController, CategoryController...) | Cáº¥p quyá»n Object Privilege (CRUD) báº±ng RBAC theo Ä‘Ăºng vai trĂ² há»‡ thá»‘ng.
+Há»“ sÆ¡, Giá» hĂ ng, Wishlist, Äá»‹a chá»‰ (UserProfileController, ShoppingCartController...) | Ăp dá»¥ng VPD lá»c dá»¯ liá»‡u theo account_id / customer_id.
+Tá»“n kho, Doanh thu chi nhĂ¡nh (BranchInventory..., Statistic...) | Ăp dá»¥ng VPD (branch_id) káº¿t há»£p nhĂ£n OLS (Group Branch). FGA giĂ¡m sĂ¡t UPDATE thá»§ cĂ´ng.
+Quáº£n lĂ½ ÄÆ¡n hĂ ng, Thanh toĂ¡n (BillController, OrderController, Payment...) | KHĂ”NG cáº¥p quyá»n DELETE. Báº¯t buá»™c táº¡o qua thá»§ tá»¥c PROC_CREATE_ORDER. PhĂ¢n quyá»n OLS theo cáº¥p quáº£n lĂ½.
+Khuyáº¿n mĂ£i, MĂ£ giáº£m giĂ¡ (DiscountCodeController, ProductDiscount...) | Ăp dá»¥ng FGA theo dĂµi chá»‰nh sá»­a % giáº£m giĂ¡.
+Quáº£n lĂ½ KhĂ¡ch hĂ ng (CustomerRestController) | VPD báº£o vá»‡ dá»¯ liá»‡u. Ăp dá»¥ng OLS báº£o vá»‡ KhĂ¡ch VIP. Data Redaction che PII (SÄT, Email).
+HoĂ n tiá»n, Tráº£ hĂ ng (RefundController, BillReturnController) | CĂ i Ä‘áº·t báº«y kiá»ƒm toĂ¡n FGA giĂ¡m sĂ¡t luá»“ng tiá»n hoĂ n tráº£ báº¥t thÆ°á»ng.
+POS táº¡i quáº§y (BuyAtTheCounterController) | GĂ¡n ROLE_STAFF, SESSIONS_PER_USER = 1, OLS nhĂ£n chi nhĂ¡nh, RBAC háº¡n cháº¿ trĂªn Bill.

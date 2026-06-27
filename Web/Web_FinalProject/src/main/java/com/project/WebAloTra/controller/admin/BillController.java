@@ -45,10 +45,10 @@ public class BillController {
     private AccountRepository accountRepository;
 
     @Autowired
-    private BillRepository billRepository;
+    private BillService billService;
 
     @Autowired
-    private BillService billService;
+    private BillRepository billRepository;
 
     // ✅ Helper method: Ensure STAFF only views/manages their own checkout bills
     private void checkBillOwnership(Long billId, Authentication authentication) {
@@ -242,8 +242,9 @@ public class BillController {
                 tongTopping = billDetailProduct.getTongTopping();
             }
 
-            // ✅ Tổng tiền = (giá sản phẩm + topping) * số lượng
-            double thanhTien = (billDetailProduct.getTongTien() + tongTopping) * q;
+            // ✅ Tổng tiền = (giá sản phẩm * số lượng) + (tổng topping * số lượng)
+            // (getTongTien() từ database đã tính sẵn giá_sản_phẩm * số_lượng)
+            double thanhTien = billDetailProduct.getTongTien() + (tongTopping * q);
             total += thanhTien;
         }
         model.addAttribute("billDetailProduct", billDetailProducts);
@@ -286,14 +287,16 @@ public class BillController {
             if (isStaff) {
                 String email = authentication.getName();
                 Account account = accountRepository.findByEmail(email);
-                if (account == null)
-                    throw new NotFoundException("Không tìm thấy tài khoản nhân viên: " + email);
-                Long branchId = account.getBranch() != null ? account.getBranch().getId() : null;
-                bills = billService.findByCashierIdAndBranchId(account.getId(), branchId, pageable);
+                if (account != null) {
+                    Long branchId = account.getBranch() != null ? account.getBranch().getId() : null;
+                    bills = billService.findByCashierIdAndBranchId(account.getId(), branchId, pageable);
+                } else {
+                    bills = billService.findAll(pageable);
+                }
             } else if (isVendor) {
                 String email = authentication.getName();
                 Long branchId = accountRepository.findBranchIdByEmail(email)
-                        .orElseThrow(() -> new NotFoundException("Không tìm thấy chi nhánh cho vendor: " + email));
+                        .orElse(null);
                 bills = billService.findByBranchId(branchId, pageable);
             } else {
                 bills = billService.findAll(pageable);
@@ -314,7 +317,8 @@ public class BillController {
 
     @GetMapping("/export-pdf/{maHoaDon}")
     public String exportPdf(HttpServletResponse response, Authentication authentication,
-            @PathVariable("maHoaDon") Long maHoaDon) throws DocumentException, IOException {
+            @PathVariable("maHoaDon") Long maHoaDon)
+            throws DocumentException, IOException {
         checkBillOwnership(maHoaDon, authentication);
         return billService.exportPdf(response, maHoaDon);
     }

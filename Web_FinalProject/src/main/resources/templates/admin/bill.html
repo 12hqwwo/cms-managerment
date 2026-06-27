@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/admin-layout.html}">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý hóa đơn</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <input type="hidden" id="pageValue" th:value="${param.page}"/>
+    <input type="hidden" id="sortValue" th:value="${param.sort}"/>
+    <input type="hidden" id="ngayTaoStartValue" th:value="${param.ngayTaoStart}"/>
+    <input type="hidden" id="ngayTaoEndValue" th:value="${param.ngayTaoEnd}"/>
+
+    <h4>Quản lý hóa đơn</h4>
+
+    <!-- ✅ Thông báo phạm vi chi nhánh - chỉ hiển thị khi STAFF đăng nhập -->
+    <div class="alert alert-info d-flex align-items-center py-2 mb-3"
+         th:if="${isStaff == true}" role="alert">
+        <i class="fas fa-store-alt mr-2"></i>
+        <span>
+            Đang hiển thị hóa đơn của chi nhánh:&nbsp;
+            <strong th:text="${branchName != null ? branchName : 'Chi nhánh của bạn'}">Chi nhánh</strong>
+        </span>
+    </div>
+
+    <form th:action="@{/admin/bill-list}" method="GET" id="form-search">
+        <div class="my-3">
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label for="maDinhDanh">Mã hóa đơn</label>
+                    <input type="text" class="form-control" id="maDinhDanh" name="maDinhDanh"
+                           placeholder="Mã hóa đơn" th:value="${maHoaDon}">
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="ngayTaoStart">Bắt đầu</label>
+                    <input type="date" class="form-control" id="ngayTaoStart" name="ngayTaoStart"
+                           th:value="${ngayTaoStart}">
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="ngayTaoEnd">Kết thúc</label>
+                    <input type="date" class="form-control" id="ngayTaoEnd" name="ngayTaoEnd"
+                           th:value="${ngayTaoEnd}">
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="trangThai">Trạng thái</label>
+                    <select class="form-select" id="trangThai" name="trangThai">
+                        <option value="">Tất cả</option>
+                        <option value="CHO_XAC_NHAN" th:selected="${trangThai == 'CHO_XAC_NHAN'}">Chờ xác nhận</option>
+                        <option value="CHO_LAY_HANG" th:selected="${trangThai == 'CHO_LAY_HANG'}">Chờ lấy hàng</option>
+                        <option value="CHO_GIAO_HANG" th:selected="${trangThai == 'CHO_GIAO_HANG'}">Chờ giao hàng</option>
+                        <option value="HOAN_THANH" th:selected="${trangThai == 'HOAN_THANH'}">Hoàn thành</option>
+                        <option value="HUY" th:selected="${trangThai == 'HUY'}">Hủy</option>
+                        <option value="TRA_HANG" th:selected="${trangThai == 'TRA_HANG'}">Trả hàng</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="loaiDon">Loại đơn</label>
+                    <select class="form-select" id="loaiDon" name="loaiDon">
+                        <option value="">Tất cả</option>
+                        <option value="OFFLINE" th:selected="${loaiDon == 'OFFLINE'}">Tại quầy</option>
+                        <option value="ONLINE" th:selected="${loaiDon == 'ONLINE'}">Trực tuyến</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="hoVaTen">Họ và tên</label>
+                    <input type="text" class="form-control" id="hoVaTen" name="hoVaTen"
+                           th:value="${hoVaTen}" placeholder="Họ và tên">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label for="soDienThoai">Số điện thoại</label>
+                    <input type="text" class="form-control" id="soDienThoai" name="soDienThoai"
+                           th:value="${soDienThoai}" placeholder="Số điện thoại">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary m-1"><i class="fa fa-search"></i> Tìm kiếm</button>
+            <a th:href="@{/admin/bill-list}" class="btn btn-secondary m-1">Hủy bỏ</a>
+            <button type="button" class="btn btn-success m-1" onclick="exportToExcel()">
+                <i class="far fa-file-excel"></i> Export
+            </button>
+        </div>
+    </form>
+
+    <div class="alert alert-success" role="alert" th:if="${message}">
+        <span th:text="${message}"></span>
+    </div>
+
+    <table class="table table-hover border my-3" style="cursor: pointer; font-size: 13px" id="billTable">
+        <thead class="thead-light">
+        <tr>
+            <th scope="col">Mã hóa đơn</th>
+            <th scope="col">Mã đổi trả</th>
+            <th scope="col">Họ và tên</th>
+            <th scope="col">Số điện thoại</th>
+            <th scope="col">Ngày đặt</th>
+            <th scope="col">Tổng tiền</th>
+            <th scope="col">Loại đơn</th>
+            <th scope="col">Hình thức TT</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col">Thao tác</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="item : ${items}" class="clickable-row" th:data-maHoaDon="${item.maHoaDon}">
+            <th scope="row" th:text="${item.maDinhDanh}">HD09347</th>
+            <th>
+                <a class="text-primary"
+                   th:href="@{'/admin-only/bill-return-detail-code/' + ${item.maDoiTra}}"
+                   th:text="${item.maDoiTra}"></a>
+            </th>
+            <td th:text="${item.hoVaTen}">Mark</td>
+            <td th:text="${item.soDienThoai}">03843234</td>
+            <td th:text="${#temporals.format(item.ngayTao, 'dd-MM-yyyy HH:mm')}">01-01-2024</td>
+            <td th:text="${#numbers.formatDecimal(item.tongTien, 0, 'POINT', 0, 'COMMA')}">0</td>
+
+            <!-- ✅ Sửa an toàn phần Enum -->
+            <td>
+                <span th:if="${item.loaiDon?.name() == 'OFFLINE' or item.loaiDon == 'OFFLINE'}">Tại quầy</span>
+                <span th:if="${item.loaiDon?.name() == 'ONLINE' or item.loaiDon == 'ONLINE'}">Online</span>
+            </td>
+
+            <td>
+                <span th:if="${item.hinhThucThanhToan == 'THE'}">Thẻ</span>
+                <span th:if="${item.hinhThucThanhToan == 'CHUYEN_KHOAN'}">Chuyển khoản</span>
+                <span th:if="${item.hinhThucThanhToan == 'TIEN_MAT'}">Tiền mặt</span>
+            </td>
+
+            <td>
+                <!-- ✅ Sửa an toàn phần trạng thái -->
+                <span class="text-warning p-1 rounded border border-warning font-weight-bold"
+                      th:if="${item.trangThai?.name() == 'CHO_XAC_NHAN' or item.trangThai == 'CHO_XAC_NHAN'}">
+                    <i class="fas fa-check-square"></i>&nbsp;Chờ xác nhận
+                </span>
+                <span class="text-secondary p-1 rounded border border-secondary font-weight-bold"
+                      th:if="${item.trangThai?.name() == 'CHO_LAY_HANG' or item.trangThai == 'CHO_LAY_HANG'}">
+                    <i class="fas fa-check-square"></i>&nbsp;Chờ lấy hàng
+                </span>
+                <span class="text-primary p-1 rounded border border-primary font-weight-bold"
+                      th:if="${item.trangThai?.name() == 'CHO_GIAO_HANG' or item.trangThai == 'CHO_GIAO_HANG'}">
+                    <i class="fas fa-check-square"></i>&nbsp;Chờ giao hàng
+                </span>
+                <span class="text-success p-1 rounded border border-success font-weight-bold"
+                      th:if="${item.trangThai?.name() == 'HOAN_THANH' or item.trangThai == 'HOAN_THANH'}">
+                    <i class="fas fa-check-square"></i>&nbsp;Hoàn thành
+                </span>
+                <span class="text-dark p-1 rounded border border-dark font-weight-bold"
+                      th:if="${item.trangThai?.name() == 'TRA_HANG' or item.trangThai == 'TRA_HANG'}">
+                    <i class="fas fa-check-square"></i>&nbsp;Đổi trả
+                </span>
+                <span class="text-danger p-1 rounded border border-danger font-weight-bold"
+                      th:if="${item.trangThai?.name() == 'HUY' or item.trangThai == 'HUY'}">
+                    <i class="fa fa-times-circle"></i>&nbsp;Hủy
+                </span>
+            </td>
+
+            <td>
+                <div class="d-flex align-items-center">
+                    <form th:action="@{'/admin/update-bill-status/' + ${item.maHoaDon}}" method="get">
+                        <input type="hidden" name="trangThaiDonHang" value="HUY">
+                        <span type="button"
+                              th:if="${item.trangThai?.name() == 'CHO_XAC_NHAN' or item.trangThai?.name() == 'CHO_LAY_HANG' 
+                              or item.trangThai == 'CHO_XAC_NHAN' or item.trangThai == 'CHO_LAY_HANG'}"
+                              class="cancel-btn bg-transparent mr-2" title="Hủy đơn">❌</span>
+                    </form>
+
+                    <form th:action="@{'/admin/update-bill-status/' + ${item.maHoaDon}}" method="get">
+                        <span type="button"
+                              th:if="${!(item.trangThai?.name() == 'HOAN_THANH' or item.trangThai?.name() == 'HUY' or item.trangThai?.name() == 'TRA_HANG'
+                              or item.trangThai == 'HOAN_THANH' or item.trangThai == 'HUY' or item.trangThai == 'TRA_HANG')}"
+                              class="hover-green btn-update-status" th:data-status="${item.trangThai}" title="Chuyển trạng thái">🔁</span>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            $('.cancel-btn').on('click', function (e) {
+                e.stopPropagation();
+                Swal.fire({
+                    title: "Xác nhận?",
+                    text: "Bạn chắc chắn muốn hủy đơn này!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    cancelButtonText: 'Hủy',
+                    confirmButtonText: 'Xác nhận',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $(this).closest('form').submit();
+                    }
+                });
+            });
+
+            $('.btn-update-status').on('click', function (e) {
+                e.stopPropagation();
+                var currentStatus = $(this).attr('data-status');
+                var nextStatus, msg;
+                switch (currentStatus) {
+                    case "CHO_XAC_NHAN": nextStatus = "CHO_LAY_HANG"; msg = "Chờ lấy hàng"; break;
+                    case "CHO_LAY_HANG": nextStatus = "CHO_GIAO_HANG"; msg = "Chờ giao hàng"; break;
+                    case "CHO_GIAO_HANG": nextStatus = "HOAN_THANH"; msg = "Hoàn thành"; break;
+                }
+                Swal.fire({
+                    title: "Xác nhận?",
+                    text: `Xác nhận chuyển sang ${msg}?`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Xác nhận",
+                    cancelButtonText: "Hủy"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = $(this).closest('form').attr('action') + `?trangThaiDonHang=${nextStatus}`;
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll(".clickable-row").forEach(row => {
+            let last = 0;
+            row.addEventListener("click", () => {
+                let now = Date.now();
+                if (now - last < 300) {
+                    window.location.href = "/admin/getbill-detail/" + row.getAttribute("data-maHoaDon");
+                }
+                last = now;
+            });
+        });
+
+        function exportToExcel() {
+            Swal.fire({
+                title: "Xác nhận?",
+                text: "Xác nhận export file excel?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xác nhận",
+                cancelButtonText: "Hủy"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const p = $("#pageValue").val(), s = $("#sortValue").val();
+                    const start = $("#ngayTaoStart").val(), end = $("#ngayTaoEnd").val();
+                    window.location.href = `/admin/export-bill?page=${p}&sort=${s}&ngayTaoStart=${start}&ngayTaoEnd=${end}`;
+                }
+            });
+        }
+    </script>
+</div>
+</body>
+</html>
