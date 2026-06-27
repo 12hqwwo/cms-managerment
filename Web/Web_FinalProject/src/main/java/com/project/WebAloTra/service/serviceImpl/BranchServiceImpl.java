@@ -75,17 +75,18 @@ public class BranchServiceImpl implements BranchService {
         return null;
     }
 
-
-
-
-
     @Override
     @Transactional
     public void deleteBranch(Long id) {
         try {
-            branchRepository.deleteById(id);
+            Branch branch = branchRepository.findById(id).orElse(null);
+            if (branch != null) {
+                branch.setActive(false);
+                branchRepository.save(branch);
+            }
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("KhÄ‚Â´ng thĂ¡Â»Æ’ xÄ‚Â³a chi nhÄ‚Â¡nh nÄ‚Â y vÄ‚Â¬ Ă„â€˜ang chĂ¡Â»Â©a dĂ¡Â»Â¯ liĂ¡Â»â€¡u rÄ‚Â ng buĂ¡Â»â„¢c (TÄ‚Â i khoĂ¡ÂºÂ£n, HÄ‚Â³a Ă„â€˜Ă†Â¡n, Kho...).");
+            throw new RuntimeException(
+                    "Không thể xóa chi nhánh này vì đang chứa dữ liệu ràng buộc (Tài khoản, Hóa đơn, Kho...).");
         }
     }
 

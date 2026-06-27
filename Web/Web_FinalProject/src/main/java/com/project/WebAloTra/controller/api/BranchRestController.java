@@ -47,7 +47,7 @@ public class BranchRestController {
     public ResponseEntity<?> getBranchDetail(@PathVariable Long branchId) {
         try {
             logger.info("Getting branch detail for branchId: {}", branchId);
-            
+
             Optional<Branch> branchOpt = branchRepository.findById(branchId);
             if (!branchOpt.isPresent()) {
                 logger.warn("Branch not found with id: {}", branchId);
@@ -62,11 +62,11 @@ public class BranchRestController {
             LocalDate today = LocalDate.now();
             List<String> revenueDates = new ArrayList<>();
             List<Double> revenueValues = new ArrayList<>();
-            
+
             for (int i = 6; i >= 0; i--) {
                 LocalDate date = today.minusDays(i);
                 revenueDates.add(date.toString());
-                revenueValues.add(0.0);  // Mặc định là 0 vì không có dữ liệu
+                revenueValues.add(0.0); // Mặc định là 0 vì không có dữ liệu
             }
 
             response.put("branchId", branchId);
@@ -85,10 +85,10 @@ public class BranchRestController {
                 accMap.put("email", acc.getEmail());
                 accMap.put("name", acc.getCustomer() != null ? acc.getCustomer().getName() : "N/A");
                 accMap.put("phone", acc.getCustomer() != null ? acc.getCustomer().getPhoneNumber() : "N/A");
-                
-                if (acc.getRole() != null && acc.getRole().getId() == 5L) { // Vendor
+
+                if (acc.getRole() != null && "ROLE_VENDOR".equals(acc.getRole().getName().name())) { // Vendor
                     vendor = accMap;
-                } else if (acc.getRole() != null && acc.getRole().getId() == 2L) { // Staff
+                } else if (acc.getRole() != null && "ROLE_STAFF".equals(acc.getRole().getName().name())) { // Staff
                     staffs.add(accMap);
                 }
             }
@@ -100,22 +100,23 @@ public class BranchRestController {
 
             logger.info("Revenue dates: {}, Revenue values: {}", revenueDates, revenueValues);
 
-            // 2. Lấy 10 hóa đơn gần nhất (tất cả, vì không có liên kết chi nhánh)
-            Pageable pageable = PageRequest.of(0, 10, Sort.by("createDate").descending());
-            List<Bill> bills = billRepository.findAll(pageable).getContent();
-            
+            // 2. Lấy 10 hóa đơn gần nhất cho chi nhánh cụ thể
+            Pageable pageable = PageRequest.of(0, 10, Sort.by("create_date").descending());
+            List<com.project.WebAloTra.dto.Bill.BillDtoInterface> bills = billRepository
+                    .findByBranchId(branchId, pageable).getContent();
+
             List<Map<String, Object>> billList = new ArrayList<>();
-            for (Bill bill : bills) {
+            for (com.project.WebAloTra.dto.Bill.BillDtoInterface bill : bills) {
                 try {
                     Map<String, Object> billMap = new HashMap<>();
-                    billMap.put("id", bill.getId());
-                    billMap.put("code", bill.getCode() != null ? bill.getCode() : "N/A");
-                    billMap.put("createDate", bill.getCreateDate() != null ? bill.getCreateDate().toLocalDate().toString() : "");
-                    billMap.put("totalAmount", bill.getAmount() != null ? bill.getAmount() : 0.0);
-                    billMap.put("status", bill.getStatus() != null ? bill.getStatus().toString() : "N/A");
+                    billMap.put("id", bill.getMaHoaDon());
+                    billMap.put("code", bill.getMaDinhDanh() != null ? bill.getMaDinhDanh() : "N/A");
+                    billMap.put("createDate", bill.getNgayTao() != null ? bill.getNgayTao().toString() : "");
+                    billMap.put("totalAmount", bill.getTongTien() != null ? bill.getTongTien() : 0.0);
+                    billMap.put("status", bill.getTrangThai() != null ? bill.getTrangThai().toString() : "N/A");
                     billList.add(billMap);
                 } catch (Exception ex) {
-                    logger.error("Error processing bill: {}", bill.getId(), ex);
+                    logger.error("Error processing bill: {}", bill.getMaHoaDon(), ex);
                 }
             }
 

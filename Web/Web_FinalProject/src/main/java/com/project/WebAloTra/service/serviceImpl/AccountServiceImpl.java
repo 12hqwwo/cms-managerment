@@ -37,6 +37,9 @@ public class AccountServiceImpl implements AccountService {
     private AddressShippingRepository addressShippingRepository;
 
     @Autowired
+    private com.project.WebAloTra.repository.RoleRepository roleRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     @Override
@@ -58,7 +61,6 @@ public class AccountServiceImpl implements AccountService {
         List<UserStatistic> userStatistics = new ArrayList<>();
 
         List<Object[]> results = accountRepository.getMonthlyAccountStatistics(startDate, endDate);
-
 
         for (Object[] result : results) {
             String month = (String) result[0];
@@ -99,18 +101,21 @@ public class AccountServiceImpl implements AccountService {
             }
         }
 
-        Role role = new Role();
-        role.setId(roleId);
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Quyền không hợp lệ!"));
         account.setRole(role);
-        
-        // If role is Staff (2) or Vendor (5), assign branch if provided
-        if (roleId == 2L || roleId == 5L) {
+
+        String roleName = role.getName().name();
+
+        // If role is Staff or Vendor, assign branch if provided
+        if ("ROLE_STAFF".equals(roleName) || "ROLE_VENDOR".equals(roleName)) {
             if (branchId != null) {
-                if (roleId == 5L) {
+                if ("ROLE_VENDOR".equals(roleName)) {
                     // Validation: A branch can only have 1 vendor
                     List<Account> branchAccounts = accountRepository.findByBranch_Id(branchId);
                     for (Account acc : branchAccounts) {
-                        if (acc.getRole() != null && acc.getRole().getId() == 5L && !acc.getEmail().equalsIgnoreCase(email)) {
+                        if (acc.getRole() != null && "ROLE_VENDOR".equals(acc.getRole().getName().name())
+                                && !acc.getEmail().equalsIgnoreCase(email)) {
                             throw new RuntimeException("Chi nhánh này đã có Vendor (Người quản lý) khác được gán!");
                         }
                     }
@@ -124,7 +129,7 @@ public class AccountServiceImpl implements AccountService {
             // For other roles, remove branch assignment
             account.setBranch(null);
         }
-        
+
         return accountRepository.save(account);
     }
 
@@ -140,9 +145,10 @@ public class AccountServiceImpl implements AccountService {
     public AccountDto updateProfile(AccountDto accountDto) {
         Account account = UserLoginUtil.getCurrentLogin();
         Customer customer = customerRepository.findByAccount_Id(account.getId());
-        if(!accountDto.getPhoneNumber().trim().equals(customer.getPhoneNumber())) {
-            if(customerRepository.existsByPhoneNumber(accountDto.getPhoneNumber())) {
-                throw new ShopApiException(HttpStatus.BAD_REQUEST, "Số điện thoại " + accountDto.getPhoneNumber() + " đã được đăng ký");
+        if (!accountDto.getPhoneNumber().trim().equals(customer.getPhoneNumber())) {
+            if (customerRepository.existsByPhoneNumber(accountDto.getPhoneNumber())) {
+                throw new ShopApiException(HttpStatus.BAD_REQUEST,
+                        "Số điện thoại " + accountDto.getPhoneNumber() + " đã được đăng ký");
             }
         }
         customer.setPhoneNumber(accountDto.getPhoneNumber());
@@ -183,8 +189,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<Account> getVendorAccountsWithoutBranch() {
         return accountRepository.findAll().stream()
-                .filter(acc -> acc.getBranch() == null 
-                        && acc.getRole() != null 
+                .filter(acc -> acc.getBranch() == null
+                        && acc.getRole() != null
                         && "ROLE_VENDOR".equalsIgnoreCase(acc.getRole().getName().name()))
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -195,9 +201,9 @@ public class AccountServiceImpl implements AccountService {
         accountDto.setName(account.getCustomer().getName());
         accountDto.setPhoneNumber(account.getCustomer().getPhoneNumber());
         List<AddressShippingDto> addressShippingDtos = new ArrayList<>();
-        List<AddressShipping> addressShippingList = addressShippingRepository.findAllByCustomer_Account_Id(account.getId());
-        for (AddressShipping addressShipping:
-             addressShippingList) {
+        List<AddressShipping> addressShippingList = addressShippingRepository
+                .findAllByCustomer_Account_Id(account.getId());
+        for (AddressShipping addressShipping : addressShippingList) {
             AddressShippingDto addressShippingDto = new AddressShippingDto();
             addressShippingDto.setId(addressShipping.getId());
             addressShippingDto.setAddress(addressShipping.getAddress());

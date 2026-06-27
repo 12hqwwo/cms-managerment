@@ -21,7 +21,7 @@ public class ProductSpecification implements Specification<Product> {
     public Predicate toPredicate(Root<Product> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
         List<Predicate> predicates = new ArrayList<>();
         if (searchProductDto.getMinPrice() != null) {
-// Tạo một subquery để lấy giá của ProductDetail đầu tiên
+            // Tạo một subquery để lấy giá của ProductDetail đầu tiên
             Subquery<Double> subquery = query.subquery(Double.class);
             Root<Product> productRoot = subquery.from(Product.class);
             Join<Product, ProductDetail> productDetailJoin = productRoot.join("productDetails");
@@ -29,7 +29,8 @@ public class ProductSpecification implements Specification<Product> {
             subquery.where(criteriaBuilder.equal(productRoot.get("id"), root.get("id")));
             Predicate predicate = criteriaBuilder.greaterThanOrEqualTo(subquery, searchProductDto.getMinPrice());
 
-            predicates.add(predicate);        }
+            predicates.add(predicate);
+        }
 
         if (searchProductDto.getMaxPrice() != null) {
             // Tạo một subquery để lấy giá của ProductDetail đầu tiên
@@ -45,30 +46,35 @@ public class ProductSpecification implements Specification<Product> {
         }
 
         if (searchProductDto.getProductName() != null) {
-            predicates.add(criteriaBuilder.like(root.get("name"), "%"+searchProductDto.getProductName()+"%"));
+            predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("name")),
+                    "%" + searchProductDto.getProductName().toLowerCase() + "%"));
         }
 
-        if(searchProductDto.getCode() != null) {
-            predicates.add(criteriaBuilder.like(root.get("code"), "%"+searchProductDto.getCode()+"%"));
-
+        if (searchProductDto.getCode() != null) {
+            predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("code")),
+                    "%" + searchProductDto.getCode().toLowerCase() + "%"));
         }
 
-        if(searchProductDto.getKeyword() != null) {
-            String keyword = searchProductDto.getKeyword();
+        if (searchProductDto.getKeyword() != null) {
+            String keyword = searchProductDto.getKeyword().toLowerCase();
 
-            Predicate productNamePredicate = criteriaBuilder.like(root.get("name"), "%" + keyword + "%");
-            Predicate productCodePredicate = criteriaBuilder.like(root.get("code"), "%" + keyword + "%");
+            Predicate productNamePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
+                    "%" + keyword + "%");
+            Predicate productCodePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("code")),
+                    "%" + keyword + "%");
             Predicate combinedPredicate = criteriaBuilder.or(productNamePredicate, productCodePredicate);
 
             predicates.add(combinedPredicate);
         }
 
-        if(searchProductDto.getCategoryId() != null) {
+        if (searchProductDto.getCategoryId() != null) {
             Predicate predicate = root.get("category").get("id").in(searchProductDto.getCategoryId());
             predicates.add(predicate);
         }
 
-        if(searchProductDto.getGender() != null) {
+        if (searchProductDto.getGender() != null) {
             Predicate predicate = criteriaBuilder.equal(root.get("gender"), searchProductDto.getGender());
             predicates.add(predicate);
         }
