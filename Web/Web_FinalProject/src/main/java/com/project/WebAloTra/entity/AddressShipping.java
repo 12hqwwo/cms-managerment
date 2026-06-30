@@ -24,6 +24,12 @@ public class AddressShipping {
     @Column(name = "address", nullable = false, length = 150)
     private String address;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id") // ✅ trùng cột DB
     private Customer customer;

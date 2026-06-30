@@ -13,6 +13,9 @@
         <div id="loading-overlay">
             <div class="loading-spinner"></div>
         </div>
+        <!-- Leaflet CSS for Map -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <!-- Haversine library or manual calculation -->
         <!-- Modal -->
         <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
             aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="z-index: 3000">
@@ -230,8 +233,9 @@
                                 <div class="p-t-5">
                                     <select class="form-control stext-111 border rounded p-2 w-100" id="branch-select"
                                         name="branchId" required>
-                                        <option value="">-- Chọn chi nhánh xử lý đơn --</option>
+                                        <option value="" data-lat="" data-lng="" data-radius="">-- Chọn chi nhánh xử lý đơn --</option>
                                         <option th:each="branch : ${branches}" th:value="${branch.id}"
+                                            th:data-lat="${branch.latitude}" th:data-lng="${branch.longitude}" th:data-radius="${branch.deliveryRadius}"
                                             th:text="${branch.branchName + ' - ' + branch.address}"></option>
                                     </select>
                                 </div>
@@ -250,10 +254,14 @@
                                         <div th:if="${addressShippings != null and not #lists.isEmpty(addressShippings)}"
                                             class="pt-15">
                                             <div th:each="address : ${addressShippings}" class="shipping-choose">
-                                                <div th:id="'shipping' + ${address.id}">
+                                                <div th:id="'shipping' + ${address.id}" class="shipping-item" 
+                                                     th:data-lat="${address.latitude}" th:data-lng="${address.longitude}">
                                                     <p th:text="${address.address}"></p>
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div id="distance-warning" class="mt-2 text-danger font-weight-bold" style="display: none;">
+                                            <i class="fa fa-exclamation-triangle"></i> Địa chỉ nhận hàng nằm ngoài phạm vi giao hàng của chi nhánh này. Vui lòng chọn chi nhánh gần hơn!
                                         </div>
                                     </div>
                                     <button type="button" class="bg2 size-102" id="add-address">Thêm
@@ -262,11 +270,15 @@
                                     <div id="address-select-group" style="display: none">
                                         <div class="bor8 bg0 m-b-12">
                                             <input class="stext-111 cl8 plh3 size-111 p-lr-15" type="text" name="street"
-                                                id="street" placeholder="Số nhà, đường, xóm">
+                                                id="street" placeholder="Nhập địa chỉ hoặc nhấp trên bản đồ">
                                         </div>
+                                        
+                                        <div id="customer-map" style="width: 100%; height: 300px; margin-bottom: 12px; border-radius: 8px;"></div>
+                                        <input type="hidden" id="customer-lat" name="latitude">
+                                        <input type="hidden" id="customer-lng" name="longitude">
+                                        
                                         <span class="stext-111 errorStreet" style="color: red; display: none">Vui lòng
-                                            nhập số
-                                            nhà, đường, xóm</span>
+                                            chọn địa chỉ trên bản đồ</span>
                                         <div>
                                             <button class="bg2 size-102 hov-btn3" type="button"
                                                 id="save-address-btn">Lưu</button>
@@ -481,20 +493,19 @@
                 })
 
                 $("#save-address-btn").on('click', function () {
-
-                    const district = $("#district").val()
-                    const ward = $("#ward").val();
-                    const street = $("#street").val().trim()
-                    if (district == "" || ward == "" || street == "") {
-                        swal("Lỗi", "Vui lòng nhập đầy đủ địa chỉ")
+                    const street = $("#street").val().trim();
+                    const lat = $("#customer-lat").val();
+                    const lng = $("#customer-lng").val();
+                    
+                    if (street === "" || !lat || !lng) {
+                        $('.errorStreet').show();
                     } else {
-                        addressSelected.street = street
                         var dataSend = {
-                            address: Object.entries(addressSelected)
-                                .filter(([key, value]) => value !== null && value !== '')
-                                .map(([key, value]) => value)
-                                .join(', ')
+                            address: street,
+                            latitude: parseFloat(lat),
+                            longitude: parseFloat(lng)
                         }
+                        
                         $.ajax({
                             type: 'POST',
                             contentType: "application/json; charset=utf-8",
@@ -503,7 +514,7 @@
                             success: function (data) {
                                 const content = `
                                            <div class="shipping-choose">
-                                               <div id="shipping${data.id}">
+                                               <div id="shipping${data.id}" class="shipping-item" data-lat="${data.latitude}" data-lng="${data.longitude}">
                                                    <p>${data.address}</p>
                                                </div>
                                            </div>`
@@ -513,6 +524,9 @@
                                     $(".shipping-choose").removeClass('active')
                                     $(this).addClass('active')
                                 })
+                                
+                                // Auto-select the newly added address
+                                $('.address-list .shipping-choose').last().click();
                             },
                             error: function (xhr, status, error) {
                                 $('#loading-overlay').hide();
@@ -1140,7 +1154,108 @@
                 return selectedToppings;
             }
 
+            // ==================== BẢN ĐỒ VÀ KHOẢNG CÁCH ====================
+            var customerMap = null;
+            var customerMarker = null;
+
+            function initCustomerMap() {
+                if (customerMap !== null) return;
+                
+                // Default center (can be HCMC or user's current location if permitted)
+                var defaultLat = 10.8231;
+                var defaultLng = 106.6297;
+
+                customerMap = L.map('customer-map').setView([defaultLat, defaultLng], 12);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(customerMap);
+
+                customerMap.on('click', function(e) {
+                    var lat = e.latlng.lat;
+                    var lng = e.latlng.lng;
+                    
+                    if (customerMarker) {
+                        customerMarker.setLatLng(e.latlng);
+                    } else {
+                        customerMarker = L.marker(e.latlng).addTo(customerMap);
+                    }
+                    
+                    $('#customer-lat').val(lat);
+                    $('#customer-lng').val(lng);
+                    $('#street').val("Tọa độ: " + lat.toFixed(5) + ", " + lng.toFixed(5));
+                    
+                    $('.errorStreet').hide();
+                });
+            }
+
+            // Fix map rendering issue when container is initially hidden
+            $("#add-address").on('click', function () {
+                setTimeout(function() {
+                    initCustomerMap();
+                    customerMap.invalidateSize();
+                }, 100);
+            });
+            
+            // Haversine formula
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                if (!lat1 || !lon1 || !lat2 || !lon2) return 999999;
+                
+                var R = 6371; // Radius of the earth in km
+                var dLat = (lat2 - lat1) * Math.PI / 180;
+                var dLon = (lon2 - lon1) * Math.PI / 180;
+                var a = 
+                    Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+                var d = R * c; // Distance in km
+                return d;
+            }
+
+            function validateDeliveryDistance() {
+                var branchSelect = $('#branch-select').find(":selected");
+                var branchLat = parseFloat(branchSelect.data('lat'));
+                var branchLng = parseFloat(branchSelect.data('lng'));
+                var branchRadius = parseFloat(branchSelect.data('radius'));
+
+                var selectedShipping = $('.shipping-choose.active .shipping-item');
+                if (selectedShipping.length === 0) return true; // Let backend handle if no shipping selected
+                
+                var customerLat = parseFloat(selectedShipping.data('lat'));
+                var customerLng = parseFloat(selectedShipping.data('lng'));
+
+                if (!branchLat || !branchLng || !customerLat || !customerLng) {
+                    $('#distance-warning').hide();
+                    $('#submitBtn').prop('disabled', false); // Allow for now, backend will reject if necessary
+                    return true;
+                }
+
+                var distance = calculateDistance(branchLat, branchLng, customerLat, customerLng);
+                
+                if (branchRadius && distance > branchRadius) {
+                    $('#distance-warning').html('<i class="fa fa-exclamation-triangle"></i> Địa chỉ nhận hàng cách chi nhánh ' + distance.toFixed(1) + 'km (vượt quá phạm vi ' + branchRadius + 'km). Vui lòng chọn chi nhánh gần hơn!');
+                    $('#distance-warning').show();
+                    $('#submitBtn').prop('disabled', true);
+                    return false;
+                } else {
+                    $('#distance-warning').hide();
+                    $('#submitBtn').prop('disabled', false);
+                    return true;
+                }
+            }
+
+            $('#branch-select').on('change', validateDeliveryDistance);
+            
+            // Needs to attach dynamically to newly added addresses too
+            $(document).on('click', '.shipping-choose', function() {
+                setTimeout(validateDeliveryDistance, 50);
+            });
+
         </script>
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     </div>
 
 </body>

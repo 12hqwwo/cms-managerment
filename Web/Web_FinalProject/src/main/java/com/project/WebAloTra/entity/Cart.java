@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 public class Cart implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cart_seq")
+    @SequenceGenerator(name = "cart_seq", sequenceName = "cart_seq", allocationSize = 1)
     private Long id;
 
     // 🔹 Liên kết đến bảng Account qua cột account_id

@@ -45,6 +45,8 @@ public class AddressShippingServiceImpl implements AddressShippingService {
             AddressShippingDto addressShippingDto = new AddressShippingDto();
             addressShippingDto.setId(item.getId());
             addressShippingDto.setAddress(item.getAddress());
+            addressShippingDto.setLatitude(item.getLatitude());
+            addressShippingDto.setLongitude(item.getLongitude());
             addressShippingDtos.add(addressShippingDto);
         });
         return addressShippingDtos;
@@ -69,6 +71,8 @@ public class AddressShippingServiceImpl implements AddressShippingService {
         
         AddressShipping addressShipping = new AddressShipping();
         addressShipping.setAddress(addressShippingDto.getAddress());
+        addressShipping.setLatitude(addressShippingDto.getLatitude());
+        addressShipping.setLongitude(addressShippingDto.getLongitude());
         
         Customer customer = currentAccount.getCustomer();
         if (customer == null) {
@@ -77,7 +81,7 @@ public class AddressShippingServiceImpl implements AddressShippingService {
         addressShipping.setCustomer(customer);
 
         AddressShipping addressShippingNew = addressShippingRepository.save(addressShipping);
-        return new AddressShippingDto(addressShippingNew.getId(), addressShippingNew.getAddress());
+        return new AddressShippingDto(addressShippingNew.getId(), addressShippingNew.getAddress(), addressShippingNew.getLatitude(), addressShippingNew.getLongitude());
     }
 
     @Override
@@ -85,13 +89,14 @@ public class AddressShippingServiceImpl implements AddressShippingService {
         AddressShipping addressShipping = new AddressShipping();
         // Sửa lỗi: dùng addressShippingDto.getAddress() thay vì addressShipping.getAddress()
         addressShipping.setAddress(addressShippingDto.getAddress());
+        // TODO: addressShippingDtoAdmin may need lat/lng if Admin adds address for Customer
         
         Customer customer = customerRepository.findById(addressShippingDto.getCustomerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
         addressShipping.setCustomer(customer);
 
         AddressShipping addressShippingNew = addressShippingRepository.save(addressShipping);
-        return new AddressShippingDto(addressShippingNew.getId(), addressShippingNew.getAddress());
+        return new AddressShippingDto(addressShippingNew.getId(), addressShippingNew.getAddress(), addressShippingNew.getLatitude(), addressShippingNew.getLongitude());
     }
 
     @Override

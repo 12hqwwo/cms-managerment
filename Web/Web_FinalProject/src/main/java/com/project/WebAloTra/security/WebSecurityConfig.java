@@ -85,6 +85,12 @@ public class WebSecurityConfig {
 					// khấu app, giảm phí vận chuyển,...)
 					.antMatchers("/admin/**", "/management/**", "/system/**").hasRole("ADMIN")
 
+					// Bảo mật cho API Branches (Tránh rò rỉ và chỉnh sửa trái phép)
+					.antMatchers(org.springframework.http.HttpMethod.POST, "/api/branches").hasRole("ADMIN")
+					.antMatchers(org.springframework.http.HttpMethod.PUT, "/api/branches/**").hasAnyRole("ADMIN", "VENDOR")
+					.antMatchers(org.springframework.http.HttpMethod.DELETE, "/api/branches/**").hasRole("ADMIN")
+					.antMatchers("/api/branches/admin/**").hasAnyRole("ADMIN", "VENDOR", "STAFF")
+
 					// Các request khác thì cho phép (để login form không bị chặn)
 					.anyRequest().permitAll()
 

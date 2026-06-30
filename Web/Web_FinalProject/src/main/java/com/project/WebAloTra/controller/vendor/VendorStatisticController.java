@@ -50,13 +50,13 @@ public class VendorStatisticController {
 
         Account account = accountService.findByEmail(auth.getName());
         if (account == null) {
-            model.addAttribute("error", "Không tìm thấy tài khoản!");
-            return "error";
+            model.addAttribute("message", "Không tìm thấy tài khoản!");
+            return "error/403";
         }
 
         if (account.getBranch() == null) {
-            model.addAttribute("error", "Không tìm thấy chi nhánh của tài khoản này!");
-            return "error";
+            model.addAttribute("message", "Tài khoản Vendor này chưa được cấp phát Chi nhánh. Vui lòng liên hệ Admin để cấu hình!");
+            return "error/403";
         }
 
         Long branchId = account.getBranch().getId();

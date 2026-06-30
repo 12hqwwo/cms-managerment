@@ -13,10 +13,13 @@
         <!-- Chart.js -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <!-- DataTables CSS & JS -->
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-        <style>
+    <style>
             .branch-card {
                 border-left: 4px solid #007bff;
                 transition: all 0.3s ease;
@@ -72,12 +75,13 @@
             <div class="table-responsive">
                 <table id="branchTable" class="table table-striped table-hover">
                     <thead class="table-dark">
-                        <tr>
                             <th>Mã Chi Nhánh</th>
                             <th>Tên Chi Nhánh</th>
                             <th>Địa Chỉ</th>
-                            <th>Số Điện Thoại</th>
+                            <th>SĐT</th>
                             <th>Email</th>
+                            <th>Vị trí (Lat,Lng)</th>
+                            <th>Bán kính (km)</th>
                             <th>Vendor Account</th>
                             <th>Trạng Thái</th>
                             <th>Thao Tác</th>
@@ -90,6 +94,15 @@
                             <td th:text="${branch.address}"></td>
                             <td th:text="${branch.phone}"></td>
                             <td th:text="${branch.email}"></td>
+                            <td>
+                                <span th:if="${branch.latitude != null and branch.longitude != null}" class="text-success">
+                                    <i class="fas fa-map-marker-alt"></i> Đã ghim
+                                </span>
+                                <span th:unless="${branch.latitude != null and branch.longitude != null}" class="text-danger">
+                                    <i class="fas fa-exclamation-circle"></i> Chưa ghim
+                                </span>
+                            </td>
+                            <td><strong th:text="${branch.deliveryRadius != null ? branch.deliveryRadius + ' km' : '5 km'}"></strong></td>
                             <td>
                                 <span th:if="${branch.vendorAccount != null}" class="badge bg-success"
                                     th:text="${branch.vendorAccount.email}"></span>
@@ -110,8 +123,9 @@
                                     th:data-branch-code="${branch.branchCode}"
                                     th:data-branch-name="${branch.branchName}"
                                     th:data-branch-address="${branch.address}" th:data-branch-phone="${branch.phone}"
-                                    th:data-branch-email="${branch.email}" data-toggle="modal"
-                                    data-target="#editBranchModal">
+                                    th:data-branch-email="${branch.email}" th:data-branch-lat="${branch.latitude}"
+                                    th:data-branch-lng="${branch.longitude}" th:data-branch-radius="${branch.deliveryRadius}"
+                                    data-toggle="modal" data-target="#editBranchModal">
                                     <i class="fas fa-edit"></i> Sửa
                                 </button>
                                 <button class="btn btn-sm btn-danger delete-branch-btn"
@@ -178,6 +192,28 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row border-top pt-3 mt-2">
+                                <h6 class="text-primary mb-3"><i class="fas fa-map-marked-alt"></i> Cấu Hình Giao Hàng</h6>
+                                <!-- Map container -->
+                                <div class="col-md-8 mb-3">
+                                    <div id="mapAdd" style="height: 250px; width: 100%; border-radius: 5px; border: 1px solid #ccc;"></div>
+                                    <small class="text-muted">Click hoặc kéo ghim trên bản đồ để tự động điền Tọa độ.</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="branchLatAdd" class="form-label">Vĩ Độ (Latitude)</label>
+                                        <input type="number" step="any" class="form-control" id="branchLatAdd" name="latitude" placeholder="VD: 10.762622">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="branchLngAdd" class="form-label">Kinh Độ (Longitude)</label>
+                                        <input type="number" step="any" class="form-control" id="branchLngAdd" name="longitude" placeholder="VD: 106.660172">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="branchRadiusAdd" class="form-label">Bán Kính Giao (km)</label>
+                                        <input type="number" step="0.1" class="form-control" id="branchRadiusAdd" name="deliveryRadius" value="5.0" required>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                     </div>
                     <div class="modal-footer">
@@ -238,6 +274,28 @@
                                                 class="red_require">*</span></label>
                                         <input type="email" class="form-control" id="branchEmailEdit" name="email"
                                             required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row border-top pt-3 mt-2">
+                                <h6 class="text-primary mb-3"><i class="fas fa-map-marked-alt"></i> Cấu Hình Giao Hàng (Cập Nhật Thủ Công)</h6>
+                                <!-- Map container -->
+                                <div class="col-md-8 mb-3">
+                                    <div id="mapEdit" style="height: 250px; width: 100%; border-radius: 5px; border: 1px solid #ccc;"></div>
+                                    <small class="text-muted">Click hoặc kéo ghim trên bản đồ để tự động điền Tọa độ.</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="branchLatEdit" class="form-label">Vĩ Độ (Latitude)</label>
+                                        <input type="number" step="any" class="form-control" id="branchLatEdit" name="latitude">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="branchLngEdit" class="form-label">Kinh Độ (Longitude)</label>
+                                        <input type="number" step="any" class="form-control" id="branchLngEdit" name="longitude">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="branchRadiusEdit" class="form-label">Bán Kính (km)</label>
+                                        <input type="number" step="0.1" class="form-control" id="branchRadiusEdit" name="deliveryRadius" required>
                                     </div>
                                 </div>
                             </div>
@@ -568,6 +626,9 @@
                         address: $('#branchAddressAdd').val(),
                         phone: $('#branchPhoneAdd').val(),
                         email: $('#branchEmailAdd').val(),
+                        latitude: $('#branchLatAdd').val() ? parseFloat($('#branchLatAdd').val()) : null,
+                        longitude: $('#branchLngAdd').val() ? parseFloat($('#branchLngAdd').val()) : null,
+                        deliveryRadius: $('#branchRadiusAdd').val() ? parseFloat($('#branchRadiusAdd').val()) : 5.0,
                         isActive: true
                     };
 
@@ -605,6 +666,9 @@
                     const address = $(this).data('branch-address');
                     const phone = $(this).data('branch-phone');
                     const email = $(this).data('branch-email');
+                    const lat = $(this).data('branch-lat');
+                    const lng = $(this).data('branch-lng');
+                    const radius = $(this).data('branch-radius');
 
                     $('#branchIdEdit').val(branchId);
                     $('#branchCodeEdit').val(branchCode);
@@ -612,6 +676,9 @@
                     $('#branchAddressEdit').val(address);
                     $('#branchPhoneEdit').val(phone);
                     $('#branchEmailEdit').val(email);
+                    $('#branchLatEdit').val(lat);
+                    $('#branchLngEdit').val(lng);
+                    $('#branchRadiusEdit').val(radius != null ? radius : 5.0);
                 });
 
                 // Xử lý nút "Cập Nhật Chi Nhánh"
@@ -622,7 +689,10 @@
                         branchName: $('#branchNameEdit').val(),
                         address: $('#branchAddressEdit').val(),
                         phone: $('#branchPhoneEdit').val(),
-                        email: $('#branchEmailEdit').val()
+                        email: $('#branchEmailEdit').val(),
+                        latitude: $('#branchLatEdit').val() ? parseFloat($('#branchLatEdit').val()) : null,
+                        longitude: $('#branchLngEdit').val() ? parseFloat($('#branchLngEdit').val()) : null,
+                        deliveryRadius: $('#branchRadiusEdit').val() ? parseFloat($('#branchRadiusEdit').val()) : 5.0
                     };
 
                     if (!formData.branchCode || !formData.branchName || !formData.address || !formData.phone || !formData.email) {
@@ -670,6 +740,99 @@
                                 console.error('Lỗi:', err);
                                 alert('Lỗi xóa chi nhánh: ' + err.message);
                             });
+                    }
+                });
+            });
+        </script>
+
+        <!-- Leaflet JS for Map -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        
+        <!-- Map Initialization Logic -->
+        <script>
+            let mapAdd, markerAdd;
+            let mapEdit, markerEdit;
+            const defaultCenter = [10.762622, 106.660172]; // HCM City default
+
+            function initMap(mapId, latInputId, lngInputId) {
+                const map = L.map(mapId).setView(defaultCenter, 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                const marker = L.marker(defaultCenter, { draggable: true }).addTo(map);
+
+                // When marker is dragged
+                marker.on('dragend', function (e) {
+                    const position = marker.getLatLng();
+                    $(`#${latInputId}`).val(position.lat.toFixed(6));
+                    $(`#${lngInputId}`).val(position.lng.toFixed(6));
+                });
+
+                // When map is clicked
+                map.on('click', function(e) {
+                    marker.setLatLng(e.latlng);
+                    $(`#${latInputId}`).val(e.latlng.lat.toFixed(6));
+                    $(`#${lngInputId}`).val(e.latlng.lng.toFixed(6));
+                });
+
+                return { map, marker };
+            }
+
+            $(document).ready(function () {
+                // Initialize map variables
+                const addMapObjs = initMap('mapAdd', 'branchLatAdd', 'branchLngAdd');
+                mapAdd = addMapObjs.map;
+                markerAdd = addMapObjs.marker;
+
+                const editMapObjs = initMap('mapEdit', 'branchLatEdit', 'branchLngEdit');
+                mapEdit = editMapObjs.map;
+                markerEdit = editMapObjs.marker;
+
+                // Fix map rendering issue in hidden Bootstrap modals
+                $('#addBranchModal').on('shown.bs.modal', function () {
+                    mapAdd.invalidateSize();
+                    // Reset to default or current input if any
+                    let currentLat = $('#branchLatAdd').val() || defaultCenter[0];
+                    let currentLng = $('#branchLngAdd').val() || defaultCenter[1];
+                    const latLng = [currentLat, currentLng];
+                    mapAdd.setView(latLng, 13);
+                    markerAdd.setLatLng(latLng);
+                });
+
+                $('#editBranchModal').on('shown.bs.modal', function () {
+                    mapEdit.invalidateSize();
+                    let currentLat = $('#branchLatEdit').val();
+                    let currentLng = $('#branchLngEdit').val();
+                    
+                    if (currentLat && currentLng) {
+                        const latLng = [currentLat, currentLng];
+                        mapEdit.setView(latLng, 15);
+                        markerEdit.setLatLng(latLng);
+                    } else {
+                        // Fallback to default if no coords saved
+                        mapEdit.setView(defaultCenter, 13);
+                        markerEdit.setLatLng(defaultCenter);
+                    }
+                });
+                
+                // Allow manual input to update marker
+                $('#branchLatEdit, #branchLngEdit').on('change', function() {
+                    let lat = $('#branchLatEdit').val();
+                    let lng = $('#branchLngEdit').val();
+                    if(lat && lng) {
+                         markerEdit.setLatLng([lat, lng]);
+                         mapEdit.setView([lat, lng], 15);
+                    }
+                });
+                
+                $('#branchLatAdd, #branchLngAdd').on('change', function() {
+                    let lat = $('#branchLatAdd').val();
+                    let lng = $('#branchLngAdd').val();
+                    if(lat && lng) {
+                         markerAdd.setLatLng([lat, lng]);
+                         mapAdd.setView([lat, lng], 15);
                     }
                 });
             });

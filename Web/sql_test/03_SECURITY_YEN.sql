@@ -60,17 +60,11 @@ CREATE OR REPLACE FUNCTION FN_VPD_CART (
 ) RETURN VARCHAR2
 IS
     v_account_id VARCHAR2(50);
-    v_role       VARCHAR2(50);
 BEGIN
     v_account_id := SYS_CONTEXT('auth_ctx', 'account_id');
     
-    -- Admin xem tất cả
-    v_role := SYS_CONTEXT('branch_ctx', 'user_role');
-    IF v_role = 'ROLE_ADMIN' THEN
-        RETURN ''; 
-    END IF;
-
-    -- Người dùng thường chỉ thấy wishlist của họ
+    -- Giỏ hàng là 100% cá nhân hóa, không ai được xem của ai khác kể cả Admin
+    -- Nếu không có tài khoản đăng nhập (Khách vãng lai), chặn không cho xem
     IF v_account_id IS NULL THEN
         RETURN '1=0';
     END IF;

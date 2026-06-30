@@ -67,6 +67,18 @@ public class BranchServiceImpl implements BranchService {
             if (branchDetails.getEmail() != null) {
                 branch.setEmail(branchDetails.getEmail());
             }
+            
+            // Cập nhật tọa độ và bán kính
+            if (branchDetails.getLatitude() != null) {
+                branch.setLatitude(branchDetails.getLatitude());
+            }
+            if (branchDetails.getLongitude() != null) {
+                branch.setLongitude(branchDetails.getLongitude());
+            }
+            if (branchDetails.getDeliveryRadius() != null) {
+                branch.setDeliveryRadius(branchDetails.getDeliveryRadius());
+            }
+            
             branch.setUpdateDate(LocalDateTime.now());
             Branch updatedBranch = branchRepository.save(branch);
             branchRepository.flush();

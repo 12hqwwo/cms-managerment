@@ -44,6 +44,15 @@ public class Branch implements Serializable {
     @Column(name = "is_active")
     private boolean isActive = true;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "delivery_radius", columnDefinition = "NUMBER(5,2) DEFAULT 5.0")
+    private Double deliveryRadius = 5.0;
+
     @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Account> vendorAccounts;
