@@ -2,6 +2,12 @@ package com.project.WebAloTra.service.serviceImpl;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import javax.persistence.EntityManager;
+import javax.persistence.ParameterMode;
+import javax.persistence.StoredProcedureQuery;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 import com.project.WebAloTra.dto.Cart.CartDto;
 import com.project.WebAloTra.dto.Cart.ProductCart;
@@ -45,6 +51,13 @@ public class CartServiceImpl implements CartService {
     private final BranchInventoryRepository branchInventoryRepository;
 
     private final AtomicLong invoiceCounter = new AtomicLong(1);
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     public CartServiceImpl(
             CartRepository cartRepository,
@@ -94,7 +107,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<CartDto> getAllCartByAccountId() {
         Account account = UserLoginUtil.getCurrentLogin();
-        List<Cart> cartList = cartRepository.findAllByAccount_Id(account.getId());
+        List<Cart> cartList = cartRepository.findAll();
         List<CartDto> cartDtos = new ArrayList<>();
 
         cartList.forEach(cart -> {
@@ -147,8 +160,8 @@ public class CartServiceImpl implements CartService {
         int quantityAdding = cartDto.getQuantity();
         int quantityRemaining = productDetail.getQuantity();
 
-        if (cartRepository.existsByProductDetail_IdAndAccount_Id(productDetail.getId(), account.getId())) {
-            Cart existsCart = cartRepository.findByProductDetail_IdAndAccount_Id(productDetail.getId(), account.getId());
+        if (cartRepository.existsByProductDetail_Id(productDetail.getId())) {
+            Cart existsCart = cartRepository.findByProductDetail_Id(productDetail.getId());
             int currentQuantity = existsCart.getQuantity();
             int quantityNeedToAdd = currentQuantity + quantityAdding;
 
@@ -193,149 +206,73 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(rollbackOn = Exception.class)
     public void orderUser(OrderDto orderDto) {
-        Bill billCurrent = billRepository.findTopByOrderByIdDesc();
-        int nextCode = 1;
-        if (billCurrent != null && billCurrent.getCode() != null) {
-            try {
-                String numericPart = billCurrent.getCode().replaceAll("\\D+", "");
-                if (!numericPart.isEmpty()) {
-                    nextCode = Integer.parseInt(numericPart) + 1;
-                }
-            } catch (NumberFormatException e) {
-                nextCode = 1;
+        /* 
+         * [BẢO MẬT CƠ SỞ DỮ LIỆU: ÁP DỤNG STORED PROCEDURE]
+         * Toàn bộ logic tạo đơn hàng ONLINE đã được chuyển xuống Oracle DB (PROC_CREATE_ORDER).
+         * Thay vì gọi nhiều lệnh JPA save() từ Java (tạo Bill, BillDetail, tính tiền, trừ kho, v.v.),
+         * hệ thống gom dữ liệu thành JSON và gọi thủ tục DB 1 lần duy nhất để:
+         * 1. Đảm bảo Transaction an toàn (Rollback toàn bộ nếu lỗi).
+         * 2. DB tự động trừ tồn kho và tính tổng tiền chính xác.
+         */
+
+        try {
+            String orderDetailsJson = objectMapper.writeValueAsString(orderDto.getOrderDetailDtos());
+            Long customerId = null;
+            if (UserLoginUtil.getCurrentLogin() != null && UserLoginUtil.getCurrentLogin().getCustomer() != null) {
+                customerId = UserLoginUtil.getCurrentLogin().getCustomer().getId();
             }
+            
+            Double promotionDiscount = orderDto.getPromotionPrice();
+            if (promotionDiscount == null || Double.isNaN(promotionDiscount) || promotionDiscount < 0) {
+                promotionDiscount = 0.0;
+            }
+
+            StoredProcedureQuery query = entityManager.createStoredProcedureQuery("PROC_CREATE_ORDER");
+            query.registerStoredProcedureParameter("p_billing_address", String.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_invoice_type", String.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_payment_method_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_customer_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_voucher_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_promotion_price", Double.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_order_id_vnpay", String.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_branch_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_order_details_json", String.class, ParameterMode.IN);
+            
+            query.registerStoredProcedureParameter("p_bill_id", Long.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_bill_code", String.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_final_amount", Double.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_error_code", Integer.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_error_msg", String.class, ParameterMode.OUT);
+
+            query.setParameter("p_billing_address", orderDto.getBillingAddress());
+            query.setParameter("p_invoice_type", "ONLINE");
+            query.setParameter("p_payment_method_id", orderDto.getPaymentMethodId());
+            query.setParameter("p_customer_id", customerId);
+            query.setParameter("p_voucher_id", orderDto.getVoucherId());
+            query.setParameter("p_promotion_price", promotionDiscount);
+            query.setParameter("p_order_id_vnpay", orderDto.getOrderId());
+            query.setParameter("p_branch_id", orderDto.getBranchId());
+            query.setParameter("p_order_details_json", orderDetailsJson);
+
+            query.execute();
+
+            Integer errorCode = (Integer) query.getOutputParameterValue("p_error_code");
+            String errorMsg = (String) query.getOutputParameterValue("p_error_msg");
+
+            if (errorCode != null && errorCode < 0) {
+                throw new ShopApiException(HttpStatus.BAD_REQUEST, errorMsg);
+            }
+
+            if (UserLoginUtil.getCurrentLogin() != null) {
+                cartRepository.deleteAll();
+            }
+
+        } catch (Exception e) {
+            if (e instanceof ShopApiException) throw (ShopApiException) e;
+            throw new RuntimeException("Lỗi tạo đơn hàng: " + e.getMessage(), e);
         }
-        String billCode = "HD" + String.format("%03d", nextCode);
+    }
 
-        Bill bill = new Bill();
-        bill.setBillingAddress(orderDto.getBillingAddress());
-        bill.setCreateDate(LocalDateTime.now());
-        bill.setUpdateDate(LocalDateTime.now());
-        bill.setCode(billCode);
-        bill.setInvoiceType(InvoiceType.ONLINE);
-        bill.setStatus(BillStatus.CHO_XAC_NHAN);
-        bill.setPromotionPrice(orderDto.getPromotionPrice());
-        bill.setReturnStatus(false);
-
-        if (orderDto.getBranchId() != null) {
-            Branch branch = branchRepository.findById(orderDto.getBranchId())
-                    .orElseThrow(() -> new NotFoundException("Chi nhánh không tồn tại"));
-            bill.setBranch(branch);
-        }
-
-        if (UserLoginUtil.getCurrentLogin() != null) {
-            Account account = UserLoginUtil.getCurrentLogin();
-            bill.setCustomer(account.getCustomer());
-        }
-
-        double total = 0.0;
-        List<BillDetail> billDetailList = new ArrayList<>();
-
-        for (OrderDetailDto item : orderDto.getOrderDetailDtos()) {
-            BillDetail billDetail = new BillDetail();
-            billDetail.setBill(bill);
-            billDetail.setQuantity(item.getQuantity());
-
-            ProductDetail productDetail = productDetailRepository.findById(item.getProductDetailId())
-                    .orElseThrow(() -> new NotFoundException("Product not found"));
-            billDetail.setProductDetail(productDetail);
-
-            Product product = productRepository.findByProductDetail_Id(productDetail.getId());
-
-            if ("2".equals(product.getStatus())) {
-                throw new ShopApiException(HttpStatus.BAD_REQUEST,
-                        "Sản phẩm " + productDetail.getProduct().getName() + " đã ngừng bán");
-            }
-            if (productDetail.getQuantity() - item.getQuantity() < 0) {
-                throw new ShopApiException(HttpStatus.BAD_REQUEST,
-                        "Sản phẩm " + productDetail.getProduct().getName() + " chỉ còn lại " + productDetail.getQuantity());
-            }
-
-            double toppingTotal = 0.0;
-            List<BillDetailTopping> toppingEntities = new ArrayList<>();
-            if (item.getToppings() != null && !item.getToppings().isEmpty()) {
-                for (ToppingOrderDto toppingDto : item.getToppings()) {
-                    if (toppingDto.getPrice() == null) continue;
-                    BillDetailTopping toppingEntity = new BillDetailTopping();
-                    toppingEntity.setToppingName(toppingDto.getName());
-                    toppingEntity.setToppingPrice(toppingDto.getPrice());
-                    toppingEntity.setBillDetail(billDetail);
-                    toppingEntities.add(toppingEntity);
-                    toppingTotal += toppingDto.getPrice();
-                }
-            }
-
-            ProductDiscount productDiscount =
-                    productDiscountRepository.findValidDiscountByProductDetailId(productDetail.getId());
-            double productPrice = (productDiscount != null)
-                    ? productDiscount.getDiscountedAmount()
-                    : productDetail.getPrice();
-
-            double unitPrice = productPrice + toppingTotal;
-            billDetail.setMomentPrice(unitPrice);
-
-            total += unitPrice * item.getQuantity();
-
-            if (!toppingEntities.isEmpty()) {
-                billDetail.setBillDetailToppings(toppingEntities);
-            }
-
-            productDetail.setQuantity(productDetail.getQuantity() - item.getQuantity());
-            productDetailRepository.save(productDetail);
-            billDetailList.add(billDetail);
-        }
-
-	    if (orderDto.getVoucherId() != null) {
-	        DiscountCode discountCode = discountCodeRepository.findById(orderDto.getVoucherId())
-	                .orElseThrow(() -> new ShopApiException(HttpStatus.BAD_REQUEST, "Không tìm thấy voucher"));
-	        if (discountCode.getMaximumUsage() <= 0) {
-	            throw new ShopApiException(HttpStatus.BAD_REQUEST, "Mã giảm giá đã hết");
-	        }
-	        discountCode.setMaximumUsage(discountCode.getMaximumUsage() - 1);
-	        discountCodeRepository.save(discountCode);
-	        bill.setDiscountCode(discountCode);
-	    }
-
-	    // ✅ Tính promotion discount từ frontend
-	    Double promotionDiscount = orderDto.getPromotionPrice();
-	    if (promotionDiscount == null || Double.isNaN(promotionDiscount) || promotionDiscount < 0) {
-	        promotionDiscount = 0.0;
-	    }
-
-	 // ✅ Tổng cuối cùng (đã trừ khuyến mãi)
-	    double finalTotal = total - promotionDiscount;
-	    if (Double.isNaN(finalTotal) || finalTotal < 0) finalTotal = 0.0;
-
-	    bill.setBillDetail(billDetailList);
-	    bill.setAmount(finalTotal); // đảm bảo đặt lại ngay trước khi lưu
-
-	    PaymentMethod paymentMethod = paymentMethodRepository.findById(orderDto.getPaymentMethodId())
-	            .orElseThrow(() -> new NotFoundException("Payment not found"));
-	    bill.setPaymentMethod(paymentMethod);
-
-	    Bill billNew = billRepository.save(bill);
-
-	    // ✅ Thanh toán
-	    if (paymentMethod.getName() == PaymentMethodName.TIEN_MAT) {
-	        Payment payment = new Payment();
-	        payment.setPaymentDate(LocalDateTime.now());
-	        payment.setOrderStatus("1");
-	        payment.setBill(billNew);
-	        payment.setAmount(String.valueOf(finalTotal));
-	        payment.setOrderId(RandomUtils.generateRandomOrderId(8));
-	        payment.setStatusExchange(0);
-	        paymentRepository.save(payment);
-	    } else if (paymentMethod.getName() == PaymentMethodName.CHUYEN_KHOAN) {
-	        Payment payment = paymentRepository.findByOrderId(orderDto.getOrderId());
-	        payment.setBill(billNew);
-	        payment.setStatusExchange(0);
-	        paymentRepository.save(payment);
-	    }
-	    
-	    // 🔹 Xóa giỏ hàng sau khi đặt hàng thành công	
-
-	    cartRepository.deleteAllByAccount_Id(UserLoginUtil.getCurrentLogin().getId());
-	}
 
 
 
@@ -343,176 +280,96 @@ public class CartServiceImpl implements CartService {
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	public OrderDto orderAdmin(OrderDto orderDto) {
-	    Bill billCurrent = billRepository.findTopByOrderByIdDesc();
-	    int nextCode = 1;
-	    if (billCurrent != null && billCurrent.getCode() != null) {
-	        try {
-	            String numericPart = billCurrent.getCode().replaceAll("\\D+", "");
-	            if (!numericPart.isEmpty()) {
-	                nextCode = Integer.parseInt(numericPart) + 1;
-	            }
-	        } catch (NumberFormatException e) {
-	            nextCode = 1;
-	        }
-	    }
-	    String billCode = "HD" + String.format("%03d", nextCode);
+        // Thay vì xử lý logic Java cũ (trừ kho, tính tiền, tạo bill), giờ gọi Oracle Procedure để DB tự xử lý
 
-	    Bill bill = new Bill();
-	    bill.setBillingAddress(orderDto.getBillingAddress());
-	    bill.setCreateDate(LocalDateTime.now());
-	    bill.setUpdateDate(LocalDateTime.now());
-	    bill.setCode(billCode);
-	    bill.setInvoiceType(InvoiceType.OFFLINE);
-	    bill.setStatus(BillStatus.HOAN_THANH);
-	    bill.setPromotionPrice(orderDto.getPromotionPrice());
-	    bill.setReturnStatus(false);
-	    Account cashierAccount = UserLoginUtil.getCurrentLogin();
-	    if (cashierAccount == null) {
-	        throw new ShopApiException(HttpStatus.UNAUTHORIZED, "Không xác định được tài khoản thanh toán");
-	    }
-	    bill.setCashier(cashierAccount);
+        try {
+            String orderDetailsJson = objectMapper.writeValueAsString(orderDto.getOrderDetailDtos());
+            
+            Long customerId = null;
+            if (orderDto.getCustomer() != null && orderDto.getCustomer().getId() != null) {
+                customerId = orderDto.getCustomer().getId();
+            }
 
-	    boolean isVendorOrStaff = cashierAccount.getRole() != null
-	            && (cashierAccount.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_VENDOR
-	            || cashierAccount.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_STAFF);
+            Account cashierAccount = UserLoginUtil.getCurrentLogin();
+            if (cashierAccount == null) {
+                throw new ShopApiException(HttpStatus.UNAUTHORIZED, "Không xác định được tài khoản thanh toán");
+            }
 
-	    Long effectiveBranchId = orderDto.getBranchId();
-	    if (isVendorOrStaff) {
-	        if (cashierAccount.getBranch() == null) {
-	            throw new ShopApiException(HttpStatus.BAD_REQUEST, "Tài khoản nhân viên/quản lý chưa được gán chi nhánh");
-	        }
-	        effectiveBranchId = cashierAccount.getBranch().getId();
-	    }
+            Long effectiveBranchId = orderDto.getBranchId();
+            boolean isVendorOrStaff = cashierAccount.getRole() != null && 
+                (cashierAccount.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_VENDOR || 
+                 cashierAccount.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_STAFF);
 
-	    if (effectiveBranchId != null) {
-	        Branch branch = branchRepository.findById(effectiveBranchId)
-	            .orElseThrow(() -> new NotFoundException("Chi nhánh không tồn tại"));
-	        bill.setBranch(branch);
-	    } else if (isVendorOrStaff) {
-	        throw new ShopApiException(HttpStatus.BAD_REQUEST, "Không tìm thấy chi nhánh hợp lệ cho nhân viên/quản lý");
-	    }
+            if (isVendorOrStaff) {
+                if (cashierAccount.getBranch() == null) {
+                    throw new ShopApiException(HttpStatus.BAD_REQUEST, "Tài khoản nhân viên/quản lý chưa được gán chi nhánh");
+                }
+                effectiveBranchId = cashierAccount.getBranch().getId();
+            }
+            
+            Double promotionDiscount = orderDto.getPromotionPrice();
+            if (promotionDiscount == null || Double.isNaN(promotionDiscount) || promotionDiscount < 0) {
+                promotionDiscount = 0.0;
+            }
 
+            StoredProcedureQuery query = entityManager.createStoredProcedureQuery("PROC_CREATE_ORDER");
+            query.registerStoredProcedureParameter("p_billing_address", String.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_invoice_type", String.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_payment_method_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_customer_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_voucher_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_promotion_price", Double.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_order_id_vnpay", String.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_branch_id", Long.class, ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_order_details_json", String.class, ParameterMode.IN);
+            
+            query.registerStoredProcedureParameter("p_bill_id", Long.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_bill_code", String.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_final_amount", Double.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_error_code", Integer.class, ParameterMode.OUT);
+            query.registerStoredProcedureParameter("p_error_msg", String.class, ParameterMode.OUT);
 
-	    if (orderDto.getCustomer() != null && orderDto.getCustomer().getId() != null) {
-	        Customer customer = customerRepository.findById(orderDto.getCustomer().getId())
-	                .orElseThrow(() -> new NotFoundException("Customer not found"));
-	        bill.setCustomer(customer);
-	    }
+            query.setParameter("p_billing_address", orderDto.getBillingAddress());
+            query.setParameter("p_invoice_type", "OFFLINE");
+            query.setParameter("p_payment_method_id", orderDto.getPaymentMethodId());
+            query.setParameter("p_customer_id", customerId);
+            query.setParameter("p_voucher_id", orderDto.getVoucherId());
+            query.setParameter("p_promotion_price", promotionDiscount);
+            query.setParameter("p_order_id_vnpay", orderDto.getOrderId());
+            query.setParameter("p_branch_id", effectiveBranchId);
+            query.setParameter("p_order_details_json", orderDetailsJson);
 
-	    double total = 0.0;
-	    List<BillDetail> billDetailList = new ArrayList<>();
+            query.execute();
 
-	    for (OrderDetailDto item : orderDto.getOrderDetailDtos()) {
-	        BillDetail billDetail = new BillDetail();
-	        billDetail.setBill(bill);
-	        billDetail.setQuantity(item.getQuantity());
+            Integer errorCode = (Integer) query.getOutputParameterValue("p_error_code");
+            String errorMsg = (String) query.getOutputParameterValue("p_error_msg");
 
-	        ProductDetail productDetail = productDetailRepository.findById(item.getProductDetailId())
-	                .orElseThrow(() -> new NotFoundException("Product not found"));
-	        billDetail.setProductDetail(productDetail);
+            if (errorCode != null && errorCode < 0) {
+                throw new ShopApiException(HttpStatus.BAD_REQUEST, errorMsg);
+            }
 
-	        double toppingTotal = 0.0;
-	        List<BillDetailTopping> toppingEntities = new ArrayList<>();
-	        if (item.getToppings() != null && !item.getToppings().isEmpty()) {
-	            for (ToppingOrderDto toppingDto : item.getToppings()) {
-	                if (toppingDto.getPrice() == null) continue;
-	                BillDetailTopping toppingEntity = new BillDetailTopping();
-	                toppingEntity.setToppingName(toppingDto.getName());
-	                toppingEntity.setToppingPrice(toppingDto.getPrice());
-	                toppingEntity.setBillDetail(billDetail);
-	                toppingEntities.add(toppingEntity);
-	                toppingTotal += toppingDto.getPrice();
-	            }
-	        }
+            Long outBillId = (Long) query.getOutputParameterValue("p_bill_id");
+            
+            OrderDto result = new OrderDto();
+            if (outBillId != null) {
+                result.setBillId(outBillId.toString());
+            }
+            result.setCustomer(orderDto.getCustomer());
+            result.setInvoiceType(InvoiceType.OFFLINE);
+            result.setBillStatus(BillStatus.HOAN_THANH);
+            result.setPaymentMethodId(orderDto.getPaymentMethodId());
+            result.setBillingAddress(orderDto.getBillingAddress());
+            result.setPromotionPrice(promotionDiscount);
+            result.setBranchId(effectiveBranchId);
+            
+            return result;
 
-	        ProductDiscount productDiscount =
-	                productDiscountRepository.findValidDiscountByProductDetailId(productDetail.getId());
-	        double productPrice = (productDiscount != null)
-	                ? productDiscount.getDiscountedAmount()
-	                : productDetail.getPrice();
+        } catch (Exception e) {
+            if (e instanceof ShopApiException) throw (ShopApiException) e;
+            throw new RuntimeException("Lỗi tạo đơn hàng admin: " + e.getMessage(), e);
+        }
+    }
 
-	        double unitPrice = productPrice + toppingTotal;
-	        billDetail.setMomentPrice(unitPrice);
-	        total += unitPrice * item.getQuantity();
-
-	        if (!toppingEntities.isEmpty()) {
-	            billDetail.setBillDetailToppings(toppingEntities);
-	        }
-
-	        if (productDetail.getQuantity() - item.getQuantity() < 0) {
-	            throw new ShopApiException(HttpStatus.BAD_REQUEST,
-	                    "Sản phẩm " + productDetail.getProduct().getName() + " chỉ còn lại " + productDetail.getQuantity());
-	        }
-
-	        if (effectiveBranchId != null) {
-	            BranchInventory branchInventory = branchInventoryRepository
-	                    .findByBranchIdAndProductDetailId(effectiveBranchId, productDetail.getId())
-	                    .orElseThrow(() -> new ShopApiException(HttpStatus.BAD_REQUEST,
-	                            "Sản phẩm " + productDetail.getProduct().getName() + " không có trong tồn kho chi nhánh"));
-	            if (branchInventory.getQuantity() == null || branchInventory.getQuantity() - item.getQuantity() < 0) {
-	                throw new ShopApiException(HttpStatus.BAD_REQUEST,
-	                        "Sản phẩm " + productDetail.getProduct().getName() + " không đủ số lượng tại chi nhánh");
-	            }
-	            branchInventory.setQuantity(branchInventory.getQuantity() - item.getQuantity());
-	            branchInventory.setUpdateDate(LocalDateTime.now());
-	            branchInventoryRepository.save(branchInventory);
-	        }
-
-	        productDetail.setQuantity(productDetail.getQuantity() - item.getQuantity());
-	        productDetailRepository.save(productDetail);
-	        billDetailList.add(billDetail);
-	    }
-
-	    if (orderDto.getVoucherId() != null) {
-	        DiscountCode discountCode = discountCodeRepository.findById(orderDto.getVoucherId())
-	                .orElseThrow(() -> new ShopApiException(HttpStatus.BAD_REQUEST, "Không tìm thấy voucher"));
-	        if (discountCode.getMaximumUsage() <= 0) {
-	            throw new ShopApiException(HttpStatus.BAD_REQUEST, "Mã giảm giá đã hết");
-	        }
-	        discountCode.setMaximumUsage(discountCode.getMaximumUsage() - 1);
-	        discountCodeRepository.save(discountCode);
-	        bill.setDiscountCode(discountCode);
-	    }
-
-	    double promotionDiscount = orderDto.getPromotionPrice();
-	    if (Double.isNaN(promotionDiscount) || promotionDiscount < 0) {
-	        promotionDiscount = 0.0;
-	    }
-	    double finalTotal = total - promotionDiscount;
-	    if (Double.isNaN(finalTotal) || finalTotal < 0) finalTotal = 0.0;
-
-	    bill.setAmount(finalTotal);
-	    bill.setBillDetail(billDetailList);
-
-	    PaymentMethod paymentMethod = paymentMethodRepository.findById(orderDto.getPaymentMethodId())
-	            .orElseThrow(() -> new NotFoundException("Payment not found"));
-	    bill.setPaymentMethod(paymentMethod);
-
-	    Bill billNew = billRepository.save(bill);
-
-	    Payment payment = new Payment();
-	    payment.setPaymentDate(LocalDateTime.now());
-	    payment.setOrderStatus("1");
-	    payment.setBill(billNew);
-	    payment.setAmount(String.valueOf(finalTotal));
-	    payment.setStatusExchange(0);
-	    payment.setOrderId(RandomUtils.generateRandomOrderId(8));
-	    paymentRepository.save(payment);
-
-	    return new OrderDto(
-	    	    billNew.getId().toString(),     // billId
-	    	    orderDto.getCustomer(),         // customer
-	    	    billNew.getInvoiceType(),       // invoiceType
-	    	    billNew.getStatus(),            // billStatus
-	    	    billNew.getPaymentMethod().getId(), // paymentMethodId
-	    	    billNew.getBillingAddress(),    // billingAddress
-	    	    billNew.getPromotionPrice(),    // promotionPrice
-	    	    null,                           // voucherId
-	    	    null,                           // orderId
-	    	    billNew.getBranch() != null ? billNew.getBranch().getId() : null, // ✅ branchId (trước orderDetailDtos)
-	    	    null                            // ✅ orderDetailDtos cuối cùng
-	    	);
-	}
 
 
 	@Override

@@ -90,7 +90,8 @@ CREATE TABLE account (
     customer_id   NUMBER(19)    NULL,
     role_id       NUMBER(19)    NULL,
     branch_id     NUMBER(19)    NULL,
-    CONSTRAINT UK_account_code UNIQUE (code)
+    CONSTRAINT UK_account_code UNIQUE (code),
+    CONSTRAINT UK_account_email UNIQUE (email)
 ) TABLESPACE TS_TRASUA;
 
 -- ============================================================

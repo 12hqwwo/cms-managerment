@@ -49,7 +49,7 @@
             </div>
 
             <!-- Form Tạo Vendor Account -->
-            <form id="vendor-form" method="post" action="#" class="needs-validation">
+            <form id="vendor-form" onsubmit="event.preventDefault();" class="needs-validation">
                 <!-- Phần 1: Tạo Tài Khoản Mới -->
                 <div class="form-section" id="newAccountSection">
                     <h5>I. Thông Tin Tài Khoản Mới</h5>
@@ -72,6 +72,19 @@
                                        placeholder="VD: NV001, VENDOR_HN..." required>
                                 <div class="invalid-feedback">
                                     Mã tài khoản không được để trống
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Tên Người Quản Lý (Họ Tên) <span class="red_require">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       placeholder="Nhập họ tên" required>
+                                <div class="invalid-feedback">
+                                    Vui lòng nhập tên
                                 </div>
                             </div>
                         </div>
@@ -109,66 +122,14 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- Phần 2: Thông tin Chi Nhánh -->
-                <div class="form-section">
-                    <h5>II. Thông Tin Chi Nhánh (Branch)</h5>
-
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="branchCode" class="form-label">Mã Chi Nhánh <span class="red_require">*</span></label>
-                                <input type="text" class="form-control" id="branchCode" name="branchCode" 
-                                       placeholder="BR_HN, BR_HCM..." required>
-                                <div class="invalid-feedback">
-                                    Mã chi nhánh không được để trống
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="branchName" class="form-label">Tên Chi Nhánh <span class="red_require">*</span></label>
-                                <input type="text" class="form-control" id="branchName" name="branchName" 
-                                       placeholder="Chi nhánh Hà Nội" required>
-                                <div class="invalid-feedback">
-                                    Tên chi nhánh không được để trống
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label for="branchAddress" class="form-label">Địa Chỉ <span class="red_require">*</span></label>
-                                <input type="text" class="form-control" id="branchAddress" name="branchAddress" 
-                                       placeholder="Nhập địa chỉ chi nhánh" required>
-                                <div class="invalid-feedback">
-                                    Địa chỉ không được để trống
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="branchPhone" class="form-label">Số Điện Thoại Chi Nhánh <span class="red_require">*</span></label>
-                                <input type="tel" class="form-control" id="branchPhone" name="branchPhone" 
-                                       placeholder="Nhập số điện thoại" required>
-                                <div class="invalid-feedback">
-                                    Số điện thoại không được để trống
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="branchEmail" class="form-label">Email Chi Nhánh <span class="red_require">*</span></label>
-                                <input type="email" class="form-control" id="branchEmail" name="branchEmail" 
-                                       placeholder="Nhập email chi nhánh" required>
-                                <div class="invalid-feedback">
-                                    Email chi nhánh không hợp lệ
-                                </div>
+                                <label for="branchId" class="form-label">Gán vào Chi Nhánh (Không bắt buộc)</label>
+                                <select class="form-control" id="branchId" name="branchId">
+                                    <option value="">-- Để trống nếu chưa muốn gán --</option>
+                                    <!-- Các option sẽ được render bằng JS -->
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -191,34 +152,22 @@
             document.getElementById('vendor-form').addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                const branchCode = document.getElementById('branchCode').value;
-                const branchName = document.getElementById('branchName').value;
-                const branchAddress = document.getElementById('branchAddress').value;
-                const branchPhone = document.getElementById('branchPhone').value;
-                const branchEmail = document.getElementById('branchEmail').value;
+                const branchId = document.getElementById('branchId').value;
 
-                // Kiểm tra thông tin branch
-                if (!branchCode || !branchName || !branchAddress || !branchPhone || !branchEmail) {
-                    alert('Vui lòng điền đầy đủ thông tin chi nhánh!');
-                    return;
+                let data = {};
+                if (branchId) {
+                    data.branchId = parseInt(branchId, 10);
                 }
-
-                let data = {
-                    branchCode: branchCode,
-                    branchName: branchName,
-                    branchAddress: branchAddress,
-                    branchPhone: branchPhone,
-                    branchEmail: branchEmail
-                };
 
                 // Tạo account mới
                 const email = document.getElementById('email').value;
                 const code = document.getElementById('code').value;
+                const name = document.getElementById('name').value;
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
                 const phoneNumber = document.getElementById('phoneNumber').value;
 
-                if (!email || !code || !password || !confirmPassword) {
+                if (!email || !code || !name || !password || !confirmPassword) {
                     alert('Vui lòng điền đầy đủ thông tin tài khoản!');
                     return;
                 }
@@ -235,6 +184,7 @@
 
                 data.email = email;
                 data.code = code;
+                data.name = name;
                 data.password = password;
                 data.phoneNumber = phoneNumber;
                 submitCreateVendorForm(data);
@@ -242,14 +192,19 @@
 
             // Gửi request tạo vendor account mới
             function submitCreateVendorForm(data) {
-            	fetch('[[@{/api/admin/accounts-branches/assign-branch-with-info}]]', {
+            	fetch('/api/admin/accounts-branches/create-vendor-only', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(data)
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text) });
+                    }
+                    return response.json();
+                })
                 .then(result => {
                     alert('Tạo vendor account thành công!');
                     window.location.href = '/admin-only/account-management';
@@ -258,6 +213,22 @@
                     console.error('Error:', error);
                     alert('Có lỗi xảy ra: ' + error.message);
                 });
+            }
+
+            // Load danh sách branch vào dropdown
+            function loadBranches() {
+                fetch('/api/branches/active')
+                    .then(res => res.json())
+                    .then(branches => {
+                        const select = document.getElementById('branchId');
+                        branches.forEach(b => {
+                            const option = document.createElement('option');
+                            option.value = b.id;
+                            option.textContent = b.branchCode + ' - ' + b.branchName;
+                            select.appendChild(option);
+                        });
+                    })
+                    .catch(err => console.error("Lỗi load branch:", err));
             }
 
             // Gửi request gán branch cho account hiện có
@@ -305,6 +276,8 @@
             (function() {
                 'use strict';
                 window.addEventListener('load', function() {
+                    loadBranches(); // Load danh sách chi nhánh khi trang vừa lên
+                    
                     const forms = document.querySelectorAll('.needs-validation');
                     Array.prototype.slice.call(forms).forEach(function(form) {
                         form.addEventListener('submit', function(event) {

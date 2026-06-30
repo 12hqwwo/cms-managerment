@@ -6,8 +6,8 @@
 -- 2. Đã kích hoạt Oracle Label Security (chopt enable ols).
 -- ==============================================================================
 
--- Thay đổi session context thành schema của dự án (Giả sử là C##WEB_ALOTRA, bạn cần thay đổi tùy vào tên Schema thực tế)
--- ALTER SESSION SET CURRENT_SCHEMA = C##WEB_ALOTRA;
+-- Thay đổi session context thành schema của dự án
+ALTER SESSION SET CURRENT_SCHEMA = TRASUA;
 
 
 -- ==============================================================================
@@ -50,22 +50,23 @@ BEGIN
     BEGIN DBMS_FGA.DROP_POLICY(object_schema => SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'), object_name => 'discount_code', policy_name => 'AUDIT_DISCOUNT_CODE'); EXCEPTION WHEN OTHERS THEN NULL; END;
     BEGIN DBMS_FGA.DROP_POLICY(object_schema => SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'), object_name => 'product_discount', policy_name => 'AUDIT_PRODUCT_DISCOUNT'); EXCEPTION WHEN OTHERS THEN NULL; END;
 
-    -- 1. Audit bảng discount_code (Giám sát khi có người INSERT, UPDATE, DELETE hoặc truy vấn mã giảm giá VIP)
+    -- 1. Audit bảng discount_code (Giám sát khi ROLE_STAFF thực hiện INSERT, UPDATE, DELETE)
     DBMS_FGA.ADD_POLICY(
         object_schema   => SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'),
         object_name     => 'discount_code',
         policy_name     => 'AUDIT_DISCOUNT_CODE',
-        audit_condition => 'percentage >= 50', -- Chỉ giám sát các mã giảm giá lớn hơn 50%
-        audit_column    => 'code, percentage',
-        statement_types => 'SELECT, INSERT, UPDATE, DELETE'
+        audit_condition => 'SYS_CONTEXT(''branch_ctx'', ''user_role'') = ''ROLE_STAFF''',
+        audit_column    => NULL,
+        statement_types => 'INSERT, UPDATE, DELETE'
     );
 
-    -- 2. Audit bảng product_discount
+    -- 2. Audit bảng product_discount (Giám sát khi ROLE_STAFF thay đổi discount_percentage hoặc status)
     DBMS_FGA.ADD_POLICY(
         object_schema   => SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'),
         object_name     => 'product_discount',
         policy_name     => 'AUDIT_PRODUCT_DISCOUNT',
-        audit_condition => NULL, -- Giám sát mọi hành động thay đổi
+        audit_condition => 'SYS_CONTEXT(''branch_ctx'', ''user_role'') = ''ROLE_STAFF''', 
+        audit_column    => 'discountedamount, closed',
         statement_types => 'INSERT, UPDATE, DELETE'
     );
 END;
@@ -96,24 +97,21 @@ EXEC SA_COMPONENTS.CREATE_LEVEL('ACCESS_POLICY', 1000, 'PUB', 'PUBLIC');
 EXEC SA_COMPONENTS.CREATE_LEVEL('ACCESS_POLICY', 2000, 'CONF', 'CONFIDENTIAL');
 EXEC SA_COMPONENTS.CREATE_LEVEL('ACCESS_POLICY', 3000, 'SEC', 'SECRET');
 
--- 2. Tạo Compartments (Bộ phận)
-EXEC SA_COMPONENTS.CREATE_COMPARTMENT('ACCESS_POLICY', 100, 'ADM', 'ADMINISTRATION');
-EXEC SA_COMPONENTS.CREATE_COMPARTMENT('ACCESS_POLICY', 200, 'MNG', 'MANAGEMENT');
-EXEC SA_COMPONENTS.CREATE_COMPARTMENT('ACCESS_POLICY', 300, 'OPR', 'OPERATIONS');
+-- 2. Tạo Compartments (Theo Chi nhánh)
+EXEC SA_COMPONENTS.CREATE_COMPARTMENT('ACCESS_POLICY', 100, 'BR1', 'BRANCH 1');
+EXEC SA_COMPONENTS.CREATE_COMPARTMENT('ACCESS_POLICY', 200, 'BR2', 'BRANCH 2');
 
--- 3. Tạo Groups (Theo Chi nhánh)
-EXEC SA_COMPONENTS.CREATE_GROUP('ACCESS_POLICY', 10, 'GLOBAL', 'ALL BRANCHES');
-EXEC SA_COMPONENTS.CREATE_GROUP('ACCESS_POLICY', 20, 'BR1', 'BRANCH 1', 'GLOBAL');
-EXEC SA_COMPONENTS.CREATE_GROUP('ACCESS_POLICY', 30, 'BR2', 'BRANCH 2', 'GLOBAL');
+-- 3. Tạo Groups (Theo Bộ phận)
+EXEC SA_COMPONENTS.CREATE_GROUP('ACCESS_POLICY', 10, 'MNG', 'MANAGEMENT');
+EXEC SA_COMPONENTS.CREATE_GROUP('ACCESS_POLICY', 20, 'OPR', 'OPERATIONS');
 
 -- A. THIẾT LẬP NHÃN CHO USER (USER AUTHORIZATION)
--- (Lưu ý: Thay thế các user C##ADMIN, C##VENDOR_BR1 bằng user Database thực tế của bạn)
 -- Cấp nhãn cho Admin (Được đọc ghi mọi thứ)
--- EXEC SA_USER_ADMIN.SET_USER_LABELS('ACCESS_POLICY', 'C##ADMIN', 'SEC:ADM,MNG,OPR:GLOBAL');
+-- EXEC SA_USER_ADMIN.SET_USER_LABELS('ACCESS_POLICY', 'C##ADMIN', 'SEC:BR1,BR2:MNG,OPR');
 -- Cấp nhãn cho Vendor Chi Nhánh 1 (Chỉ đọc/ghi dữ liệu Management & Operation của Branch 1)
--- EXEC SA_USER_ADMIN.SET_USER_LABELS('ACCESS_POLICY', 'C##VENDOR_BR1', 'SEC:MNG,OPR:BR1');
+-- EXEC SA_USER_ADMIN.SET_USER_LABELS('ACCESS_POLICY', 'C##VENDOR_BR1', 'CONF:BR1:MNG,OPR');
 -- Cấp nhãn cho Staff Chi Nhánh 1 (Chỉ đọc/ghi dữ liệu Operation của Branch 1)
--- EXEC SA_USER_ADMIN.SET_USER_LABELS('ACCESS_POLICY', 'C##STAFF_BR1', 'CONF:OPR:BR1');
+-- EXEC SA_USER_ADMIN.SET_USER_LABELS('ACCESS_POLICY', 'C##STAFF_BR1', 'PUB:BR1:OPR');
 
 
 -- D. XỬ LÝ TRẠNG THÁI 'NO_CONTROL' (Bật kiểm soát thực sự)
@@ -126,47 +124,55 @@ UPDATE account SET ols_label = CHAR_TO_LABEL('ACCESS_POLICY', 'PUB') WHERE ols_l
 UPDATE bill SET ols_label = CHAR_TO_LABEL('ACCESS_POLICY', 'PUB') WHERE ols_label IS NULL;
 COMMIT;
 
--- B. TẠO HÀM TỰ ĐỘNG GÁN NHÃN KHI INSERT (LABEL FUNCTION)
-CREATE OR REPLACE FUNCTION gen_bill_label (p_branch_id IN NUMBER) RETURN SA_LABEL IS
+-- B. TẠO TRIGGER TỰ ĐỘNG GÁN NHÃN KHI INSERT (Thay thế cho Label Function bị lỗi)
+-- Sử dụng Database Trigger là giải pháp an toàn và ổn định nhất thay vì phụ thuộc vào SA_POLICY_ADMIN.APPLY_TABLE_POLICY label_function
+
+CREATE OR REPLACE TRIGGER TRASUA.trg_ols_bill_insert
+BEFORE INSERT ON TRASUA.bill
+FOR EACH ROW
 BEGIN
-    IF p_branch_id = 1 THEN
-        RETURN TO_SA_LABEL('ACCESS_POLICY', 'CONF:OPR:BR1');
-    ELSIF p_branch_id = 2 THEN
-        RETURN TO_SA_LABEL('ACCESS_POLICY', 'CONF:OPR:BR2');
+    IF :new.branch_id = 1 THEN
+        :new.ols_label := CHAR_TO_LABEL('ACCESS_POLICY', 'PUB:BR1:OPR');
+    ELSIF :new.branch_id = 2 THEN
+        :new.ols_label := CHAR_TO_LABEL('ACCESS_POLICY', 'PUB:BR2:OPR');
+    ELSE
+        :new.ols_label := CHAR_TO_LABEL('ACCESS_POLICY', 'PUB');
     END IF;
-    RETURN TO_SA_LABEL('ACCESS_POLICY', 'PUB');
 END;
 /
 
-CREATE OR REPLACE FUNCTION gen_account_label (p_branch_id IN NUMBER) RETURN SA_LABEL IS
+CREATE OR REPLACE TRIGGER TRASUA.trg_ols_account_insert
+BEFORE INSERT ON TRASUA.account
+FOR EACH ROW
 BEGIN
-    IF p_branch_id = 1 THEN
-        RETURN TO_SA_LABEL('ACCESS_POLICY', 'SEC:MNG:BR1');
-    ELSIF p_branch_id = 2 THEN
-        RETURN TO_SA_LABEL('ACCESS_POLICY', 'SEC:MNG:BR2');
+    IF :new.branch_id = 1 THEN
+        :new.ols_label := CHAR_TO_LABEL('ACCESS_POLICY', 'CONF:BR1:MNG');
+    ELSIF :new.branch_id = 2 THEN
+        :new.ols_label := CHAR_TO_LABEL('ACCESS_POLICY', 'CONF:BR2:MNG');
+    ELSE
+        :new.ols_label := CHAR_TO_LABEL('ACCESS_POLICY', 'PUB');
     END IF;
-    RETURN TO_SA_LABEL('ACCESS_POLICY', 'PUB');
 END;
 /
 
 -- Bước 3: Đổi Policy sang thực thi (Có bật READ_CONTROL, WRITE_CONTROL và tự động gọi Label Function)
 BEGIN
-    SA_POLICY_ADMIN.REMOVE_TABLE_POLICY('ACCESS_POLICY', SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'), 'account');
+    -- Remove trước, bọc riêng để xử lý trường hợp policy chưa áp dụng
+    BEGIN SA_POLICY_ADMIN.REMOVE_TABLE_POLICY('ACCESS_POLICY', SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'), 'account'); EXCEPTION WHEN OTHERS THEN NULL; END;
+    BEGIN SA_POLICY_ADMIN.REMOVE_TABLE_POLICY('ACCESS_POLICY', SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'), 'bill');    EXCEPTION WHEN OTHERS THEN NULL; END;
+
     SA_POLICY_ADMIN.APPLY_TABLE_POLICY(
         policy_name    => 'ACCESS_POLICY',
         schema_name    => SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'),
         table_name     => 'account',
-        table_options  => 'READ_CONTROL,WRITE_CONTROL,CHECK_CONTROL',
-        label_function => 'gen_account_label(:new.branch_id)'
+        table_options  => 'READ_CONTROL,WRITE_CONTROL,CHECK_CONTROL'
     );
 
-    SA_POLICY_ADMIN.REMOVE_TABLE_POLICY('ACCESS_POLICY', SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'), 'bill');
     SA_POLICY_ADMIN.APPLY_TABLE_POLICY(
         policy_name    => 'ACCESS_POLICY',
         schema_name    => SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'),
         table_name     => 'bill',
-        table_options  => 'READ_CONTROL,WRITE_CONTROL,CHECK_CONTROL',
-        label_function => 'gen_bill_label(:new.branch_id)'
+        table_options  => 'READ_CONTROL,WRITE_CONTROL,CHECK_CONTROL'
     );
 END;
 /
@@ -179,13 +185,15 @@ CREATE OR REPLACE CONTEXT branch_ctx USING pkg_branch_sec;
 
 -- Tạo Package Set Context
 CREATE OR REPLACE PACKAGE pkg_branch_sec IS
-    PROCEDURE set_branch_id(p_branch_id NUMBER);
+    PROCEDURE set_context(p_branch_id NUMBER, p_role_name VARCHAR2, p_account_id NUMBER);
 END;
 /
 CREATE OR REPLACE PACKAGE BODY pkg_branch_sec IS
-    PROCEDURE set_branch_id(p_branch_id NUMBER) IS
+    PROCEDURE set_context(p_branch_id NUMBER, p_role_name VARCHAR2, p_account_id NUMBER) IS
     BEGIN
         DBMS_SESSION.SET_CONTEXT('branch_ctx', 'branch_id', TO_CHAR(p_branch_id));
+        DBMS_SESSION.SET_CONTEXT('branch_ctx', 'user_role', p_role_name);
+        DBMS_SESSION.SET_CONTEXT('branch_ctx', 'account_id', TO_CHAR(p_account_id));
     END;
 END;
 /
@@ -202,16 +210,33 @@ RETURN VARCHAR2
 IS
     v_role VARCHAR2(100);
     v_branch_id VARCHAR2(10);
+    v_account_id VARCHAR2(20);
 BEGIN
-    -- Lấy role hoặc branch id từ ứng dụng truyền vào qua Context
+    -- Lấy role, branch id, account id từ ứng dụng truyền vào qua Context
+    v_role := SYS_CONTEXT('branch_ctx', 'user_role');
     v_branch_id := SYS_CONTEXT('branch_ctx', 'branch_id');
+    v_account_id := SYS_CONTEXT('branch_ctx', 'account_id');
     
-    -- Nếu là Admin (chưa set branch_id hoặc branch_id = 0), được xem tất cả
-    IF v_branch_id IS NULL OR v_branch_id = '0' THEN
+    -- Nếu là Admin (hoặc chưa đăng nhập), được xem tất cả (hoặc fallback policy)
+    IF v_role = 'ROLE_ADMIN' OR v_role IS NULL THEN
         RETURN ''; 
-    ELSE
-        -- Nếu là Vendor/Staff, chỉ được xem row thuộc chi nhánh của mình
+    ELSIF v_role = 'ROLE_VENDOR' THEN
+        -- Nếu là Vendor, được xem toàn bộ row thuộc chi nhánh của mình
         RETURN 'branch_id = ' || v_branch_id;
+    ELSIF v_role = 'ROLE_STAFF' THEN
+        -- Nếu là Staff, tùy theo bảng
+        IF UPPER(p_table) = 'BILL' THEN
+            -- Staff chỉ xem được hóa đơn do chính mình tạo (cashier) tại chi nhánh của mình
+            RETURN 'branch_id = ' || v_branch_id || ' AND cashier_account_id = ' || v_account_id;
+        ELSIF UPPER(p_table) = 'ACCOUNT' THEN
+            -- Staff bị cấm hoàn toàn không được xem bảng ACCOUNT
+            RETURN '1=0';
+        ELSE
+            -- Mặc định an toàn cho các bảng khác
+            RETURN 'branch_id = ' || v_branch_id;
+        END IF;
+    ELSE
+        RETURN '1=0'; -- Chặn hoàn toàn nếu role không hợp lệ
     END IF;
 END;
 /

@@ -8,5 +8,6 @@ import com.project.WebAloTra.entity.Customer;
 import java.util.List;
 
 public interface AddressShippingRepository extends JpaRepository<AddressShipping, Long> {
+    // Mở lại vì AccountServiceImpl.convertToDto vẫn đang gọi phương thức này
     List<AddressShipping> findAllByCustomer_Account_Id(Long accountId);
 }

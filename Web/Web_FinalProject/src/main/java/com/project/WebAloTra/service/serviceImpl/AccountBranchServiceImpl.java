@@ -12,8 +12,10 @@ import com.project.WebAloTra.entity.Role;
 import com.project.WebAloTra.entity.enumClass.RoleName;
 import com.project.WebAloTra.repository.AccountRepository;
 import com.project.WebAloTra.repository.BranchRepository;
+import com.project.WebAloTra.repository.CustomerRepository;
 import com.project.WebAloTra.repository.RoleRepository;
 import com.project.WebAloTra.service.AccountBranchService;
+import com.project.WebAloTra.entity.Customer;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -31,6 +33,9 @@ public class AccountBranchServiceImpl implements AccountBranchService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -62,6 +67,9 @@ public class AccountBranchServiceImpl implements AccountBranchService {
     @Override
     @Transactional
     public Account createVendorAccountWithBranch(CreateVendorAccountRequest request) {
+        if (accountRepository.findByEmail(request.getEmail()) != null) {
+            throw new RuntimeException("Email này đã được sử dụng. Vui lòng dùng tính năng 'Đổi thông tin tài khoản' để gán quyền Vendor cho tài khoản đã có.");
+        }
         Branch branch = new Branch();
         branch.setBranchCode(request.getBranchCode());
         branch.setBranchName(request.getBranchName());
@@ -87,6 +95,46 @@ public class AccountBranchServiceImpl implements AccountBranchService {
         vendorRole.ifPresent(account::setRole);
 
         // Account là owning side, chỉ cần save account là đủ
+        accountRepository.save(account);
+
+        return account;
+    }
+
+    // -------------------- TẠO MỚI VENDOR ACCOUNT ĐỘC LẬP --------------------
+    @Override
+    @Transactional
+    public Account createVendorAccountOnly(com.project.WebAloTra.dto.Account.CreateVendorOnlyRequest request) {
+        if (accountRepository.findByEmail(request.getEmail()) != null) {
+            throw new RuntimeException("Email này đã được sử dụng. Vui lòng dùng tính năng 'Đổi thông tin tài khoản' để gán quyền Vendor cho tài khoản đã có.");
+        }
+
+        Account account = new Account();
+        account.setEmail(request.getEmail());
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
+        account.setCode(request.getCode());
+        account.setNonLocked(true);
+        account.setCreateDate(LocalDateTime.now());
+        account.setUpdateDate(LocalDateTime.now());
+
+        // Tạo Customer tương ứng để lưu name, phone, code, email
+        Customer customer = new Customer();
+        customer.setCode(request.getCode());
+        customer.setName(request.getName() != null && !request.getName().trim().isEmpty() ? request.getName() : "Vendor " + request.getCode());
+        customer.setEmail(request.getEmail());
+        customer.setPhoneNumber(request.getPhoneNumber());
+        customer = customerRepository.save(customer);
+
+        account.setCustomer(customer);
+
+        // Nếu có truyền branchId thì lấy branch đó gán vào
+        if (request.getBranchId() != null) {
+            Optional<Branch> optBranch = branchRepository.findById(request.getBranchId());
+            optBranch.ifPresent(account::setBranch);
+        }
+
+        Optional<Role> vendorRole = roleRepository.findByName(RoleName.ROLE_VENDOR);
+        vendorRole.ifPresent(account::setRole);
+
         accountRepository.save(account);
 
         return account;

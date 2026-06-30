@@ -50,6 +50,26 @@ public class AdminAccountBranchController {
         }
     }
 
+    // -------------------- TẠO MỚI VENDOR ACCOUNT ĐỘC LẬP (HOẶC CHỌN BRANCH SẴN CÓ) --------------------
+    @PostMapping("/create-vendor-only")
+    public ResponseEntity<?> createVendorAccountOnly(@RequestBody com.project.WebAloTra.dto.Account.CreateVendorOnlyRequest request) {
+        try {
+            if (request.getEmail() == null || request.getEmail().isEmpty()) {
+                return ResponseEntity.badRequest().body("Email không được để trống");
+            }
+            if (request.getPassword() == null || request.getPassword().isEmpty()) {
+                return ResponseEntity.badRequest().body("Mật khẩu không được để trống");
+            }
+
+            Account createdAccount = accountBranchService.createVendorAccountOnly(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdAccount);
+        } catch (Exception e) {
+            logger.error("Lỗi tạo vendor account độc lập", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Lỗi: " + e.getMessage());
+        }
+    }
+
     // -------------------- GÁN BRANCH CHO ACCOUNT HIỆN CÓ --------------------
     @PostMapping("/assign-branch-with-info")
     public ResponseEntity<?> assignBranchWithInfo(@RequestBody AssignBranchWithInfoRequest request) {

@@ -15,6 +15,9 @@ public interface AccountBranchService {
     // Tạo vendor account mới kèm branch
     Account createVendorAccountWithBranch(CreateVendorAccountRequest request);
     
+    // Tạo vendor account mới độc lập (không bắt buộc branch)
+    Account createVendorAccountOnly(com.project.WebAloTra.dto.Account.CreateVendorOnlyRequest request);
+    
     // Lấy account theo branch
     Optional<Account> getVendorAccountByBranchId(Long branchId);
     

@@ -89,13 +89,13 @@
                             <span th:text="${account.email}"></span>
                         </td>
                         <td>
-                            <span th:text="${account.customer.name}"></span>
+                            <span th:text="${account.customer?.name}"></span>
                         </td>
                         <td>
-                            <span th:text="${account.customer.phoneNumber}"></span>
+                            <span th:text="${account.customer?.phoneNumber}"></span>
                         </td>
                         <td>
-                            <span th:text="${account.role.name}"></span>
+                            <span th:text="${account.role?.name}"></span>
                         </td>
                         <td>
                             <span th:unless="${account.isNonLocked}" class="badge badge-danger">Đã khóa</span>

@@ -10,6 +10,7 @@
 --   Windows : C:\oracle\oradata\ORCL\ts_trasua01.dbf
 --   Linux   : /u01/app/oracle/oradata/ORCL/ts_trasua01.dbf
 -- ============================================================
+ALTER DATABASE OPEN;
 CREATE TABLESPACE TS_TRASUA
     DATAFILE 'ts_trasua01.dbf'   -- Oracle tu tim thu muc data mac dinh
     SIZE 256M
