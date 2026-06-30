@@ -15,8 +15,11 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
 
 	@Bean
@@ -83,7 +86,7 @@ public class WebSecurityConfig {
 
 					// Các chức năng chỉ dành cho ADMIN (quản lý user, danh mục, vận chuyển, chiết
 					// khấu app, giảm phí vận chuyển,...)
-					.antMatchers("/admin/**", "/management/**", "/system/**").hasRole("ADMIN")
+					.antMatchers("/admin/**", "/api/admin/**", "/management/**", "/system/**").hasRole("ADMIN")
 
 					// Bảo mật cho API Branches (Tránh rò rỉ và chỉnh sửa trái phép)
 					.antMatchers(org.springframework.http.HttpMethod.POST, "/api/branches").hasRole("ADMIN")

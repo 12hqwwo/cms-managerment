@@ -192,6 +192,11 @@
     <div id="interactive" class="viewport"></div>
     <nav class="" style="background-color: #0964CF; padding: 0 14px">
         <div class="flex items-center">
+            <div class="mr-4 cursor-pointer hover:bg-black/[.54] rounded-lg p-2" onclick="history.back()" title="Trở lại">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </div>
             <div class="search-container w- mr-2">
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -484,22 +489,24 @@
                         <h5 class="font-bold text-blue-500 text-2xl" id="last-price">0</h5>
                     </div>
                 </div>
-                <div class="">
-                    <div class="col">
-                        <h6 class="font-bold">Tiền khách đưa: </h6>
+                <div id="cash-payment-section">
+                    <div class="">
+                        <div class="col">
+                            <h6 class="font-bold">Tiền khách đưa: </h6>
+                        </div>
+                        <div class="col">
+                            <input class="border-none outline-none bg-transparent text-xl" type="text" name=""
+                                id="customerPayInput">
+                        </div>
                     </div>
-                    <div class="col">
-                        <input class="border-none outline-none bg-transparent text-xl" type="text" name=""
-                            id="customerPayInput">
-                    </div>
-                </div>
-                <hr>
-                <div class="mt-2">
-                    <div class="col">
-                        <h6 class="text-blue-500">Tiền thừa trả khách: </h6>
-                    </div>
-                    <div class="col">
-                        <h6 class="text-xl" id="money-change">0</h6>
+                    <hr>
+                    <div class="mt-2">
+                        <div class="col">
+                            <h6 class="text-blue-500">Tiền thừa trả khách: </h6>
+                        </div>
+                        <div class="col">
+                            <h6 class="text-xl" id="money-change">0</h6>
+                        </div>
                     </div>
                 </div>
 
@@ -1109,6 +1116,20 @@
                         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                     }
 
+                    $('input[name="paymentMethod"]').change(function () {
+                        if ($(this).val() == 3) {
+                            $('#cash-payment-section').hide();
+                            $('#customerPayInput').prop('disabled', true);
+                            $('#customerPayInput').val('');
+                            pay.customerPay = 0;
+                            updateCustomerChange();
+                        } else {
+                            $('#cash-payment-section').show();
+                            $('#customerPayInput').prop('disabled', false);
+                        }
+                    });
+
+
                     $("#customerPayInput").on('input', function () {
 
                         var value = $(this).val();
@@ -1505,7 +1526,9 @@
                             return;
                         }
 
-                        if (pay.customerPay == '') {
+                        var paymentMethodId = $('input[name="paymentMethod"]:checked').val();
+
+                        if (paymentMethodId != 3 && pay.customerPay == '') {
                             Swal.fire({
                                 title: "Lỗi",
                                 text: "Vui lòng nhập số tiền khách đưa",
@@ -1516,7 +1539,6 @@
 
                         const promotionPrice = parseInt(removeAnyNonDigit($("#voucher-discount").text())) + parseInt(removeAnyNonDigit($("#product-discount").text()))
 
-                        var paymentMethodId = $('input[name="paymentMethod"]:checked').val()
 
                         var dataSend = {
                             customer: {

@@ -474,7 +474,7 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 		    LEFT JOIN product_detail pd ON rd.product_detail_id = pd.id
 		    WHERE b.status = 'HOAN_THANH'
 		      AND (b.create_date BETWEEN TO_TIMESTAMP(:fromDate, 'YYYY-MM-DD') AND TO_TIMESTAMP(:toDate, 'YYYY-MM-DD'))
-		      AND (:branchId IS NULL OR b.branch_id, b.cashier_account_id = :branchId)
+		      AND (:branchId IS NULL OR b.branch_id = :branchId OR b.cashier_account_id = :branchId)
 		    GROUP BY TO_CHAR(b.create_date, 'MM-YYYY')
 		    ORDER BY TO_CHAR(b.create_date, 'MM-YYYY')
 		    """, nativeQuery = true)

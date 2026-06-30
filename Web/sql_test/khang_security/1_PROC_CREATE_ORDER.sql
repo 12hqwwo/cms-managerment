@@ -1,5 +1,5 @@
--- ==========================================
--- 0. T?O SEQUENCE CHO M? H�A ��N
+﻿-- ==========================================
+-- 0. T?O SEQUENCE CHO M? H�A ��N
 -- ==========================================
 BEGIN
     EXECUTE IMMEDIATE 'CREATE SEQUENCE SEQ_BILL_CODE START WITH 1 INCREMENT BY 1 NOCACHE';
@@ -169,6 +169,20 @@ BEGIN
                 RETURN;
         END;
 
+        IF p_invoice_type = 'OFFLINE' THEN
+            BEGIN
+                SELECT quantity INTO v_pd_qty_stock
+                FROM   branch_inventory
+                WHERE  branch_id = p_branch_id AND product_detail_id = v_pd_id;
+            EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                    ROLLBACK;
+                    p_error_code := -6;
+                    p_error_msg  := 'Sản phẩm ' || v_product_name || ' không có trong kho chi nhánh này';
+                    RETURN;
+            END;
+        END IF;
+
         -- Kiểm tra ngừng bán (status = 2)
         IF v_pd_status = 2 THEN
             ROLLBACK;
@@ -242,9 +256,15 @@ BEGIN
         END IF;
 
         -- Trừ tồn kho
-        UPDATE product_detail
-        SET    quantity = quantity - v_qty
-        WHERE  id = v_pd_id;
+        IF p_invoice_type = 'OFFLINE' THEN
+            UPDATE branch_inventory
+            SET    quantity = quantity - v_qty
+            WHERE  branch_id = p_branch_id AND product_detail_id = v_pd_id;
+        ELSE
+            UPDATE product_detail
+            SET    quantity = quantity - v_qty
+            WHERE  id = v_pd_id;
+        END IF;
 
     END LOOP;
 
@@ -307,7 +327,7 @@ BEGIN
     END IF;
 
     -- ==============================================================
-    -- BƯỚC 9: Gán OUT parameters & commit
+    -- BƯỚC 9: Gán OUT parameters and commit
     -- ==============================================================
     p_bill_id      := v_bill_id;
     p_bill_code    := v_bill_code;
@@ -334,6 +354,7 @@ END PROC_CREATE_ORDER;
 SELECT object_name, status
 FROM   user_objects
 WHERE  object_name = 'PROC_CREATE_ORDER';
+
 
 
 

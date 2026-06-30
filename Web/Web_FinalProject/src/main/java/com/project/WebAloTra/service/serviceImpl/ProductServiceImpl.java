@@ -19,6 +19,7 @@ import com.project.WebAloTra.exception.ShopApiException;
 import com.project.WebAloTra.repository.ProductDetailRepository;
 import com.project.WebAloTra.repository.ProductDiscountRepository;
 import com.project.WebAloTra.repository.ProductRepository;
+import com.project.WebAloTra.repository.BranchInventoryRepository;
 import com.project.WebAloTra.repository.Specification.ProductSpecification;
 import com.project.WebAloTra.service.ProductService;
 import com.project.WebAloTra.utils.QRCodeService;
@@ -41,6 +42,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductDiscountRepository productDiscountRepository;
+
+    @Autowired
+    private BranchInventoryRepository branchInventoryRepository;
+
+    @Autowired
+    private QRCodeService qrCodeService;
 
     @Override
     public Page<Product> getAllProduct(Pageable pageable0) {
@@ -127,6 +134,12 @@ public class ProductServiceImpl implements ProductService {
         Specification<Product> spec = new ProductSpecification(searchDto);
         Page<Product> products = productRepository.findAll(spec, pageable);
         return products.map(this::convertToDto);
+    }
+
+    @Override
+    public Page<ProductDto> searchBranchProduct(SearchProductDto searchDto, Pageable pageable, Long branchId) {
+        Page<Product> products = productRepository.findProductsAvailableInBranch(branchId, pageable);
+        return products.map(product -> convertToDtoWithBranchInventory(product, branchId));
     }
 
     @Override
@@ -233,4 +246,46 @@ public class ProductServiceImpl implements ProductService {
         return productDto;
     }
 
+    private ProductDto convertToDtoWithBranchInventory(Product product, Long branchId) {
+        ProductDto productDto = new ProductDto();
+        productDto.setId(product.getId());
+        productDto.setCode(product.getCode());
+        productDto.setName(product.getName());
+        productDto.setCategoryName(product.getCategory().getName());
+        productDto.setImageUrl(product.getFirstImageUrl());
+        productDto.setDescription(product.getDescribe());
+        productDto.setCreateDate(product.getCreateDate());
+        productDto.setUpdatedDate(product.getUpdatedDate());
+
+        List<ProductDetailDto> productDetailDtoList = new ArrayList<>();
+        Double priceMin = Double.valueOf(100000000);
+        for (ProductDetail productDetail: product.getProductDetails()) {
+            Integer branchQuantity = branchInventoryRepository.getQuantityByBranchAndProductDetail(branchId, productDetail.getId());
+            if (branchQuantity != null && branchQuantity > 0) {
+                if(productDetail.getPrice() < priceMin) {
+                    priceMin = productDetail.getPrice();
+                }
+                ProductDetailDto productDetailDto = new ProductDetailDto();
+                productDetailDto.setId(productDetail.getId());
+                productDetailDto.setProductId(product.getId());
+                productDetailDto.setColor(productDetail.getColor());
+                productDetailDto.setSize(productDetail.getSize());
+                productDetailDto.setPrice(productDetail.getPrice());
+                productDetailDto.setQuantity(branchQuantity);
+                productDetailDto.setBarcode(productDetail.getBarcode());
+                ProductDiscount productDiscount = productDiscountRepository.findValidDiscountByProductDetailId(productDetail.getId());
+                if(productDiscount != null) {
+                    productDto.setDiscounted(true);
+                    productDetailDto.setDiscountedPrice(productDiscount.getDiscountedAmount());
+                    if (productDiscount.getDiscountedAmount() < priceMin) {
+                        priceMin = productDiscount.getDiscountedAmount();
+                    }
+                }
+                productDetailDtoList.add(productDetailDto);
+            }
+        }
+        productDto.setPriceMin(priceMin);
+        productDto.setProductDetailDtos(productDetailDtoList);
+        return productDto;
+    }
 }

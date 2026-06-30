@@ -26,6 +26,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Page<Product> findAllByStatus(int status, Pageable pageable);
     Page<Product> findAllByStatusAndDeleteFlag(int status, boolean delete_flag, Pageable pageable);
 
+    @Query("SELECT DISTINCT p FROM Product p JOIN p.productDetails pd JOIN BranchInventory bi ON bi.productDetail = pd WHERE bi.branch.id = :branchId AND bi.quantity > 0 AND p.deleteFlag = false AND p.status = 1")
+    Page<Product> findProductsAvailableInBranch(@org.springframework.data.repository.query.Param("branchId") Long branchId, Pageable pageable);
+
     // 🔍 Tìm sản phẩm theo tên
     @Query(value = """
         SELECT p.id, p.code, p.name, br.name AS brandName, mt.name AS materialName, ct.name AS categoryName
@@ -62,6 +65,20 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             AND (:trangThai IS NULL OR p.status = :trangThai)
             AND p.delete_flag = 0
         ORDER BY p.create_date DESC
+        """, countQuery = """
+        SELECT count(p.id)
+        FROM product p
+        LEFT JOIN brand b ON b.id = p.brand_id
+        LEFT JOIN material m ON m.id = p.material_id
+        LEFT JOIN category c ON c.id = p.category_id
+        WHERE
+            (:maSanPham IS NULL OR p.code LIKE '%' || :maSanPham || '%')
+            AND (:tenSanPham IS NULL OR p.name LIKE '%' || :tenSanPham || '%')
+            AND (:nhanHang IS NULL OR b.id = :nhanHang)
+            AND (:chatLieu IS NULL OR m.id = :chatLieu)
+            AND (:theLoai IS NULL OR c.id = :theLoai)
+            AND (:trangThai IS NULL OR p.status = :trangThai)
+            AND p.delete_flag = 0
         """, nativeQuery = true)
     Page<ProductSearchDto> listSearchProduct(String maSanPham, String tenSanPham, Long nhanHang,
                                              Long chatLieu, Long theLoai, Integer trangThai, Pageable pageable);
@@ -82,6 +99,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         LEFT JOIN category c ON c.id = p.category_id
         WHERE p.delete_flag = 0
         ORDER BY p.create_date DESC
+        """, countQuery = """
+        SELECT count(p.id)
+        FROM product p
+        LEFT JOIN brand b ON b.id = p.brand_id
+        LEFT JOIN material m ON m.id = p.material_id
+        LEFT JOIN category c ON c.id = p.category_id
+        WHERE p.delete_flag = 0
         """, nativeQuery = true)
     Page<ProductSearchDto> getAll(Pageable pageable);
 

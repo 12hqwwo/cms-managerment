@@ -28,10 +28,58 @@
         </h4>
 
         <div class="d-flex gap-2">
+            <button class="btn btn-success" data-toggle="modal" data-target="#requestInventoryModal">
+                <i class="fas fa-plus"></i> Yêu cầu nhập hàng
+            </button>
             <select id="categorySelect" class="form-control mr-2">
                 <option value="">-- Tất cả danh mục --</option>
             </select>
             <input id="searchInput" type="text" class="form-control" placeholder="🔍 Tìm sản phẩm...">
+        </div>
+    </div>
+
+    <!-- Modal Yêu cầu nhập hàng -->
+    <div class="modal fade" id="requestInventoryModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-boxes"></i> Tạo Phiếu Yêu Cầu Nhập Hàng</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="requestInventoryForm">
+                        <div class="form-group">
+                            <label>Ghi chú / Lý do:</label>
+                            <textarea class="form-control" id="requestNote" rows="2" placeholder="Ví dụ: Bổ sung nguyên liệu cho cuối tuần..."></textarea>
+                        </div>
+                        <hr>
+                        <h6>Danh sách sản phẩm cần nhập:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered" id="requestItemsTable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Sản phẩm (Mã - Tên - Size)</th>
+                                        <th width="150">Số lượng xin cấp</th>
+                                        <th width="50">Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Items will be appended here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addRequestItemBtn">
+                            <i class="fas fa-plus"></i> Thêm sản phẩm vào phiếu
+                        </button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-success" id="submitRequestBtn">Gửi Yêu Cầu</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -161,6 +209,97 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadCategories();
     loadProducts();
+    
+    // --- Lôgic Yêu Cầu Nhập Hàng ---
+    let requestItems = [];
+    const requestItemsTable = document.getElementById("requestItemsTable").getElementsByTagName("tbody")[0];
+    
+    document.getElementById("addRequestItemBtn").addEventListener("click", function() {
+        // Fetch all system products to allow vendor to request (even those not in their branch)
+        fetch('/api/vendor/inventory-request/master-products')
+            .then(res => res.json())
+            .then(data => {
+                const tr = document.createElement("tr");
+                let options = '<option value="">-- Chọn sản phẩm --</option>';
+                data.forEach(p => {
+                    const sizeColor = (p.size || "") + (p.color ? (" - " + p.color) : "");
+                    options += `<option value="${p.productDetailId}">${p.productCode} - ${p.productName} ${sizeColor ? '(' + sizeColor + ')' : ''}</option>`;
+                });
+                
+                tr.innerHTML = `
+                    <td>
+                        <select class="form-control form-control-sm product-select" required>
+                            ${options}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm quantity-input" min="1" value="1" required>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger remove-item-btn"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                requestItemsTable.appendChild(tr);
+                
+                tr.querySelector('.remove-item-btn').addEventListener('click', function() {
+                    tr.remove();
+                });
+            })
+            .catch(err => console.error(err));
+    });
+
+    document.getElementById("submitRequestBtn").addEventListener("click", function() {
+        const note = document.getElementById("requestNote").value;
+        const rows = requestItemsTable.getElementsByTagName("tr");
+        const details = [];
+        
+        for (let row of rows) {
+            const pdId = row.querySelector('.product-select').value;
+            const qty = row.querySelector('.quantity-input').value;
+            if (pdId && qty > 0) {
+                details.push({
+                    productDetailId: parseInt(pdId), // This should ideally be product_detail_id, but the UI might need to select size/sugar. For simplicity we map to productDetail ID.
+                    requestedQuantity: parseInt(qty)
+                });
+            }
+        }
+        
+        if (details.length === 0) {
+            alert("Vui lòng thêm ít nhất 1 sản phẩm hợp lệ!");
+            return;
+        }
+
+        const dataSend = {
+            note: note,
+            branchId: branchId,
+            requestDetails: details
+        };
+
+        fetch('/api/vendor/inventory-request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataSend)
+        })
+        .then(res => {
+            if (res.ok) {
+                alert("Đã gửi yêu cầu nhập hàng thành công!");
+                try {
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        bootstrap.Modal.getInstance(document.getElementById('requestInventoryModal')).hide();
+                    } else {
+                        $('#requestInventoryModal').modal('hide');
+                    }
+                } catch(e) { console.log(e); }
+                requestItemsTable.innerHTML = '';
+                document.getElementById("requestNote").value = '';
+            } else {
+                alert("Có lỗi xảy ra khi gửi yêu cầu.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
 });
 </script>
 </th:block>

@@ -43,8 +43,12 @@ public class ProductRestController {
 
     @GetMapping("/api/products/filter")
     public Page<ProductDto> filterProductApi(SearchProductDto searchRequest, @PageableDefault(page = 0, size = 10) Pageable page){
-//        searchForm.setPriceStart(searchForm.getPriceStart()*1000000);
-//        searchForm.setPriceEnd(searchForm.getPriceEnd()*1000000);
+        com.project.WebAloTra.entity.Account account = com.project.WebAloTra.utils.UserLoginUtil.getCurrentLogin();
+        if (account != null && account.getBranch() != null && 
+           (account.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_VENDOR || 
+            account.getRole().getName() == com.project.WebAloTra.entity.enumClass.RoleName.ROLE_STAFF)) {
+            return productService.searchBranchProduct(searchRequest, page, account.getBranch().getId());
+        }
         return productService.searchProduct(searchRequest, page);
     }
 

@@ -83,10 +83,10 @@ public class ProductController {
         Pageable pageable = PageRequest.of(page, pageSize);
         Page<ProductSearchDto> listProducts;
 
-        if (maSanPham == null || tenSanPham == null || nhanHang == null || chatLieu == null || theLoai == null || trangThai==null) {
-            listProducts=productService.listSearchProduct(maSanPham,tenSanPham,nhanHang,chatLieu,theLoai,trangThai,pageable);
-        }else {
+        if (maSanPham == null && tenSanPham == null && nhanHang == null && chatLieu == null && theLoai == null && trangThai == null) {
             listProducts = productService.getAll(pageable);
+        } else {
+            listProducts = productService.listSearchProduct(maSanPham, tenSanPham, nhanHang, chatLieu, theLoai, trangThai, pageable);
         }
         model.addAttribute("maSanPham",maSanPham);
         model.addAttribute("tenSanPham",tenSanPham);

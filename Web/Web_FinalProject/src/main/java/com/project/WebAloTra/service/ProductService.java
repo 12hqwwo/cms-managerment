@@ -38,6 +38,8 @@ public interface ProductService {
 
     Page<ProductDto> searchProduct(SearchProductDto searchDto, Pageable pageable);
 
+    Page<ProductDto> searchBranchProduct(SearchProductDto searchDto, Pageable pageable, Long branchId);
+
     Page<ProductDto> getAllProductApi(Pageable pageable);
 
     ProductDto getProductByBarcode(String barcode);
